@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://via.placeholder.com/800x200/000000/00FF00?text=EVONET+CORE+-+AUTONOMOUS+AI+SECURITY+AGENT" alt="EvoNet Banner">
+  <img src="https://capsule-render.vercel.app/api?type=rect&color=0:000000,100:002200&height=200&section=header&text=EVONET%20CORE&fontSize=60&fontColor=00ff00&desc=Autonomous%20AI%20Security%20Agent&descSize=20&descAlignY=70" alt="EvoNet Banner">
   
   # 🧬 EvoNet-Core: Autonomous AI Security Agent
   
