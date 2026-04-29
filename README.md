@@ -1,147 +1,93 @@
-# Evonet-core: Hệ Thống AI Tự Học và Tiến Hóa Bảo Mật
+<div align="center">
+  <img src="https://via.placeholder.com/800x200/000000/00FF00?text=EVONET+CORE+-+AUTONOMOUS+AI+SECURITY+AGENT" alt="EvoNet Banner">
+  
+  # 🧬 EvoNet-Core: Autonomous AI Security Agent
+  
+  **Hệ Thống AI Tự Học và Tiến Hóa Bảo Mật Dựa Trên Luồng Thác Đổ Đa Tầng**
 
-## Giới thiệu
+  ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)
+  ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)
+  ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+  ![AI Models](https://img.shields.io/badge/AI_Models-Qwen_|_Llama-FF9900.svg)
+  ![Database](https://img.shields.io/badge/Database-Pinecone_|_Neo4j-green.svg)
+</div>
 
-Evonet-core là một hệ thống AI tiên tiến được thiết kế để tự động thu thập, phân tích và tiến hóa bảo mật dựa trên dữ liệu lỗ hổng CVE thực tế. Hệ thống kết hợp nhiều mô hình AI (NVIDIA NIM, Groq, Cloudflare AI và Local AI) cùng với cơ sở dữ liệu vector Pinecone để tạo ra một "não bộ" bảo mật có khả năng tự học và tiến hóa liên tục.
+---
 
-## Tính năng chính
+> **EvoNet-Core** là một hệ thống Trí tuệ Nhân tạo tiên tiến được thiết kế để tự động thu thập, phân tích và tiến hóa bảo mật dựa trên dữ liệu lỗ hổng CVE thực tế. Hệ thống đóng vai trò như một **Kỹ sư Bảo mật Tự trị**, có khả năng tự động rà quét mã nguồn, phát hiện lỗ hổng và sinh ra các bản vá code an toàn.
 
-### 🤖 Trí tuệ nhân tạo đa tầng
-- **Hệ thống AI đa lớp**: Sử dụng chiến lược failover đa lớp với NVIDIA NIM, Groq, Cloudflare AI và Local AI
-- **Khả năng tự học**: Hệ thống tự động cập nhật kiến thức bảo mật từ dữ liệu CVE thực tế
-- **Tự động hóa hoàn toàn**: Hoạt động 24/7 với khả năng tự động vá lỗi và tiến hóa
+## ✨ Tính năng cốt lõi
 
-### 🛡️ Bảo mật chủ động
-- **Phát hiện lỗ hổng tự động**: Quét và phát hiện các lỗ hổng bảo mật phổ biến như SQL Injection, XSS, v.v.
-- **Mô phỏng tấn công thực tế**: Mô phỏng các cuộc tấn công để kiểm tra khả năng phòng thủ
-- **Hệ thống Incident Response tự động**: Tự động phát hiện và phản ứng sự cố bảo mật
+### 🤖 Trí tuệ nhân tạo đa tầng (Fallback Routing)
+- **Hệ thống AI đa lớp:** Sử dụng chiến lược failover (đỡ đạn) 4 lớp: `NVIDIA NIM -> Groq -> Cloudflare AI -> Local AI`. Đảm bảo hệ thống không bao giờ "sập" do giới hạn API.
+- **Não bộ RAG & Knowledge Graph:** Tự động cập nhật kiến thức bảo mật từ dữ liệu CVE mới nhất vào Pinecone và xây dựng biểu đồ tri thức với Neo4j để chống "ảo giác" (hallucinations).
 
-### 🌐 Tích hợp đa nền tảng
-- **Tích hợp Telegram**: Giao diện điều khiển và thông báo qua Telegram Bot
-- **Tích hợp GitHub**: Tự động tạo Pull Request để vá lỗi
-- **Tích hợp CI/CD**: Tự động triển khai vá lỗi
+### 🛡️ Bảo mật chủ động & Guardrails
+- **Mô phỏng tấn công (Red Team):** Chủ động mô phỏng các cuộc tấn công để kiểm thử sức chịu đựng của mã nguồn.
+- **Màng lọc Tử thần (Regex Guardrail):** Chốt chặn sinh tử cấm AI thực thi các lệnh phá hoại như `os.remove`, `DROP TABLE`, `rm -rf`. Kích hoạt báo động đỏ và đóng băng tiến trình ngay lập tức.
+- **Human-in-the-Loop:** Tự động tạo bản nháp code sửa lỗi và chờ người dùng duyệt (`/duyet_tienhoa`) qua Telegram trước khi áp dụng vào thực tế.
 
-## Kiến trúc hệ thống
+### 🔌 Tích hợp CI/CD & Giao diện CLI
+- **Giao diện dòng lệnh (CLI):** Tích hợp Typer & Rich cho trải nghiệm Terminal chuyên nghiệp.
+- **Điều khiển qua Telegram:** Bot giám sát 24/7, báo cáo sự cố và nhận lệnh từ xa.
 
-### 1. Các thành phần chính
-- **FastAPI Backend** (`app/main.py`): Giao diện API chính và bộ não điều phối
-- **Telegram Bot**: Giao diện điều khiển và thông báo
-- **Knowledge Graph**: Sử dụng Neo4j để lưu trữ mối quan hệ giữa các lỗ hổng, kỹ năng phòng thủ
+---
 
-### 2. Các module xử lý
-- `cve_refinery.py`: Thu thập và xử lý dữ liệu CVE
-- `self_evolve.py`: Tự học và tạo ra kỹ năng phòng thủ
-- `evo_autofix.py`: Tự động sửa lỗi trong codebase
-- `system_watchdog.py`: Giám sát hệ thống
-- `threat_intel_collector.py`: Thu thập thông tin đe dọa từ nhiều nguồn
+## 🏗️ Kiến trúc Hệ thống
 
-## Công nghệ sử dụng
+Hệ thống được thiết kế theo mô hình Micro-services bọc trong container, tối ưu hóa cho các hệ thống máy chủ nhỏ (như Intel NUC).
 
-- **Backend**: FastAPI, Uvicorn
-- **Vector Database**: Pinecone
-- **Knowledge Graph**: Neo4j
-- **AI Models**: 
-  - NVIDIA NIM (qwen/qwen2.5-coder-32b-instruct)
-  - Groq (llama-3.3-70b-versatile)
-  - Cloudflare AI (@cf/qwen/qwen2.5-coder-32b-instruct)
-  - Local AI (qwen2.5-coder:14b/32b qua Ollama)
-- **Embeddings**: Cloudflare (@cf/baai/bge-base-en-v1.5)
-- **Reinforcement Learning**: Stable-Baselines3, Gym
-- **Federated Learning**: PyTorch, Hugging Face Transformers
-- **Giao diện**: Telegram Bot API
-- **Containerization**: Docker, Docker Compose
-
-## Bảo mật và quyền riêng tư
-
-- Tất cả API keys được lưu trữ trong biến môi trường, không được commit lên repo
-- Hệ thống hoạt động độc lập, không gửi dữ liệu nhạy cảm ra ngoài trừ khi được cấu hình cụ thể
-- Kết nối đến các dịch vụ bên ngoài được mã hóa qua HTTPS
-- Điều khiển qua Telegram có thể bị giới hạn chỉ chấp nhận tin nhắn từ ID chat cụ thể
-- Federated Learning cho phép cải thiện mô hình mà không chia sẻ dữ liệu nhạy cảm
-- 🛡️ Màng lọc Tử thần (Regex Blacklist Guardrail): Hệ thống kiểm tra và chặn các từ khóa nguy hiểm như `os.remove`, `shutil.rmtree`, `DROP TABLE`, `DELETE FROM`, `rm -rf`, `format`, v.v. Khi phát hiện từ khóa nguy hiểm, hệ thống sẽ:
-  - Lập tức quăng lỗi (Exception)
-  - Báo động đỏ về Telegram
-  - Chặn đứng tiến trình ngay lập tức
-
-## Cài đặt và chạy
-
-### Yêu cầu
-- Docker và Docker Compose
-- API Keys cho các dịch vụ: NVIDIA, Groq, Cloudflare, Pinecone, Telegram, GitHub
-- Môi trường Linux (khuyến nghị Ubuntu/Debian)
-- Ollama hoặc tương tự để chạy Local AI (tùy chọn)
-
-### Các bước triển khai
-
-1. Clone repository:
-   ```bash
-   git clone <repository-url>
-   cd evonet-core
-   ```
-
-2. Cấu hình môi trường:
-   - Sao chép file `.env.example` thành `.env` 
-   - Điền đầy đủ các API keys cần thiết vào file `.env`
-
-3. Khởi động hệ thống:
-   ```bash
-   docker-compose up -d
-   ```
-   
-   Hoặc sử dụng script khởi động tổng hợp:
-   ```bash
-   python start_evonet.py
-   ```
-
-4. Kiểm tra logs:
-   ```bash
-   docker-compose logs -f evonet_api_core
-   ```
-
-## Sử dụng qua Telegram
-
-Sau khi hệ thống chạy, bạn có thể điều khiển qua Telegram bot với các lệnh:
-
-- `/update`: Khởi động chu trình tiến hóa đầy đủ
-- `/collect_threat`: Chỉ thu thập và xử lý thông tin đe dọa từ các nguồn mở
-- `/gat_cve`: Chỉ thu thập và xử lý CVE mới
-- `/gom_code`: Thu thập và phân tích mã nguồn trong workspace
-- `/test_autofix`: Kích hoạt hệ thống tự động sửa lỗi
-- `/train_fl`: Khởi động quá trình huấn luyện Federated Learning
-- `/duyet_tienhoa`: Duyệt và áp dụng bản nháp code mới (nếu có)
-- `/tu_choi`: Từ chối bản nháp code hiện tại
-- Tin nhắn thường: Hỏi đáp với AI Evonet
-
-## Cấu trúc dự án
+```mermaid
+graph TD
+    A[Telegram / CLI] --> B(FastAPI Backend)
+    B --> C{AI Router}
+    C -->|Layer 1| D[NVIDIA NIM]
+    C -->|Layer 2| E[Groq]
+    C -->|Layer 3| F[Cloudflare AI]
+    C -->|Layer 4| G[Local Ollama]
+    B --> H[(Pinecone Vector DB)]
+    B --> I[(Neo4j Graph DB)]
+    B --> J[Guardrail System]
+    J --> K[Auto-Patching Engine]
 
 ```
-evonet-core/
-├── app/
-│   ├── main.py                 # FastAPI backend chính
-│   ├── requirements.txt        # Dependencies Python
-│   ├── kg_manager.py            # Quản lý Knowledge Graph
-│   └── scripts/
-│       ├── cve_refinery.py     # Thu thập và xử lý CVE
-│       ├── self_evolve.py      # Tự học và tạo kỹ năng phòng thủ
-│       ├── evo_autofix.py      # Tự động sửa lỗi code (giao diện)
-│       ├── threat_intel_collector.py # Thu thập thông tin đe dọa
-│       ├── system_watchdog.py  # Giám sát hệ thống
-│       └── autonomous_manager.py # Quản lý hoạt động tự chủ
-├── docker-compose.yml          # Cấu hình Docker
-├── .env                        # Biến môi trường (không có trong repo vì chứa secrets)
-├── .gitignore                  # Files to ignore in git
-└── README.md                  # Tài liệu này
-```
+🚀 Hướng dẫn Cài đặt & Chạy
+1. Triển khai với Docker (Khuyên dùng)
+Yêu cầu hệ thống: Docker, Docker Compose, Linux/Ubuntu.
 
-## Hiệu suất xử lý
+# Clone dự án
+git clone [https://github.com/phonghhd/EvoNet-AI-Core.git](https://github.com/phonghhd/EvoNet-AI-Core.git)
+cd EvoNet-AI-Core
 
-### Tự động hóa hoàn toàn
-- **Thu thập threat intelligence**: 5-10 phút mỗi giờ
-- **Phân tích CVE**: 10-15 phút cho mỗi batch 100 CVE
-- **Tự động fix lỗi**: 2-5 phút mỗi lỗi được xác nhận
-- **Mô phỏng tấn công**: 1-2 phút mỗi kịch bản tấn công
+# Cấu hình API Keys
+cp .env.example .env
+nano .env 
 
-### Hiệu quả kinh tế
-- **Tiết kiệm thời gian**: Giảm 90% thời gian phân tích CVE thủ công
-- **Tăng độ chính xác**: Phát hiện và fix lỗi với độ chính xác 95%
-- **Tự động hóa**: Tiết kiệm 80% công sức bảo trì bảo mật
+# Khởi động toàn bộ cụm dịch vụ
+docker-compose up -d
+
+
+2. Sử dụng Giao diện Dòng lệnh (EvoNet CLI)
+EvoNet cung cấp bộ công cụ CLI mạnh mẽ giúp quản lý trực tiếp từ Terminal:
+
+# Cài đặt CLI vào hệ thống
+pip install -e .
+
+# Xem danh sách các lệnh hỗ trợ
+evonet --help
+
+# Quét và tự động vá lỗi một thư mục dự án
+evonet scan --path /path/to/your/code
+
+📱 Lệnh Điều khiển Telegram
+Chỉ chấp nhận các lệnh từ ADMIN_CHAT_ID đã cấu hình:
+
+🛠️ /update - Khởi động chu trình thu thập và tiến hóa đầy đủ.
+
+📡 /gat_cve - Chỉ thu thập và nhúng dữ liệu CVE mới vào Pinecone.
+
+🕵️ /test_autofix - Kích hoạt Đặc vụ AI rà quét và đề xuất code vá lỗi.
+
+✅ /duyet_tienhoa - Chấp nhận và ghi đè bản vá lỗi vào source code.
+
+❌ /tu_choi - Hủy bỏ bản nháp do AI đề xuất.

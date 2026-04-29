@@ -1,9 +1,17 @@
 import os
 import requests
+import time
 from github import Github
 import datetime
 from dotenv import load_dotenv
 load_dotenv("/home/phong/evonet-core/.env", override=True)
+
+# --- CẤU HÌNH BIẾN ---
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN") # Sếp cần tạo trên GitHub
+REPO_NAME = os.getenv("GITHUB_REPO") # Ví dụ: "phonghuynh/evonet-core"
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # --- CẤU HÌNH BIẾN ---
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
@@ -44,14 +52,18 @@ def ask_nvidia_to_fix(error_log, file_content):
     res = requests.post(url, headers=headers, json=payload)
     return res.json()["choices"][0]["message"]["content"].strip()
 
-def create_auto_fix_pr(file_path, error_log):
-    """Tự động tạo nhánh mới và mở Pull Request trên GitHub với kiểm thử tự động"""
-    # Import here to avoid circular imports
-    from auto_patch_generator import create_auto_fix_pr as auto_patch_create_pr
-    # Delegate to the new auto patch generator
-    auto_patch_create_pr(file_path, error_log)
+def start_scan(file_path):
+    """Hàm quét mã nguồn và tự động vá lỗi"""
+    # Đây là nơi bạn sẽ tích hợp chức năng quét và vá lỗi thực sự
+    # Ví dụ đơn giản:
+    print(f"Đang quét và vá lỗi cho file: {file_path}")
+    # Bạn cần tích hợp với các module xử lý thực sự ở đây
+    # Ví dụ: phân tích mã nguồn, phát hiện lỗi, tạo bản vá, v.v.
+    # Hiện tại, chúng ta sẽ chỉ in ra thông báo giả lập
+    time.sleep(2)  # Giả lập thời gian quét
+    print("Đã hoàn tất quét và vá lỗi")
+    # Trong tương lai, bạn sẽ thay thế bằng code thực sự gọi đến các module xử lý
 
-# Chạy test giả lập
 if __name__ == "__main__":
     # Giả lập một lỗi chia cho 0 trong file main.py
     fake_error = "ZeroDivisionError: division by zero at line 42 in ask_api()"
