@@ -1,37 +1,98 @@
-name: EvoNet Auto Threat Harvester
+name: EvoNet Holy Trinity Pipeline
 
-# Lên lịch chạy tự động
+# Lên lịch chạy tự động: 00:00 sáng Thứ Hai hàng tuần
 on:
   schedule:
-    - cron: '0 0 * * 1' # Chạy tự động vào 00:00 mỗi sáng Thứ Hai hàng tuần
-  workflow_dispatch:     # Cấp quyền cho sếp bấm nút "Chạy ngay" bằng tay trên web
+    - cron: '0 0 * * 1'
+  workflow_dispatch: 
 
 permissions:
-  contents: write # Cho phép Bot được quyền lưu file vào kho code của sếp
+  contents: write
 
 jobs:
-  hunt-cves:
+  # ==========================================
+  # TRẠM 1: BOT TRINH SÁT (TÌM CVE NGUY HIỂM)
+  # ==========================================
+  bot_1_harvester:
+    name: 🕵️‍♂️ Lọc CVE Nguy Hiểm
     runs-on: ubuntu-latest
-
     steps:
-      - name: Lấy mã nguồn về
-        uses: actions/checkout@v4
-
-      - name: Cài đặt Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
-      - name: Cài đặt thư viện requests
-        run: pip install requests
-
-      - name: Kích hoạt Đặc vụ EvoNet đi cào dữ liệu
+      - run: pip install requests
+      
+      # Chạy script 1 (Tái sử dụng cái hồi chiều, nhưng sẽ nâng cấp sau để chỉ lọc lỗi Nặng)
+      - name: Kích hoạt Bot 1 cào CVE
         run: python app/scripts/fetch_weekly_cves.py
 
-      - name: Lưu trữ và đẩy dữ liệu mới lên GitHub (Nếu có)
+      # Đóng gói dữ liệu vứt lên "băng chuyền" (Artifact) để chuyển cho Bot 2
+      - name: Gửi dữ liệu lên băng chuyền
+        uses: actions/upload-artifact@v4
+        with:
+          name: cve-data-stage-1
+          path: data/latest_threats.json
+
+  # ==========================================
+  # TRẠM 2: BOT TIN TẶC (SĂN MÃ KHAI THÁC - PoC)
+  # ==========================================
+  bot_2_poc_hunter:
+    name: 🥷 Săn Mã Khai Thác (PoC)
+    needs: bot_1_harvester # LỆNH QUYỀN LỰC: Phải chờ Trạm 1 chạy xong mới được chạy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      
+      # Nhận gói dữ liệu từ Trạm 1 rớt xuống
+      - name: Nhận dữ liệu từ Trạm 1
+        uses: actions/download-artifact@v4
+        with:
+          name: cve-data-stage-1
+          path: data/
+
+      # Kích hoạt Bot 2 đi lùng PoC 
+      - name: Kích hoạt Bot 2 đi săn PoC
+        run: python app/scripts/hunt_poc.py
+
+      # Đóng gói dữ liệu đã nhồi thêm PoC lên băng chuyền cho Bot 3
+      - name: Gửi dữ liệu lên băng chuyền
+        uses: actions/upload-artifact@v4
+        with:
+          name: cve-data-stage-2
+          path: data/latest_threats.json
+
+  # ==========================================
+  # TRẠM 3: BOT BÁC SĨ (PHÂN TÍCH BẢN VÁ & LƯU TRỮ)
+  # ==========================================
+  bot_3_patch_analyzer:
+    name: 🛡️ Phân Tích Bản Vá & Lưu Trữ
+    needs: bot_2_poc_hunter 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      
+      # Nhận gói dữ liệu từ Trạm 2 rớt xuống
+      - name: Nhận dữ liệu từ Trạm 2
+        uses: actions/download-artifact@v4
+        with:
+          name: cve-data-stage-2
+          path: data/
+
+      - name: Kích hoạt Bot 3 cào Code Patch Diff
+        run: python app/scripts/analyze_patch.py
+
+      - name: Lưu trữ thành quả hoàn chỉnh lên EvoNet
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "EvoNet-Bot"
-          git add .
-          # Dòng lệnh kiểm tra: Nếu có thay đổi thì mới commit, không thì thôi bỏ qua
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 Auto-update: EvoNet vớt được CVE mới" && git push)
+          git config --local user.name "EvoNet-Trinity-Bot"
+          git add data/latest_threats.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🧠 Auto-update: Bộ dữ liệu AI Training (CVE + PoC + Patch)" && git push)
