@@ -3,40 +3,49 @@
   
   # 🧬 EvoNet-Core: Autonomous AI Security Agent
   
-  **Hệ Thống AI Tự Học và Tiến Hóa Bảo Mật Dựa Trên Luồng Thác Đổ Đa Tầng**
+  **Self-Learning & Evolutionary Security System Powered by Multi-Tier LLM Routing**
 
-  ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)
-  ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)
-  ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
-  ![AI Models](https://img.shields.io/badge/AI_Models-Qwen_|_Llama-FF9900.svg)
-  ![Database](https://img.shields.io/badge/Database-Pinecone_|_Neo4j-green.svg)
+  [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+  [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+  [![AI Models](https://img.shields.io/badge/AI_Models-Qwen_|_Llama-FF9900.svg)]()
+  [![Database](https://img.shields.io/badge/Database-Pinecone_|_Neo4j-green.svg)]()
+  [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 </div>
 
 ---
 
-> **EvoNet-Core** là một hệ thống Trí tuệ Nhân tạo tiên tiến được thiết kế để tự động thu thập, phân tích và tiến hóa bảo mật dựa trên dữ liệu lỗ hổng CVE thực tế. Hệ thống đóng vai trò như một **Kỹ sư Bảo mật Tự trị**, có khả năng tự động rà quét mã nguồn, phát hiện lỗ hổng và sinh ra các bản vá code an toàn.
+> **EvoNet-Core** is an advanced Artificial Intelligence system designed to autonomously harvest, analyze, and evolve defenses based on real-world CVE (Common Vulnerabilities and Exposures) data. Acting as an **Autonomous Security Engineer**, it proactively scans source code, detects vulnerabilities, and generates secure, production-ready patch code.
 
-## ✨ Tính năng cốt lõi
-
-### 🤖 Trí tuệ nhân tạo đa tầng (Fallback Routing)
-- **Hệ thống AI đa lớp:** Sử dụng chiến lược failover (đỡ đạn) 4 lớp: `NVIDIA NIM -> Groq -> Cloudflare AI -> Local AI`. Đảm bảo hệ thống không bao giờ "sập" do giới hạn API.
-- **Não bộ RAG & Knowledge Graph:** Tự động cập nhật kiến thức bảo mật từ dữ liệu CVE mới nhất vào Pinecone và xây dựng biểu đồ tri thức với Neo4j để chống "ảo giác" (hallucinations).
-
-### 🛡️ Bảo mật chủ động & Guardrails
-- **Mô phỏng tấn công (Red Team):** Chủ động mô phỏng các cuộc tấn công để kiểm thử sức chịu đựng của mã nguồn.
-- **Màng lọc Tử thần (Regex Guardrail):** Chốt chặn sinh tử cấm AI thực thi các lệnh phá hoại như `os.remove`, `DROP TABLE`, `rm -rf`. Kích hoạt báo động đỏ và đóng băng tiến trình ngay lập tức.
-- **Human-in-the-Loop:** Tự động tạo bản nháp code sửa lỗi và chờ người dùng duyệt (`/duyet_tienhoa`) qua Telegram trước khi áp dụng vào thực tế.
-
-### 🔌 Tích hợp CI/CD & Giao diện CLI
-- **Giao diện dòng lệnh (CLI):** Tích hợp Typer & Rich cho trải nghiệm Terminal chuyên nghiệp.
-- **Điều khiển qua Telegram:** Bot giám sát 24/7, báo cáo sự cố và nhận lệnh từ xa.
+## 📑 Table of Contents
+- [Core Features](#-core-features)
+- [System Architecture](#-system-architecture)
+- [Getting Started](#-getting-started)
+- [Usage (CLI & Telegram)](#-usage)
+- [Disclaimer](#-disclaimer)
 
 ---
 
-## 🏗️ Kiến trúc Hệ thống
+## ✨ Core Features
 
-Hệ thống được thiết kế theo mô hình Micro-services bọc trong container, tối ưu hóa cho các hệ thống máy chủ nhỏ (như Intel NUC).
+### 🤖 Multi-Tier AI Routing (Fallback Engine)
+- **High-Availability AI Layer:** Implements a robust 4-tier failover strategy: `NVIDIA NIM -> Groq -> Cloudflare AI -> Local AI`. Ensures zero downtime even during API rate limits.
+- **RAG & Knowledge Graph Engine:** Continuously ingests the latest CVE intelligence into **Pinecone** (Vector DB) and structures complex threat relationships using **Neo4j** (Graph DB) to strictly eliminate LLM hallucinations.
 
+### 🛡️ Proactive Defense & Guardrails
+- **Automated Red Teaming:** Proactively simulates attack vectors to stress-test target source code.
+- **Lethal Filter (Regex Guardrails):** Strict pre-execution validation blocks destructive AI-generated commands (e.g., `os.remove`, `DROP TABLE`, `rm -rf`), instantly triggering a system freeze and red alert.
+- **Human-in-the-Loop (HITL):** Generates draft patch code and awaits manual authorization via Telegram (`/duyet_tienhoa`) before applying modifications to the codebase.
+
+### 🔌 Seamless CI/CD & Interactivity
+- **CLI Tooling:** Integrated with `Typer` & `Rich` for a highly visual, professional Terminal experience.
+- **Telegram Bot Integration:** 24/7 monitoring, real-time incident reporting, and remote command execution via an encrypted Telegram channel.
+
+---
+
+## 🏗️ System Architecture
+
+The ecosystem is built on a containerized microservices architecture, heavily optimized for edge computing and Mini PC deployments (e.g., Intel NUC).
 ```mermaid
 graph TD
     A[Telegram / CLI] --> B(FastAPI Backend)
@@ -49,45 +58,50 @@ graph TD
     B --> I[(Neo4j Graph DB)]
     B --> J[Guardrail System]
     J --> K[Auto-Patching Engine]
-
 ```
-🚀 Hướng dẫn Cài đặt & Chạy
-1. Triển khai với Docker (Khuyên dùng)
-Yêu cầu hệ thống: Docker, Docker Compose, Linux/Ubuntu.
+🚀 Getting Started
+Prerequisites
+Docker & Docker Compose
 
-# Clone dự án
+Python 3.11+ (for local development)
+
+Valid API keys (Pinecone, LLM Providers, Telegram Bot)
+
+1. Docker Deployment (Recommended)
+
+# Clone the repository
 git clone [https://github.com/phonghhd/EvoNet-AI-Core.git](https://github.com/phonghhd/EvoNet-AI-Core.git)
 cd EvoNet-AI-Core
 
-# Cấu hình API Keys
+# Configure Environment Variables
 cp .env.example .env
 nano .env 
 
-# Khởi động toàn bộ cụm dịch vụ
+# Spin up the microservices cluster
 docker-compose up -d
 
+2. Local CLI Installation
+EvoNet provides a powerful CLI suite for direct Terminal management:
 
-2. Sử dụng Giao diện Dòng lệnh (EvoNet CLI)
-EvoNet cung cấp bộ công cụ CLI mạnh mẽ giúp quản lý trực tiếp từ Terminal:
-
-# Cài đặt CLI vào hệ thống
+# Install the CLI package globally
 pip install -e .
 
-# Xem danh sách các lệnh hỗ trợ
+# View available commands
 evonet --help
 
-# Quét và tự động vá lỗi một thư mục dự án
+# Scan and auto-patch a specific project directory
 evonet scan --path /path/to/your/code
 
-📱 Lệnh Điều khiển Telegram
-Chỉ chấp nhận các lệnh từ ADMIN_CHAT_ID đã cấu hình:
+📱 Usage
+Telegram Remote Control
+Note: Commands are strictly authorized only for configured ADMIN_CHAT_ID.
 
-🛠️ /update - Khởi động chu trình thu thập và tiến hóa đầy đủ.
+Command and Action
+🛠️ /update - Triggers a full cycle: CVE Harvesting + Analysis + Evolution.
+📡 /gat_cve - Harvests only new CVEs and embeds them into Pinecone.
+🕵️ /test_autofix - Activates AI Agent to scan code and propose patches.
+✅ /duyet_tienhoa - Approves and overwrites target source code with the patch.
+❌ /tu_choi - Rejects and discards the AI-proposed draft patch.
 
-📡 /gat_cve - Chỉ thu thập và nhúng dữ liệu CVE mới vào Pinecone.
-
-🕵️ /test_autofix - Kích hoạt Đặc vụ AI rà quét và đề xuất code vá lỗi.
-
-✅ /duyet_tienhoa - Chấp nhận và ghi đè bản vá lỗi vào source code.
-
-❌ /tu_choi - Hủy bỏ bản nháp do AI đề xuất.
+⚠️ Disclaimer
+EvoNet-Core is developed strictly for educational, research, and defensive purposes. The auto-patching mechanism modifies source code automatically. Always use version control (e.g., Git) and review AI-generated patches before deploying to production environments. The author is not responsible for any damage caused by misuse of this software.
