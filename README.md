@@ -96,11 +96,14 @@ evonet scan --path /path/to/your/code
 Telegram Remote Control
 Note: Commands are strictly authorized only for configured ADMIN_CHAT_ID.
 
-Command and Action
 🛠️ /update - Triggers a full cycle: CVE Harvesting + Analysis + Evolution.
+
 📡 /gat_cve - Harvests only new CVEs and embeds them into Pinecone.
+
 🕵️ /test_autofix - Activates AI Agent to scan code and propose patches.
+
 ✅ /duyet_tienhoa - Approves and overwrites target source code with the patch.
+
 ❌ /tu_choi - Rejects and discards the AI-proposed draft patch.
 
 ⚠️ Disclaimer
