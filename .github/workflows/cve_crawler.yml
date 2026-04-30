@@ -1,0 +1,37 @@
+name: EvoNet Auto Threat Harvester
+
+# Lên lịch chạy tự động
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Chạy tự động vào 00:00 mỗi sáng Thứ Hai hàng tuần
+  workflow_dispatch:     # Cấp quyền cho sếp bấm nút "Chạy ngay" bằng tay trên web
+
+permissions:
+  contents: write # Cho phép Bot được quyền lưu file vào kho code của sếp
+
+jobs:
+  hunt-cves:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Lấy mã nguồn về
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cài đặt thư viện requests
+        run: pip install requests
+
+      - name: Kích hoạt Đặc vụ EvoNet đi cào dữ liệu
+        run: python scripts/fetch_weekly_cves.py
+
+      - name: Lưu trữ và đẩy dữ liệu mới lên GitHub (Nếu có)
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "EvoNet-Bot"
+          git add data/latest_threats.json
+          # Dòng lệnh kiểm tra: Nếu có thay đổi thì mới commit, không thì thôi bỏ qua
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 Auto-update: EvoNet vớt được CVE mới" && git push)
