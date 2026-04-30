@@ -54,13 +54,14 @@ def update_cve_database():
                 added_count += 1
                 print(f"⚠️ Báo động: Bắt được {cve_id} (Điểm CVSS: {cvss_score})")
 
-    # 5. Lưu lại vào file nếu có "chiến lợi phẩm" mới
+    # 5. LUÔN LUÔN LƯU FILE (Để giữ băng chuyền Pipeline không bị đứt)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(existing_cves, f, indent=4, ensure_ascii=False)
+
     if added_count > 0:
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(existing_cves, f, indent=4, ensure_ascii=False)
         print(f"✅ Đã tóm được {added_count} CVE NGUY HIỂM vào danh sách chờ xử lý!")
     else:
-        print("💤 Không có lỗ hổng NGUY HIỂM nào xuất hiện, các hệ thống an toàn.")
+        print("💤 Không có lỗ hổng NGUY HIỂM nào xuất hiện. Vẫn giao lại hồ sơ cũ cho Bot 2!")
 
 if __name__ == "__main__":
     print("🧬 Kích hoạt EvoNet Threat Harvester (Phiên bản Lọc Nguy Hiểm)...")
