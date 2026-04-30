@@ -1,0 +1,52 @@
+services:
+  evonet-api:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: python:3.11-slim
+    container_name: evonet_api_core
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./workspace:/workspace
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    command: sh -c "pip install -r requirements.txt && python app/main.py"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.80'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 2. NEO4J DATABASE FOR KNOWLEDGE GRAPH
+  neo4j:
+    image: neo4j:5.11
+    container_name: evonet_neo4j
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH}
+    volumes:
+      - ./neo4j/data:/data
+    restart: unless-stopped
+
+  # 3. DASHBOARD SERVICE
+  evonet-dashboard:
+    image: python:3.11-slim
+    container_name: evonet_dashboard
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    command: sh -c "pip install -r requirements.txt && python app/dashboard.py"
+    restart: unless-stopped
+    depends_on:
+      - evonet-api
