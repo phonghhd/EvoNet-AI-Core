@@ -36,23 +36,45 @@ def update_cve_database():
 
     print("🔍 Đang khởi động bộ lọc CVSS >= 7.0 (High/Critical)...")
 
-    # 4. BỘ LỌC CHÍ MẠNG KÉP: Hàng mới + Độ nguy hiểm cao
+    # 4. BỘ LỌC THÔNG MINH VÀ TỰ ĐỘNG DỌN RÁC (Garbage Collection)
     for item in new_data:
         cve_id = item.get("id")
         cvss_score = item.get("cvss")
         
-        # Kiểm tra xem có mã ID và chưa từng lưu trong hệ thống không
-        if cve_id and cve_id not in existing_cves:
-            # Kiểm tra xem có điểm số và điểm số phải >= 7.0
-            if cvss_score is not None and float(cvss_score) >= 7.0:
-                existing_cves[cve_id] = {
-                    "summary": item.get("summary", "Không có mô tả"),
-                    "cvss_score": float(cvss_score),
-                    "date_added_to_evonet": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "stage": "1_CVE_Harvested" # Gắn tag để Bot 2 biết đường vào nhận việc
-                }
-                added_count += 1
-                print(f"⚠️ Báo động: Bắt được {cve_id} (Điểm CVSS: {cvss_score})")
+        # --- TÍNH NĂNG 1: QUẢN LÝ HỒ SƠ CŨ (DỌN RÁC) ---
+        if cve_id in existing_cves:
+            # Nếu lúc trước lưu tạm vì chưa có điểm, nay API đã nhả điểm chính thức
+            if existing_cves[cve_id].get("cvss_score") == "Chưa chấm điểm (Có biến!)" and cvss_score is not None:
+                official_score = float(cvss_score)
+                if official_score < 7.0:
+                    # Điểm thấp -> Rác -> XÓA KHỎI BỘ NHỚ NGAY VÀ LUÔN
+                    del existing_cves[cve_id]
+                    print(f"🗑️ Đã ném {cve_id} vào thùng rác vì điểm chính thức quá bèo ({official_score}).")
+                else:
+                    # Điểm cao -> Cập nhật con số chính thức vào hồ sơ
+                    existing_cves[cve_id]["cvss_score"] = official_score
+                    print(f"🔥 Cập nhật {cve_id}: Quái vật đã lộ diện với điểm chính thức ({official_score}).")
+            
+            # Xử lý xong hồ sơ cũ thì bỏ qua vòng lặp này để đi tới lỗ hổng tiếp theo
+            continue 
+
+        # --- TÍNH NĂNG 2: SĂN LÙNG MỒI MỚI TOANH ---
+        # TH1: Đã có điểm và >= 7.0 (High/Critical)
+        is_high_risk = cvss_score is not None and float(cvss_score) >= 7.0
+        
+        # TH2: Mới toanh chưa có điểm (Báo động ngầm, bắt về chờ xét xử)
+        is_unscored_new = cvss_score is None
+        
+        if is_high_risk or is_unscored_new:
+            score_display = float(cvss_score) if cvss_score else "Chưa chấm điểm (Có biến!)"
+            existing_cves[cve_id] = {
+                "summary": item.get("summary", "Không có mô tả"),
+                "cvss_score": score_display,
+                "date_added_to_evonet": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "stage": "1_CVE_Harvested" 
+            }
+            added_count += 1
+            print(f"⚠️ Đã tóm mồi mới: {cve_id} - Điểm: {score_display}")
 
     # 5. LUÔN LUÔN LƯU FILE (Để giữ băng chuyền Pipeline không bị đứt)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
