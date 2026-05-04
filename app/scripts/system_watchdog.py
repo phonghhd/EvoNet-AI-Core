@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import re
 import sys
 import traceback
-load_dotenv("/home/phong/evonet-core/.env", override=True)
+load_dotenv("/app/.env", override=True)
 
 # --- CẤU HÌNH ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")

@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime
 from dotenv import load_dotenv
 
-load_dotenv("./.env", override=True)
+load_dotenv("/app/.env", override=True)
 
 class QwenBrain:
     def __init__(self):
@@ -68,11 +68,7 @@ class QwenBrain:
             return result["choices"][0]["message"]["content"]
         except Exception as e:
             print(f"Error calling Qwen model: {e}")
-            # Fallback to dummy response
-            return "def fix_vulnerability():
-    return 'patched'"
-            
-        return None
+            return "def fix_vulnerability():\n    return 'patched'"
 
 # Initialize the brain
 qwen_brain = QwenBrain()

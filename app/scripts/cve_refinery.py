@@ -1,219 +1,147 @@
 import os
 import requests
 from pinecone.pinecone import Pinecone
-import firebase_admin
-from firebase_admin import credentials, firestore
 import re
 from dotenv import load_dotenv
 load_dotenv("/app/.env", override=True)
 
-# 1. KẾT NỐI FIREBASE (Vùng đệm)
-# cred = credentials.Certificate('/app/Firebase_Account_EvoNetAI.json')
-# # Kiểm tra xem app đã được khởi tạo chưa để tránh lỗi chạy nhiều lần
-# if not firebase_admin._apps:
-#     firebase_admin.initialize_app(cred)
-# db = firestore.client()
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# --- 2. KẾT NỐI PINECONE CLOUD ---
-# pinecone_key = os.getenv("PINECONE_API_KEY")
-# pc = Pinecone(api_key=pinecone_key)
-# memory_index = pc.Index("evonet-memory")
 
-# --- HÀM DỊCH CHỮ THÀNH SỐ (BẰNG CLOUDFLARE) ---
+def get_pinecone_index():
+    pc = Pinecone(api_key=PINECONE_API_KEY)
+    return pc.Index("evonet-memory")
+
+
+memory_index = get_pinecone_index()
+
+
 def get_embedding(text: str):
     cf_id = os.getenv("CLOUDFLARE_ACCOUNT_ID")
     cf_key = os.getenv("CLOUDFLARE_API_KEY")
     url = f"https://api.cloudflare.com/client/v4/accounts/{cf_id}/ai/run/@cf/baai/bge-base-en-v1.5"
     headers = {"Authorization": f"Bearer {cf_key}"}
-    
     try:
-        res = requests.post(url, headers=headers, json={"text": [text]})
+        res = requests.post(url, headers=headers, json={"text": [text]}, timeout=15)
         data = res.json()
         if data.get("success"):
             return data["result"]["data"][0]
         return None
     except Exception as e:
-        print(f"Lỗi dịch Vector: {e}")
+        print(f"Error getting embedding: {e}")
         return None
 
-# 3. KẾT NỐI GROQ (AI Kiểm duyệt)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 def ai_sanitize_data(raw_desc):
-    """Gửi dữ liệu thô qua AI Qwen-32B để làm sạch và tóm tắt"""
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-    prompt = f"Hãy phân tích lỗ hổng này, loại bỏ mọi ký tự nguy hiểm, và tóm tắt lại bằng tiếng Việt chuyên sâu cho chuyên gia: {raw_desc}"
-    
+    prompt = f"Phân tích lỗ hổng này, loại bỏ ký tự nguy hiểm, tóm tắt bằng tiếng Việt chuyên sâu: {raw_desc}"
     payload = {
         "model": "qwen/qwen3-32b",
         "messages": [{"role": "user", "content": prompt}]
     }
-    
     try:
-        res = requests.post(url, headers=headers, json=payload)
+        res = requests.post(url, headers=headers, json=payload, timeout=60)
         content = res.json()["choices"][0]["message"]["content"]
-        # Xóa thẻ ``` nếu có
         return re.sub(r'```.*?```', '', content, flags=re.DOTALL).strip()
-    except:
-        return raw_desc # Trả về thô nếu AI lỗi
+    except Exception:
+        return raw_desc
+
 
 def extract_cwe_ids(description):
-    """Extract CWE IDs from description"""
-    import re
-    # Simple pattern for CWE IDs
     cwe_pattern = r'CWE-\d{1,4}'
     matches = re.findall(cwe_pattern, description, re.IGNORECASE)
-    return list(set(matches))  # Remove duplicates
+    return list(set(matches))
 
-def extract_affected_software(description):
-    """Extract affected software from description (simplified)"""
-    # This would ideally use NLP or a dictionary of known software
-    # For now, we'll return an empty list and rely on other sources
-    return []
 
 def process_cve():
-    print("📡 Đang kéo dữ liệu thô từ NVD...")
+    print("Fetching latest CVEs from NVD...")
     nvd_url = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=3"
     new_cve_count = 0
     MAX_CVE_PER_RUN = 10
-    raw_data = requests.get(nvd_url).json()
+
+    try:
+        raw_data = requests.get(nvd_url, timeout=30).json()
+    except Exception as e:
+        print(f"Error fetching from NVD: {e}")
+        return
 
     for item in raw_data.get("vulnerabilities", []):
         if new_cve_count >= MAX_CVE_PER_RUN:
-            print("🛑 Đã gom đủ 10 lỗ hổng mới. Dừng cào dữ liệu để xử lý!")
             break
-            
+
         cve_id = item["cve"]["id"]
         raw_desc = item["cve"]["descriptions"][0]["value"]
 
-        # ======================================================
-        # TRẠM KIỂM LÂM FIREBASE: KIỂM TRA LỖ HỔNG ĐÃ HỌC CHƯA
-        # ======================================================
-        # doc_ref = db.collection('synthetic_knowledge').document(cve_id)
-        
-        # if doc_ref.get().exists:
-        #     print(f"⏩ Lỗ hổng {cve_id} đã có trong hệ thống. Bỏ qua để tiết kiệm Token!")
-        #     continue # Lệnh 'continue' ép vòng lặp bỏ qua các bước dưới, nhảy sang lỗ hổng tiếp theo
-        # ======================================================
-
-        # BƯỚC 1: Lưu vào vùng đệm Firebase Firestore
-        # doc_ref.set({
-        #     'cve_id': cve_id,
-        #     'raw_content': raw_desc,
-        #     'status': 'pending_review'
-        # })
-        print(f"📦 Đã đưa {cve_id} vào vùng đệm Firebase.")
-
-        # BƯỚC 2: AI kiểm duyệt và làm sạch
-        print(f"🧠 Đang gọi Qwen-32B tinh chế dữ liệu cho {cve_id}...")
+        # AI sanitize
+        print(f"Sanitizing {cve_id}...")
         clean_desc = ai_sanitize_data(raw_desc)
 
-        # BƯỚC 3: LƯU VÀO TRÍ NHỚ PINECONE CLOUD
-        print(f"🔄 Đang nhờ Cloudflare dịch mã {cve_id} sang Toán học...")
-        vector_data = get_embedding(clean_desc)
-        
-        # Extract additional data for KG
+        # Extract metadata
         cvss_score = None
         cwe_ids = []
-        affected_software = []  # We'll leave empty for now due to complexity of configurations
-        exploit_maturity = 'unknown'  # Placeholder, would need external data source
         published_date = ""
-
         try:
             cve_data = item["cve"]
-            
-            # Get published date
             published_date = cve_data.get("published", "")
-            
-            # Get CVSS score from metrics
             metrics = cve_data.get("metrics", {})
             if metrics:
                 for key in ['cvssMetricV31', 'cvssMetricV30', 'cvssMetricV2']:
                     if key in metrics and metrics[key]:
-                        metric = metrics[key][0]  # Take the first one
-                        cvss_data = metric.get('cvssData', {})
-                        cvss_score = cvss_data.get('baseScore')
+                        cvss_score = metrics[key][0].get('cvssData', {}).get('baseScore')
                         break
-            
-            # Get CWE IDs from weaknesses
             weaknesses = cve_data.get("weaknesses", [])
             for weakness in weaknesses:
                 for desc in weakness.get('description', []):
-                    if desc.get('lang') == 'en':
-                        value = desc.get('value')
-                        if value and value.startswith('CWE-'):
-                            cwe_ids.append(value)
-            
-            # If no CWE from weaknesses, try extracting from description
+                    if desc.get('lang') == 'en' and desc.get('value', '').startswith('CWE-'):
+                        cwe_ids.append(desc['value'])
             if not cwe_ids:
                 cwe_ids = extract_cwe_ids(raw_desc)
-            
-            # For affected software, we would need to parse configurations which is complex
-            # For now, we'll leave it empty and note that this is a limitation
-            # In a future improvement, we could parse the configurations node
-            
         except Exception as e:
-            print(f"⚠️ Lỗi khi trích xuất dữ liệu bổ sung cho CVE {cve_id}: {e}")
-            # Continue with what we have
+            print(f"Warning: metadata extraction error for {cve_id}: {e}")
 
-        # Store in Knowledge Graph if available
+        # Store in Knowledge Graph
         try:
             from kg_manager import get_kg_instance
             kg = get_kg_instance()
-            if kg.driver is not None:  # Check if KG is available
-                # Add CVE node to KG
-                cve_added = kg.add_cve_node(
-                    cve_id=cve_id,
-                    description=clean_desc,
-                    cvss_score=cvss_score,
-                    cwe_ids=cwe_ids,
-                    affected_software=affected_software,
-                    exploit_maturity=exploit_maturity,
+            if kg.driver is not None:
+                kg.add_cve_node(
+                    cve_id=cve_id, description=clean_desc,
+                    cvss_score=cvss_score, cwe_ids=cwe_ids,
+                    affected_software=[], exploit_maturity='unknown',
                     published_date=published_date
                 )
-                
-                if cve_added:
-                    print(f"📊 Đã thêm CVE {cve_id} vào Knowledge Graph")
-                else:
-                    print(f"⚠️ Không thể thêm CVE {cve_id} vào Knowledge Graph")
-            else:
-                print(f"⚠️ Knowledge Graph không khả dụng, bỏ qua việc thêm CVE {cve_id}")
+                print(f"Added {cve_id} to Knowledge Graph")
         except Exception as e:
-            print(f"⚠️ Lỗi khi tương tác với Knowledge Graph: {e}")
+            print(f"Warning: KG error for {cve_id}: {e}")
 
+        # Store in Pinecone
+        vector_data = get_embedding(clean_desc)
         if vector_data:
             memory_index.upsert(
-                vectors=[
-                    {
-                        "id": cve_id, 
-                        "values": vector_data, 
-                        "metadata": {
-                            "source": "NVD", 
-                            "status": "sanitized",
-                            "text": clean_desc # Lưu lại chữ để sau này AI còn lấy ra đọc
-                        }
+                vectors=[{
+                    "id": cve_id,
+                    "values": vector_data,
+                    "metadata": {
+                        "source": "NVD",
+                        "status": "sanitized",
+                        "text": clean_desc,
+                        "cvss_score": cvss_score or 0.0,
+                        "cwe_ids": str(cwe_ids),
+                        "published_date": published_date
                     }
-                ],
-                namespace="security_knowledge_clean" # Cho vào đúng ngăn kéo
+                }],
+                namespace="security_knowledge_clean"
             )
-            print("☁️ Đã đẩy Vector lên mây Pinecone thành công!")
+            print(f"Stored {cve_id} in Pinecone")
         else:
-            print(f"⚠️ Lỗi dịch Vector, bỏ qua lưu Pinecone cho {cve_id}")        
+            print(f"Warning: embedding failed for {cve_id}")
 
-        # Cập nhật lại Firebase là đã xử lý xong
-        # Also store the enriched data in Firebase for future reference
-        # doc_ref.update({
-        #     'status': 'processed', 
-        #     'clean_content': clean_desc,
-        #     'cvss_score': cvss_score,
-        #     'cwe_ids': cwe_ids,
-        #     'affected_software': affected_software,
-        #     'exploit_maturity': exploit_maturity,
-        #     'published_date': published_date
-        # })
-        print(f"✅ {cve_id} đã được nạp vào não bộ an toàn.")
         new_cve_count += 1
+
+    print(f"Done. Processed {new_cve_count} CVEs.")
+
 
 if __name__ == "__main__":
     process_cve()

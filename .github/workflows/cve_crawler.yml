@@ -1,6 +1,5 @@
-name: EvoNet Holy Trinity Pipeline
+name: EvoNet CVE Pipeline
 
-# Lên lịch chạy tự động: MỖI 6 TIẾNG 1 LẦN (vd: 0h, 3h, 6h, 9h, 12h, 15h, 18h, 21h)
 on:
   schedule:
     - cron: '0 */3 * * *'
@@ -10,11 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  # ==========================================
-  # TRẠM 1: BOT TRINH SÁT (TÌM CVE NGUY HIỂM)
-  # ==========================================
   bot_1_harvester:
-    name: 🕵️‍♂️ Lọc CVE Nguy Hiểm
+    name: CVE Harvester
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,24 +18,18 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
-      
-      # Chạy script 1 (Tái sử dụng cái hồi chiều, nhưng sẽ nâng cấp sau để chỉ lọc lỗi Nặng)
-      - name: Kích hoạt Bot 1 cào CVE
+      - name: Fetch high-severity CVEs
         run: python app/scripts/fetch_weekly_cves.py
-
-      # Đóng gói dữ liệu vứt lên "băng chuyền" (Artifact) để chuyển cho Bot 2
-      - name: Gửi dữ liệu lên băng chuyền
+      - name: Upload CVE data
         uses: actions/upload-artifact@v4
         with:
           name: cve-data-stage-1
           path: data/latest_threats.json
+          retention-days: 1
 
-  # ==========================================
-  # TRẠM 2: BOT TIN TẶC (SĂN MÃ KHAI THÁC - PoC)
-  # ==========================================
   bot_2_poc_hunter:
-    name: 🥷 Săn Mã Khai Thác (PoC)
-    needs: bot_1_harvester # LỆNH QUYỀN LỰC: Phải chờ Trạm 1 chạy xong mới được chạy
+    name: PoC Hunter
+    needs: bot_1_harvester
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,31 +37,25 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
-      
-      # Nhận gói dữ liệu từ Trạm 1 rớt xuống
-      - name: Nhận dữ liệu từ Trạm 1
+      - name: Download CVE data
         uses: actions/download-artifact@v4
         with:
           name: cve-data-stage-1
           path: data/
-
-      # Kích hoạt Bot 2 đi lùng PoC 
-      - name: Kích hoạt Bot 2 đi săn PoC
+      - name: Hunt PoC on GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python app/scripts/hunt_poc.py
-
-      # Đóng gói dữ liệu đã nhồi thêm PoC lên băng chuyền cho Bot 3
-      - name: Gửi dữ liệu lên băng chuyền
+      - name: Upload PoC data
         uses: actions/upload-artifact@v4
         with:
           name: cve-data-stage-2
           path: data/latest_threats.json
+          retention-days: 1
 
-  # ==========================================
-  # TRẠM 3: BOT BÁC SĨ (PHÂN TÍCH BẢN VÁ & LƯU TRỮ)
-  # ==========================================
   bot_3_patch_analyzer:
-    name: 🛡️ Phân Tích Bản Vá & Lưu Trữ
-    needs: bot_2_poc_hunter 
+    name: Patch Analyzer
+    needs: bot_2_poc_hunter
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -79,27 +63,26 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
-      
-      # Nhận gói dữ liệu từ Trạm 2 rớt xuống
-      - name: Nhận dữ liệu từ Trạm 2
+      - name: Download PoC data
         uses: actions/download-artifact@v4
         with:
           name: cve-data-stage-2
           path: data/
-
-      - name: Kích hoạt Bot 3 cào Code Patch Diff
+      - name: Generate patches with AI
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
         run: python app/scripts/analyze_patch.py
-
-      - name: Lưu trữ thành quả hoàn chỉnh lên EvoNet
+      - name: Commit results
         run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "EvoNet-Trinity-Bot"
+          git config --local user.email "evonet-bot@users.noreply.github.com"
+          git config --local user.name "EvoNet-Bot"
           git add -f data/latest_threats.json
-          
-          # Dùng IF ELSE chuẩn mực để kiểm tra, chỉ thẳng mặt nhánh main để push
           if ! git diff --staged --quiet; then
-            git commit -m "🧠 Auto-update: Bộ dữ liệu AI Training (CVE + PoC + Patch)"
-            git push origin main
+            git commit -m "Auto-update: CVE + PoC + Patch data"
+            git push origin HEAD:${{ github.ref_name }}
           else
-            echo "💤 Không có sự thay đổi dữ liệu, hệ thống đi ngủ."
+            echo "No changes to commit"
           fi

@@ -1,23 +1,16 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS base
 
-# Cài đặt các dependencies hệ thống cần thiết
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Tạo thư mục làm việc
 WORKDIR /app
 
-# Copy requirements và cài đặt dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
 COPY . .
 
-# Expose port
 EXPOSE 8080
 
-# Command mặc định
-CMD ["python", "main.py"]
+CMD ["python", "app/main.py"]

@@ -1,52 +1,70 @@
 services:
   evonet-api:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
     container_name: evonet_api_core
-    working_dir: /app
     volumes:
-      - .:/app
       - ./workspace:/workspace
+      - ./logs:/app/logs
+      - ./data:/app/data
     ports:
       - "8080:8080"
     env_file:
       - .env
-    command: sh -c "pip install -r requirements.txt && python app/main.py"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
-          cpus: '0.80'
-          memory: 1G
+          cpus: '2.0'
+          memory: 4G
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  # 2. NEO4J DATABASE FOR KNOWLEDGE GRAPH
   neo4j:
     image: neo4j:5.11
     container_name: evonet_neo4j
     environment:
       - NEO4J_AUTH=${NEO4J_AUTH}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
     volumes:
       - ./neo4j/data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # 3. DASHBOARD SERVICE
   evonet-dashboard:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
     container_name: evonet_dashboard
-    working_dir: /app
-    volumes:
-      - .:/app
     ports:
       - "8081:8081"
     env_file:
       - .env
-    command: sh -c "pip install -r requirements.txt && python app/dashboard.py"
+    command: python app/dashboard.py
     restart: unless-stopped
     depends_on:
-      - evonet-api
+      evonet-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8081/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

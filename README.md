@@ -1,110 +1,187 @@
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=rect&color=0:000000,100:002200&height=200&section=header&text=EVONET%20CORE&fontSize=60&fontColor=00ff00&desc=Autonomous%20AI%20Security%20Agent&descSize=20&descAlignY=70" alt="EvoNet Banner">
-  
-  # 🧬 EvoNet-Core: Autonomous AI Security Agent
-  
-  **Self-Learning & Evolutionary Security System Powered by Multi-Tier LLM Routing**
+
+  # EvoNet-Core: Autonomous AI Security Agent
+
+  **Self-Learning Security System with Multi-Tier LLM Routing, Graph RAG, RL Defense, and MITRE ATT&CK Integration**
 
   [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
   [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
-  [![AI Models](https://img.shields.io/badge/AI_Models-Qwen_|_Llama-FF9900.svg)]()
-  [![Database](https://img.shields.io/badge/Database-Pinecone_|_Neo4j-green.svg)]()
   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 </div>
 
 ---
 
-> **EvoNet-Core** is an advanced Artificial Intelligence system designed to autonomously harvest, analyze, and evolve defenses based on real-world CVE (Common Vulnerabilities and Exposures) data. Acting as an **Autonomous Security Engineer**, it proactively scans source code, detects vulnerabilities, and generates secure, production-ready patch code.
+EvoNet-Core is an autonomous AI security agent that continuously harvests CVE data, analyzes vulnerabilities, and generates defensive code. It combines **4-tier AI failover**, **Knowledge Graph + Vector RAG**, **Reinforcement Learning defense optimization**, **MITRE ATT&CK mapping**, **EPSS scoring**, and **human-in-the-loop approval** into a unified security platform.
 
-## 📑 Table of Contents
-- [Core Features](#-core-features)
-- [System Architecture](#-system-architecture)
-- [Getting Started](#-getting-started)
-- [Usage (CLI & Telegram)](#-usage)
-- [Disclaimer](#-disclaimer)
+## Features
 
----
+### Multi-Tier AI Routing (4-Layer Failover)
+**NVIDIA NIM → Groq → Cloudflare AI → Local Ollama** — zero downtime during rate limits.
 
-## ✨ Core Features
+### Graph RAG (Knowledge Graph + Vector Retrieval)
+**Pinecone** vector DB for CVE/defense embeddings + **Neo4j** knowledge graph for structured threat relationships (CVE → CWE → Software → Defense Skills → ATT&CK Techniques). Combined retrieval eliminates hallucinations.
 
-### 🤖 Multi-Tier AI Routing (Fallback Engine)
-- **High-Availability AI Layer:** Implements a robust 4-tier failover strategy: `NVIDIA NIM -> Groq -> Cloudflare AI -> Local AI`. Ensures zero downtime even during API rate limits.
-- **RAG & Knowledge Graph Engine:** Continuously ingests the latest CVE intelligence into **Pinecone** (Vector DB) and structures complex threat relationships using **Neo4j** (Graph DB) to strictly eliminate LLM hallucinations.
+### MITRE ATT&CK Integration
+Automatic mapping of CVEs to ATT&CK techniques via CWE analysis. Stored in Neo4j for attack path analysis.
 
-### 🛡️ Proactive Defense & Guardrails
-- **Automated Red Teaming:** Proactively simulates attack vectors to stress-test target source code.
-- **Lethal Filter (Regex Guardrails):** Strict pre-execution validation blocks destructive AI-generated commands (e.g., `os.remove`, `DROP TABLE`, `rm -rf`), instantly triggering a system freeze and red alert.
-- **Human-in-the-Loop (HITL):** Generates draft patch code and awaits manual authorization via Telegram (`/duyet_tienhoa`) before applying modifications to the codebase.
+### EPSS Scoring
+FIRST EPSS API integration for exploit prediction scoring. Prioritizes CVEs by likelihood of exploitation, not just CVSS.
 
-### 🔌 Seamless CI/CD & Interactivity
-- **CLI Tooling:** Integrated with `Typer` & `Rich` for a highly visual, professional Terminal experience.
-- **Telegram Bot Integration:** 24/7 monitoring, real-time incident reporting, and remote command execution via an encrypted Telegram channel.
+### Reinforcement Learning Defense Agent
+PPO-based RL agent trained on CVE features to suggest optimal defense strategies (10 strategies: input validation, output encoding, WAF, etc.). Integrated into the self-evolution pipeline.
 
----
+### Federated Learning
+Local model fine-tuning from user feedback with FedAvg aggregation. Privacy-preserving continuous improvement.
 
-## 🏗️ System Architecture
+### Proactive Defense
+- **Regex Guardrail**: Blocks destructive patterns (`rm -rf`, `DROP TABLE`, `eval`, `exec`)
+- **Human-in-the-Loop**: Draft patches require Telegram approval
+- **Attack Simulator**: Tests patch effectiveness against SQL injection, XSS, command injection
+- **Secrets Scanner**: Detects API keys, passwords, tokens in codebase
+- **SBOM Generator**: CycloneDX-compatible software bill of materials
 
-The ecosystem is built on a containerized microservices architecture, heavily optimized for edge computing and Mini PC deployments (e.g., Intel NUC).
-```mermaid
-graph TD
-    A[Telegram / CLI] --> B(FastAPI Backend)
-    B --> C{AI Router}
-    C -->|Layer 1| D[NVIDIA NIM]
-    C -->|Layer 2| E[Groq]
-    C -->|Layer 3| F[Cloudflare AI]
-    C -->|Layer 4| G[Local Ollama]
-    B --> H[(Pinecone Vector DB)]
-    B --> I[(Neo4j Graph DB)]
-    B --> J[Guardrail System]
-    J --> K[Auto-Patching Engine]
-```
-🚀 Getting Started
-Prerequisites
-Docker & Docker Compose
+### Production Infrastructure
+- **Structured Logging**: Loguru with rotation and retention
+- **Prometheus Metrics**: Request counts, latency, AI call stats
+- **Rate Limiting**: Slowapi per-endpoint rate limiting
+- **Health Checks**: Docker health checks on all services
+- **API Authentication**: Bearer token auth for API endpoints
 
-Python 3.11+ (for local development)
+### CI/CD & Interactivity
+- CLI tooling with Typer & Rich (real SAST scanning)
+- Telegram bot for 24/7 monitoring and remote control
+- GitHub Actions pipeline for automated CVE harvesting + patching
 
-Valid API keys (Pinecone, LLM Providers, Telegram Bot)
+## Quick Start
 
-1. Docker Deployment (Recommended)
+### Docker (Recommended)
 
-# Clone the repository
-git clone [https://github.com/phonghhd/EvoNet-AI-Core.git](https://github.com/phonghhd/EvoNet-AI-Core.git)
+```bash
+git clone https://github.com/phonghhd/EvoNet-AI-Core.git
 cd EvoNet-AI-Core
 
-# Configure Environment Variables
 cp .env.example .env
-nano .env 
+# Edit .env with your API keys
 
-# Spin up the microservices cluster
 docker-compose up -d
+```
 
-2. Local CLI Installation
-EvoNet provides a powerful CLI suite for direct Terminal management:
+- API: http://localhost:8080
+- Dashboard: http://localhost:8081
+- Neo4j Browser: http://localhost:7474
+- Prometheus Metrics: http://localhost:8080/metrics
 
-# Install the CLI package globally
+### Local Development
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+
+python app/main.py          # API server
+python app/dashboard.py     # Dashboard
+python app/scripts/autonomous_manager.py  # 24/7 scheduler
+```
+
+### CLI
+
+```bash
 pip install -e .
-
-# View available commands
-evonet --help
-
-# Scan and auto-patch a specific project directory
 evonet scan --path /path/to/your/code
+evonet scan --tools bandit
+evonet scan --output results.json
+```
 
-📱 Usage
-Telegram Remote Control
-Note: Commands are strictly authorized only for configured ADMIN_CHAT_ID.
+## Telegram Commands
 
-🛠️ /update - Triggers a full cycle: CVE Harvesting + Analysis + Evolution.
+| Command | Description |
+|---------|-------------|
+| `/update` | Full evolution cycle (CVE → analysis → ATT&CK → EPSS → patching) |
+| `/gat_cve` | Harvest new CVEs from NVD |
+| `/test_autofix` | Scan code and propose patches |
+| `/duyet_tienhoa` | Approve and apply draft patch |
+| `/tu_choi` | Reject draft patch |
+| `/collect_threat` | Collect threat intelligence |
+| `/threat_alert` | Check for new threats |
+| `/simulate_attack` | Test patch effectiveness |
+| `/auto_update` | Start 24/7 autonomous scheduler |
 
-📡 /gat_cve - Harvests only new CVEs and embeds them into Pinecone.
+## Architecture
 
-🕵️ /test_autofix - Activates AI Agent to scan code and propose patches.
+```
+Telegram / CLI → FastAPI Backend → AI Router (4-Tier Fallback)
+                                    ├── NVIDIA NIM
+                                    ├── Groq
+                                    ├── Cloudflare AI
+                                    └── Local Ollama
+                → Graph RAG (Pinecone + Neo4j)
+                → MITRE ATT&CK Mapping
+                → EPSS Scoring
+                → RL Defense Agent (PPO)
+                → Guardrail System → Auto-Patching Engine
+                → Prometheus Metrics + Loguru Logging
+```
 
-✅ /duyet_tienhoa - Approves and overwrites target source code with the patch.
+## Project Structure
 
-❌ /tu_choi - Rejects and discards the AI-proposed draft patch.
+```
+evonet-core/
+├── app/
+│   ├── main.py                 # FastAPI + Telegram + httpx streaming
+│   ├── dashboard.py            # Web dashboard (port 8081)
+│   ├── kg_manager.py           # Neo4j Knowledge Graph
+│   ├── advanced_rag.py         # Vector RAG retrieval
+│   ├── graph_rag.py            # Graph RAG (Neo4j + Pinecone)
+│   ├── cli.py                  # CLI tool (Typer + real SAST)
+│   ├── setup.py                # Package setup
+│   ├── scripts/
+│   │   ├── autonomous_manager.py   # 24/7 APScheduler (15 jobs)
+│   │   ├── cve_refinery.py         # NVD CVE ingestion + KG
+│   │   ├── self_evolve.py          # Self-learning + RL integration
+│   │   ├── self_qa.py              # Synthetic QA generation
+│   │   ├── evo_autofix.py          # Auto-patching + GitHub PR
+│   │   ├── evo_architect_loop.py   # Code optimization
+│   │   ├── analyze_patch.py        # AI-powered patch generation
+│   │   ├── advanced_security.py    # ATT&CK + EPSS + SBOM + Secrets
+│   │   ├── threat_intel_collector.py
+│   │   ├── threat_alert_system.py
+│   │   ├── attack_simulator.py
+│   │   ├── advanced_static_analyzer.py
+│   │   ├── code_harvester.py
+│   │   ├── auto_update_system.py
+│   │   ├── multi_language_support.py
+│   │   └── brain/                  # Local AI modules
+│   ├── federated_learning/     # FL training (FedAvg)
+│   ├── rl_environment/         # RL defense agent (PPO + Gymnasium)
+│   └── templates/              # Dashboard HTML
+├── docs/                       # Documentation
+├── tests/                      # Test suite
+├── .github/workflows/          # CI/CD pipeline
+├── docker-compose.yml
+├── Dockerfile.optimized
+└── requirements.txt
+```
 
-⚠️ Disclaimer
-EvoNet-Core is developed strictly for educational, research, and defensive purposes. The auto-patching mechanism modifies source code automatically. Always use version control (e.g., Git) and review AI-generated patches before deploying to production environments. The author is not responsible for any damage caused by misuse of this software.
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [API Reference](docs/API.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+
+## Testing
+
+```bash
+pip install pytest
+pytest tests/ -v
+```
+
+## Disclaimer
+
+EvoNet-Core is developed for **educational, research, and defensive purposes only**. Always use version control and review AI-generated patches before deploying to production.
+
+## License
+
+[Apache License 2.0](LICENSE.md)

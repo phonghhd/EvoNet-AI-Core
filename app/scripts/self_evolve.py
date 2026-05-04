@@ -2,11 +2,15 @@ import os
 import requests
 import datetime
 from dotenv import load_dotenv
-from multi_language_support import MultiLanguageSupport
+try:
+    from multi_language_support import MultiLanguageSupport
+except ImportError:
+    from scripts.multi_language_support import MultiLanguageSupport
 
 # --- BƠM TIÊM CHÌA KHÓA SIÊU SẠCH ---
+load_dotenv("/app/.env", override=True)
+
 def get_env_safe(key_name):
-    load_dotenv("/home/phong/evonet-core/.env", override=True)
     val = os.getenv(key_name)
     if val:
         # Tẩy rửa mọi ký tự tàng hình, nháy kép, dấu cách thừa
@@ -164,6 +168,12 @@ def evolve():
             
         cve_id = results['matches'][0]['id']
         cve_text = results['matches'][0]['metadata'].get('text', 'Không có nội dung')
+        cwe_ids_str = results['matches'][0]['metadata'].get('cwe_ids', '[]')
+        try:
+            import ast
+            cwe_ids = ast.literal_eval(cwe_ids_str) if isinstance(cwe_ids_str, str) else cwe_ids_str
+        except Exception:
+            cwe_ids = []
 
         # Analyze code in workspace to determine target language
         workspace_path = "/workspace"
@@ -216,6 +226,31 @@ def evolve():
 
         defense_code, used_model = ask_ai_with_failover(prompt)
 
+        # RL Agent suggests optimal defense strategy
+        rl_suggestion = None
+        try:
+            from rl_environment.blue_team_agent import get_rl_agent
+            agent = get_rl_agent()
+            if agent:
+                cve_features = {
+                    'id': cve_id,
+                    'cvss_score': results['matches'][0]['metadata'].get('cvss_score', 5.0),
+                    'cwe_ids': cwe_ids,
+                    'exploit_maturity': 'low',
+                    'affected_software': []
+                }
+                rl_suggestion = agent.suggest_defense(cve_features)
+                print(f"RL Agent suggests: {rl_suggestion['strategy']}")
+        except Exception as e:
+            print(f"RL agent unavailable: {e}")
+
+        # EPSS + ATT&CK enrichment
+        try:
+            from scripts.advanced_security import enrich_cve_with_epss
+            enrich_cve_with_epss(cve_id, results['matches'][0].get('metadata', {}))
+        except Exception:
+            pass
+
         vector_data = get_embedding(defense_code)
         if vector_data:
             from pinecone.pinecone import Pinecone
@@ -232,7 +267,8 @@ def evolve():
                         "type": "defense_skill",
                         "model_used": used_model,
                         "text": defense_code,
-                        "language": target_language
+                        "language": target_language,
+                        "rl_strategy": rl_suggestion['strategy'] if rl_suggestion else "N/A"
                     }
                 }],
                 namespace="learned_skills"

@@ -1,20 +1,28 @@
 import os
 from setuptools import setup, find_packages
 
-# Đọc requirements từ file requirements.txt
+here = os.path.abspath(os.path.dirname(__file__))
+
+
 def read_requirements():
-    with open(os.path.join(os.path.dirname(__file__), '..', 'requirements.txt')) as f:
-        return f.read().splitlines()
+    req_path = os.path.join(here, '..', 'requirements.txt')
+    if os.path.exists(req_path):
+        with open(req_path) as f:
+            return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    return []
+
 
 setup(
     name="evonet",
-    version="1.0.0",
-    packages=find_packages(),
-    py_modules=["app.cli"],
-    install_requires=read_requirements() + ["typer", "rich"],
+    version="2.0.0",
+    description="Autonomous AI Security Agent",
+    packages=find_packages(where=here),
+    package_dir={"": "."},
+    install_requires=read_requirements() + ["typer>=0.9.0", "rich>=13.0.0"],
     entry_points={
         "console_scripts": [
-            "evonet=app.cli:main", # Gõ 'evonet' sẽ gọi hàm 'main' trong 'app/cli.py'
+            "evonet=cli:main",
         ],
     },
+    python_requires=">=3.11",
 )

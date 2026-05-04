@@ -7,7 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv("/home/phong/evonet-core/.env", override=True)
+load_dotenv("/app/.env", override=True)
 
 class FeedbackLearningSystem:
     """Advanced feedback learning system for continuous improvement"""

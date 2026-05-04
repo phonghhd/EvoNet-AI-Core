@@ -1,623 +1,209 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 import os
-import json
-from pathlib import Path
-from typing import Dict, List
-from datetime import datetime, timedelta
 import sqlite3
-import pandas as pd
+import time
+import requests
+from pathlib import Path
+from datetime import datetime
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from dotenv import load_dotenv
+
+load_dotenv("/app/.env", override=True)
 
 app = FastAPI()
 
-# Create templates directory and files
 templates_dir = Path("app/templates")
 templates_dir.mkdir(exist_ok=True, parents=True)
 
-# Create a more advanced HTML template with charts
-html_template = """
-<!DOCTYPE html>
+html_template = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evonet-core Dashboard</title>
+    <title>EvoNet-Core Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #3498db;
-            --secondary: #2c3e50;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --light: #f8f9fa;
-            --dark: #343a40;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, var(--secondary), #1a2530);
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .header p {
-            opacity: 0.9;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            padding: 1.5rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--secondary);
-        }
-        
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary), #2980b9);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
-        }
-        
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
-        }
-        
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-        
-        .chart-container {
-            height: 300px;
-            margin: 1rem 0;
-            position: relative;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-        }
-        
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-        
-        .table th, .table td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: var(--secondary);
-        }
-        
-        .table tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .progress-container {
-            margin: 1rem 0;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background-color: #e0e0e0;
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 0.5rem 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.3s ease;
-        }
-        
-        .progress-success {
-            background: linear-gradient(90deg, var(--success), #2ecc71);
-        }
-        
-        .progress-warning {
-            background: linear-gradient(90deg, var(--warning), #f1c40f);
-        }
-        
-        .timestamp {
-            color: #7f8c8d;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .badge-success {
-            background-color: rgba(39, 174, 96, 0.1);
-            color: var(--success);
-        }
-        
-        .badge-warning {
-            background-color: rgba(243, 156, 18, 0.1);
-            color: var(--warning);
-        }
-        
-        .badge-danger {
-            background-color: rgba(231, 76, 60, 0.1);
-            color: var(--danger);
-        }
-        
-        .refresh-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s ease;
-        }
-        
-        .refresh-btn:hover {
-            background: #2980b9;
-        }
-        
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .stat-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            
-            .header h1 {
-                font-size: 1.5rem;
-            }
-        }
+        :root { --primary: #3498db; --secondary: #2c3e50; --success: #27ae60; --warning: #f39c12; --danger: #e74c3c; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }
+        .header { background: linear-gradient(135deg, var(--secondary), #1a2530); color: white; padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.8rem; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); padding: 1.5rem; }
+        .card-title { font-size: 1.2rem; font-weight: 600; color: var(--secondary); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: linear-gradient(135deg, var(--primary), #2980b9); color: white; padding: 1.5rem; border-radius: 10px; text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+        .stat-label { font-size: 1rem; opacity: 0.9; }
+        .chart-container { height: 300px; position: relative; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: 500; }
+        .badge-success { background: rgba(39,174,96,0.1); color: var(--success); }
+        .badge-warning { background: rgba(243,156,18,0.1); color: var(--warning); }
+        .badge-danger { background: rgba(231,76,60,0.1); color: var(--danger); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: var(--secondary); }
+        .progress-bar { height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; margin: 0.5rem 0; }
+        .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--success), #2ecc71); transition: width 0.3s; }
+        .refresh-btn { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Evonet-core Dashboard</h1>
-        <p>Hệ thống AI tự học và tiến hóa bảo mật - Thống kê thời gian thực</p>
-        <button class="refresh-btn" onclick="refreshData()">🔄 Làm mới dữ liệu</button>
+        <div><h1>EvoNet-Core Dashboard</h1><p>Autonomous AI Security Agent</p></div>
+        <button class="refresh-btn" onclick="loadData()">Refresh</button>
     </div>
-    
     <div class="container">
         <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-number" id="total_cves">0</div>
-                <div class="stat-label">Lỗ hổng CVE</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="defense_skills">0</div>
-                <div class="stat-label">Kỹ năng phòng thủ</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="threat_intel">0</div>
-                <div class="stat-label">Thông tin đe dọa</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="patches">0</div>
-                <div class="stat-label">Bản vá</div>
-            </div>
+            <div class="stat-card"><div class="stat-number" id="total_cves">-</div><div class="stat-label">CVEs Tracked</div></div>
+            <div class="stat-card"><div class="stat-number" id="defense_skills">-</div><div class="stat-label">Defense Skills</div></div>
+            <div class="stat-card"><div class="stat-number" id="threat_intel">-</div><div class="stat-label">Threat Intel</div></div>
+            <div class="stat-card"><div class="stat-number" id="patches">-</div><div class="stat-label">Patches</div></div>
         </div>
-        
         <div class="grid">
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Hoạt động gần đây</div>
-                </div>
-                <div class="table-container">
-                    <table class="table" id="activities-table">
-                        <thead>
-                            <tr>
-                                <th>Thời gian</th>
-                                <th>Hoạt động</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="card-title">Recent Activities</div>
+                <table><thead><tr><th>Time</th><th>Action</th><th>Status</th></tr></thead><tbody id="activities-body"></tbody></table>
             </div>
-            
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Tiến trình học tập</div>
-                </div>
-                <div class="progress-container">
-                    <div>Hoàn thành:</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill progress-success" id="learning-progress" style="width: 0%"></div>
-                    </div>
-                    <div id="learning-percent">0%</div>
-                </div>
-                <div class="progress-container">
-                    <div>Độ chính xác:</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill progress-warning" id="accuracy-progress" style="width: 0%"></div>
-                    </div>
-                    <div id="accuracy-percent">0%</div>
-                </div>
+                <div class="card-title">System Health</div>
+                <div>CPU: <span id="cpu">-</span>%</div>
+                <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width:0%"></div></div>
+                <div>Memory: <span id="mem">-</span>%</div>
+                <div class="progress-bar"><div class="progress-fill" id="mem-bar" style="width:0%"></div></div>
+                <div>Disk: <span id="disk">-</span>%</div>
+                <div class="progress-bar"><div class="progress-fill" id="disk-bar" style="width:0%"></div></div>
             </div>
         </div>
-        
         <div class="grid">
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Phân tích hiệu suất theo thời gian</div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="performance-chart"></canvas>
-                </div>
+                <div class="card-title">Vulnerability Types</div>
+                <div class="chart-container"><canvas id="vuln-chart"></canvas></div>
             </div>
-            
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Phân bố loại lỗ hổng</div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="vulnerability-chart"></canvas>
-                </div>
+                <div class="card-title">Activity Timeline</div>
+                <div class="chart-container"><canvas id="timeline-chart"></canvas></div>
             </div>
         </div>
     </div>
-    
     <script>
-        // Chart instances
-        let performanceChart = null;
-        let vulnerabilityChart = null;
-        
-        // Initialize charts
+        let vulnChart, timelineChart;
         function initCharts() {
-            const performanceCtx = document.getElementById('performance-chart').getContext('2d');
-            performanceChart = new Chart(performanceCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Số mục xử lý',
-                        data: [],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }, {
-                        label: 'Tỷ lệ thành công (%)',
-                        data: [],
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-            
-            const vulnerabilityCtx = document.getElementById('vulnerability-chart').getContext('2d');
-            vulnerabilityChart = new Chart(vulnerabilityCtx, {
+            vulnChart = new Chart(document.getElementById('vuln-chart'), {
                 type: 'doughnut',
-                data: {
-                    labels: ['SQL Injection', 'XSS', 'Buffer Overflow', 'Command Injection', 'Path Traversal'],
-                    datasets: [{
-                        data: [30, 25, 20, 15, 10],
-                        backgroundColor: [
-                            '#3498db',
-                            '#2ecc71',
-                            '#f39c12',
-                            '#e74c3c',
-                            '#9b59b6'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
+                data: { labels: ['SQL Injection','XSS','Buffer Overflow','Command Injection','Path Traversal'], datasets: [{ data: [30,25,20,15,10], backgroundColor: ['#3498db','#2ecc71','#f39c12','#e74c3c','#9b59b6'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+            timelineChart = new Chart(document.getElementById('timeline-chart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Processed', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.1)' }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
         }
-        
-        // Load data from API
         async function loadData() {
             try {
-                // Load stats
-                const statsResponse = await fetch('/api/stats');
-                const stats = await statsResponse.json();
-                
+                const stats = await (await fetch('/api/stats')).json();
                 document.getElementById('total_cves').textContent = stats.total_cves;
                 document.getElementById('defense_skills').textContent = stats.defense_skills;
                 document.getElementById('threat_intel').textContent = stats.threat_intel;
                 document.getElementById('patches').textContent = stats.patches;
-                
-                // Update progress bars
-                document.getElementById('learning-progress').style.width = stats.learning_progress + '%';
-                document.getElementById('learning-percent').textContent = stats.learning_progress + '%';
-                
-                document.getElementById('accuracy-progress').style.width = stats.success_rate + '%';
-                document.getElementById('accuracy-percent').textContent = stats.success_rate + '%';
-                
-                // Load activities
-                const activitiesResponse = await fetch('/api/activities');
-                const activities = await activitiesResponse.json();
-                
-                const tbody = document.querySelector('#activities-table tbody');
+                const sys = await (await fetch('/api/system')).json();
+                document.getElementById('cpu').textContent = sys.cpu_percent;
+                document.getElementById('cpu-bar').style.width = sys.cpu_percent + '%';
+                document.getElementById('mem').textContent = sys.memory_percent;
+                document.getElementById('mem-bar').style.width = sys.memory_percent + '%';
+                document.getElementById('disk').textContent = sys.disk_percent.toFixed(1);
+                document.getElementById('disk-bar').style.width = sys.disk_percent + '%';
+                const acts = await (await fetch('/api/activities')).json();
+                const tbody = document.getElementById('activities-body');
                 tbody.innerHTML = '';
-                
-                activities.forEach(activity => {
-                    const row = tbody.insertRow();
-                    row.innerHTML = `
-                        <td class="timestamp">${activity.timestamp}</td>
-                        <td>${activity.action}</td>
-                        <td><span class="badge badge-${activity.status_class}">${activity.status}</span></td>
-                    `;
-                });
-                
-                // Update charts with mock data
-                if (performanceChart) {
-                    const hours = [];
-                    const processed = [];
-                    const success = [];
-                    
-                    for (let i = 23; i >= 0; i--) {
-                        const hour = new Date(Date.now() - i * 60 * 60 * 1000).getHours();
-                        hours.push(hour + ':00');
-                        processed.push(Math.floor(Math.random() * 50) + 10);
-                        success.push(Math.floor(Math.random() * 30) + 70);
-                    }
-                    
-                    performanceChart.data.labels = hours;
-                    performanceChart.data.datasets[0].data = processed;
-                    performanceChart.data.datasets[1].data = success;
-                    performanceChart.update();
-                }
-                
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
+                acts.forEach(a => { tbody.innerHTML += `<tr><td>${a.timestamp}</td><td>${a.action}</td><td><span class="badge badge-${a.status_class}">${a.status}</span></td></tr>`; });
+            } catch(e) { console.error('Load error:', e); }
         }
-        
-        // Refresh data function
-        function refreshData() {
-            loadData();
-        }
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            initCharts();
-            loadData();
-            
-            // Auto-refresh every 30 seconds
-            setInterval(loadData, 30000);
-        });
+        document.addEventListener('DOMContentLoaded', () => { initCharts(); loadData(); setInterval(loadData, 30000); });
     </script>
 </body>
-</html>
-"""
+</html>"""
 
-# Write the template file
 template_file = templates_dir / "dashboard.html"
 template_file.write_text(html_template)
-
-# Initialize templates
 templates = Jinja2Templates(directory="app/templates")
 
-# Initialize database for storing dashboard data
+
+def get_pinecone_stats():
+    try:
+        from pinecone import Pinecone
+        pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+        index = pc.Index("evonet-memory")
+        stats = index.describe_index_stats()
+        ns = stats.get("namespaces", {})
+        return {
+            "total_cves": ns.get("security_knowledge_clean", {}).get("vector_count", 0),
+            "defense_skills": ns.get("learned_skills", {}).get("vector_count", 0),
+            "threat_intel": ns.get("threat_intel_raw", {}).get("vector_count", 0),
+            "patches": ns.get("patches", {}).get("vector_count", 0),
+        }
+    except Exception:
+        return {"total_cves": 0, "defense_skills": 0, "threat_intel": 0, "patches": 0}
+
+
+def get_system_metrics():
+    import psutil
+    return {
+        "cpu_percent": psutil.cpu_percent(interval=0.1),
+        "memory_percent": psutil.virtual_memory().percent,
+        "disk_percent": psutil.disk_usage('/').percent,
+    }
+
+
 def init_db():
     conn = sqlite3.connect("app/dashboard.db")
-    cursor = conn.cursor()
-    
-    # Create tables for dashboard data
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS dashboard_stats (
-            id INTEGER PRIMARY KEY,
-            total_cves INTEGER,
-            defense_skills INTEGER,
-            threat_intel INTEGER,
-            patches INTEGER,
-            learning_progress REAL,
-            processed_items INTEGER,
-            success_rate REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS activities (
-            id INTEGER PRIMARY KEY,
-            timestamp TEXT,
-            action TEXT,
-            details TEXT,
-            status TEXT,
-            status_class TEXT
-        )
-    """)
-    
+    c = conn.cursor()
+    c.execute("""CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY, timestamp TEXT, action TEXT, details TEXT, status TEXT, status_class TEXT
+    )""")
     conn.commit()
     conn.close()
 
-# Initialize database
+
 init_db()
 
-# Mock data for demonstration
-def get_dashboard_stats():
-    """Get dashboard statistics"""
-    # In a real implementation, this would query your actual data sources
-    return {
-        "total_cves": 1247,
-        "defense_skills": 892,
-        "threat_intel": 563,
-        "patches": 234,
-        "learning_progress": 78.5,
-        "processed_items": 142,
-        "success_rate": 94.2
-    }
-
-def get_recent_activities():
-    """Get recent activities for dashboard"""
-    # In a real implementation, this would query your activity log
-    return [
-        {
-            "timestamp": "2023-06-15 14:30:22",
-            "action": "Thu thập CVE mới",
-            "details": "Đã thu thập 3 lỗ hổng mới từ NVD",
-            "status": "Thành công",
-            "status_class": "success"
-        },
-        {
-            "timestamp": "2023-06-15 13:45:17",
-            "action": "Tự học & tiến hóa",
-            "details": "Đã tạo 2 kỹ năng phòng thủ mới",
-            "status": "Thành công",
-            "status_class": "success"
-        },
-        {
-            "timestamp": "2023-06-15 12:20:05",
-            "action": "Tự động vá lỗi",
-            "details": "Đã tạo PR vá lỗi cho main.py",
-            "status": "Thành công",
-            "status_class": "success"
-        },
-        {
-            "timestamp": "2023-06-15 11:05:43",
-            "action": "Thu thập thông tin đe dọa",
-            "details": "Đã thu thập 12 mẫu thông tin mới",
-            "status": "Thành công",
-            "status_class": "success"
-        },
-        {
-            "timestamp": "2023-06-15 10:30:11",
-            "action": "Kiểm tra chất lượng",
-            "details": "Đã hoàn tất kiểm tra tự động",
-            "status": "Thành công",
-            "status_class": "success"
-        }
-    ]
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    """Main dashboard page"""
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request
-    })
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
 
 @app.get("/api/stats")
 async def api_stats():
-    """API endpoint for dashboard statistics"""
-    return get_dashboard_stats()
+    return get_pinecone_stats()
+
+
+@app.get("/api/system")
+async def api_system():
+    return get_system_metrics()
+
 
 @app.get("/api/activities")
 async def api_activities():
-    """API endpoint for recent activities"""
-    return get_recent_activities()
+    try:
+        conn = sqlite3.connect("app/dashboard.db")
+        c = conn.cursor()
+        c.execute("SELECT timestamp, action, status, status_class FROM activities ORDER BY id DESC LIMIT 20")
+        rows = c.fetchall()
+        conn.close()
+        return [{"timestamp": r[0], "action": r[1], "status": r[2], "status_class": r[3]} for r in rows]
+    except Exception:
+        return []
+
 
 @app.get("/health")
-async def health_check():
-    """Health check endpoint"""
+async def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
-@app.get("/metrics")
-async def metrics():
-    """System metrics endpoint"""
-    # In a real implementation, this would return actual system metrics
-    return {
-        "uptime": "1h 23m",
-        "memory_usage": "45%",
-        "cpu_usage": "23%",
-        "active_connections": 12,
-        "total_requests": 1247
-    }
 
 if __name__ == "__main__":
     import uvicorn
