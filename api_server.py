@@ -3,6 +3,7 @@ import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
+from github import Github
 
 # Khởi tạo ứng dụng FastAPI
 app = FastAPI(
@@ -17,6 +18,7 @@ class ScanPayload(BaseModel):
     branch: str
     commit_sha: str
     code_diff: str
+    file_path: str
 
 def post_github_comment(repo_name, commit_sha, comment_body):
     """Hàm giúp EvoNet Bot chui vào GitHub để lại comment"""
@@ -50,6 +52,51 @@ def post_github_comment(repo_name, commit_sha, comment_body):
             print(f"❌ Lỗi comment GitHub: {res.status_code} - {res.text}")
     except Exception as e:
         print(f"❌ Lỗi kết nối GitHub API: {e}")
+
+def create_auto_pr(repo_name, commit_sha, file_path, patched_code):
+    """Tuyệt kỹ: Bot chui vào GitHub tạo nhánh và mở Pull Request"""
+    github_token = os.getenv("GITHUB_BOT_TOKEN")
+    if not github_token:
+        print("⚠️ Thiếu GITHUB_BOT_TOKEN, không thể tạo PR!")
+        return
+
+    try:
+        print(f"🛠️ Đang khởi tạo Auto-Patching cho file {file_path}...")
+        
+        # 1. Đăng nhập vào GitHub
+        g = Github(github_token)
+        repo = g.get_repo(f"phonghhd/{repo_name}")
+        
+        # 2. Tạo tên nhánh mới dựa trên mã SHA của commit lỗi
+        new_branch_name = f"evonet-patch-{commit_sha[:7]}"
+        main_branch = repo.get_branch("main")
+        
+        # Tạo nhánh mới rẽ ra từ main
+        repo.create_git_ref(ref=f"refs/heads/{new_branch_name}", sha=main_branch.commit.sha)
+        
+        # 3. Lấy file hiện tại để ghi đè
+        file_contents = repo.get_contents(file_path, ref="main")
+        
+        # 4. Ghi đè đoạn code đã được AI vá lỗi lên nhánh mới
+        repo.update_file(
+            path=file_path,
+            message=f"🛡️ EvoNet Auto-Patch: Vá lỗ hổng bảo mật",
+            content=patched_code,
+            sha=file_contents.sha,
+            branch=new_branch_name
+        )
+        
+        # 5. Mở Pull Request dâng lên cho Sếp Phong duyệt
+        pr = repo.create_pull(
+            title=f"[EvoNet Bot] 🛡️ Đề xuất vá lỗi bảo mật khẩn cấp",
+            body="EvoNet AI Guardian đã phát hiện lỗ hổng. Máy chủ đã tự động viết lại mã nguồn an toàn. Sếp kiểm tra và Merge nhé! 🚀",
+            head=new_branch_name,
+            base="main"
+        )
+        print(f"✅ ĐẠI CÔNG CÁO THÀNH! PR đã tạo tại: {pr.html_url}")
+
+    except Exception as e:
+        print(f"❌ Khởi tạo Auto-PR thất bại: {e}")
 
 def ask_ai_with_failover(system_prompt, user_prompt):
     """Hàm lõi: Gọi AI với cơ chế dự phòng 3 lớp"""
@@ -112,18 +159,26 @@ def ask_ai_with_failover(system_prompt, user_prompt):
 async def scan_code(payload: ScanPayload):
     print(f"📡 Nhận tín hiệu cầu cứu từ repo: {payload.repo} | Nhánh: {payload.branch}")
     
-    system_prompt = """Bạn là EvoNet Guardian. Rà soát đoạn mã Git Diff. Phát hiện mã độc/lỗ hổng (như RCE, SQLi, lộ secret) thì trả lời bắt đầu bằng 'VULNERABLE:'. Nếu an toàn thì trả lời bắt đầu bằng 'SAFE:'."""
+    system_prompt = """Bạn là EvoNet Guardian. Rà soát đoạn mã Git Diff. 
+    Nếu phát hiện mã độc/lỗ hổng, hãy TRẢ VỀ TOÀN BỘ ĐOẠN MÃ ĐÃ ĐƯỢC VÁ LỖI. 
+    YÊU CẦU TỐI THƯỢNG: Chỉ trả về mã nguồn thuần túy, tuyệt đối không giải thích, không dùng markdown ```python, không có lời chào. 
+    Nếu an toàn, hãy trả lời đúng 1 chữ: 'SAFE'."""
     user_prompt = f"Kiểm tra đoạn mã sau:\n\n{payload.code_diff}"
 
     # Gọi hàm 3 lớp
     ai_reply = ask_ai_with_failover(system_prompt, user_prompt)
     print(f"🤖 Phán quyết cuối cùng: {ai_reply}")
 
-    if "VULNERABLE" in ai_reply.upper():
-        post_github_comment(payload.repo, payload.commit_sha, ai_reply)
-        return {"status": "VULNERABILITY_FOUND", "message": f"EvoNet AI đã chặn mã nguồn! Lý do: {ai_reply}"}
+    if ai_reply.strip() != "SAFE":
+        # Gọi tuyệt kỹ Auto PR
+        # Tạm thời gán file_path cứng để test, sau này sếp sẽ lấy từ GitHub Actions sang
+        create_auto_pr(payload.repo, payload.commit_sha, payload.file_path, ai_reply)
+        
+        return {"status": "VULNERABILITY_FOUND", "message": "EvoNet AI đã chặn và tự động mở Pull Request vá lỗi!"}
     else:
-        return {"status": "SAFE", "message": f"EvoNet AI xác nhận an toàn: {ai_reply}"}
+        return {"status": "SAFE", "message": "Mã nguồn an toàn!"}
+    
+    
 
 # Endpoint để kiểm tra server có đang sống không
 @app.get("/")
