@@ -25,11 +25,14 @@ from slowapi.util import get_remote_address
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 
-load_dotenv("/app/.env", override=True)
+_env_path = "/app/.env" if os.path.exists("/app/.env") else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+load_dotenv(_env_path, override=True)
 
 logger.remove()
 logger.add(sys.stderr, level="INFO", format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
-logger.add("/app/logs/evonet.log", rotation="10 MB", retention="7 days", level="DEBUG")
+_log_dir = "/app/logs" if os.path.isdir("/app/logs") else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
+os.makedirs(_log_dir, exist_ok=True)
+logger.add(os.path.join(_log_dir, "evonet.log"), rotation="10 MB", retention="7 days", level="DEBUG")
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -195,13 +198,17 @@ def retrieve_memory(query: str, namespace: str = "security_knowledge_clean"):
             if index:
                 pinecone_pool.return_connection(index)
 
-        if not results.get('matches'):
+        results_dict: dict = dict(results)  # type: ignore[arg-type]
+
+        if not results_dict.get('matches'):
             return ""
 
         context = ""
-        for match in results['matches']:
-            text_content = match['metadata'].get('text', '') or match['metadata'].get('raw_content', '')
-            context += f"MEMORY (Score {round(match['score'] * 100)}%): {text_content}\n---\n"
+        for match in results_dict.get('matches', []):  # type: ignore[arg-type]
+            metadata = match.get('metadata', {})  # type: ignore[union-attr]
+            text_content = metadata.get('text', '') or metadata.get('raw_content', '')  # type: ignore[union-attr]
+            score = match.get('score', 0)  # type: ignore[union-attr]
+            context += f"MEMORY (Score {round(score * 100)}%): {text_content}\n---\n"
         return context.strip()
     except Exception as e:
         print(f"Pinecone retrieval error: {e}")

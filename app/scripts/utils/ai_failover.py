@@ -3,7 +3,8 @@ import re
 import requests
 from dotenv import load_dotenv
 
-load_dotenv("/app/.env", override=True)
+_env_path = "/app/.env" if os.path.exists("/app/.env") else os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+load_dotenv(_env_path, override=True)
 
 NVIDIA_MODEL = "qwen/qwen2.5-coder-32b-instruct"
 GROQ_MODEL = "llama-3.3-70b-versatile"
