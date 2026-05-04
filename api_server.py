@@ -18,9 +18,6 @@ load_dotenv(str(_env), override=True)
 sys.path.insert(0, str(APP_DIR))
 sys.path.insert(0, str(APP_DIR / "scripts" / "utils"))
 
-sys.path.insert(0, str(APP_DIR))
-sys.path.insert(0, str(APP_DIR / "scripts" / "utils"))
-
 from main import (  # type: ignore[import-untyped]  # noqa: E402
     app,
     send_telegram_message,
