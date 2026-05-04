@@ -18,6 +18,39 @@ class ScanPayload(BaseModel):
     commit_sha: str
     code_diff: str
 
+def post_github_comment(repo_name, commit_sha, comment_body):
+    """Hàm giúp EvoNet Bot chui vào GitHub để lại comment"""
+    github_token = os.getenv("GITHUB_BOT_TOKEN")
+    if not github_token:
+        print("⚠️ Thiếu GITHUB_BOT_TOKEN, Bot không thể comment!")
+        return
+
+    # Sếp đang đẩy repo_name là "vietnamese-ai", cần ghép thêm tên tài khoản phonghhd của sếp vào
+    full_repo = f"phonghhd/{repo_name}"
+    
+    # URL API của GitHub để comment thẳng vào cái commit bị lỗi
+    url = f"https://api.github.com/repos/{full_repo}/commits/{commit_sha}/comments"
+    
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # Nội dung comment Bot sẽ viết
+    data = {
+        "body": f"### 🛡️ EvoNet Security Bot Cảnh Báo\n\n**Phát hiện mã nguồn có vấn đề:**\n{comment_body}"
+    }
+    
+    try:
+        print("✍️ Đang cử Bot EvoNet lên GitHub để lại lời nhắn...")
+        res = requests.post(url, headers=headers, json=data)
+        if res.status_code == 201:
+            print("✅ Bot EvoNet đã comment thành công!")
+        else:
+            print(f"❌ Lỗi comment GitHub: {res.status_code} - {res.text}")
+    except Exception as e:
+        print(f"❌ Lỗi kết nối GitHub API: {e}")
+
 def ask_ai_with_failover(system_prompt, user_prompt):
     """Hàm lõi: Gọi AI với cơ chế dự phòng 3 lớp"""
     
@@ -87,6 +120,7 @@ async def scan_code(payload: ScanPayload):
     print(f"🤖 Phán quyết cuối cùng: {ai_reply}")
 
     if "VULNERABLE" in ai_reply.upper():
+        post_github_comment(payload.repo, payload.commit_sha, ai_reply)
         return {"status": "VULNERABILITY_FOUND", "message": f"EvoNet AI đã chặn mã nguồn! Lý do: {ai_reply}"}
     else:
         return {"status": "SAFE", "message": f"EvoNet AI xác nhận an toàn: {ai_reply}"}
