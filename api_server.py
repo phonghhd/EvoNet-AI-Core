@@ -134,6 +134,7 @@ def create_auto_pr(repo_name: str, commit_sha: str, file_path: str, patched_code
 @app.post("/api/v1/scan")
 async def scan_code(payload: ScanPayload):
     print(f"[SCAN] {payload.repo} | {payload.branch} | {payload.file_path}")
+    ignored_extensions = (".json", ".csv", ".md", ".txt")
     start = time.time()
 
     guardrail_hits = []
