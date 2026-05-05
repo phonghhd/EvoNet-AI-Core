@@ -501,10 +501,10 @@ async def list_models():
 
 @app.post("/v1/chat/completions")
 @limiter.limit("30/minute")
-async def chat_completions(req: Request, _=Depends(verify_api_key)):
+async def chat_completions(request: Request, _=Depends(verify_api_key)):
     REQUEST_COUNT.labels(method='POST', endpoint='/v1/chat/completions').inc()
     start_time = time.time()
-    data = await req.json()
+    data = await request.json()
     model_requested = data.get("model", "evonet-coder").lower()
     messages = data.get("messages", [])
     is_stream = data.get("stream", False)
