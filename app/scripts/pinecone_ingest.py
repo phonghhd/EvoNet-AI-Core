@@ -78,7 +78,7 @@ def ingest():
             "source": "github_pipeline",
             "status": "processed",
             "text": summary[:1000],
-            "cvss_score": float(cvss) if cvss else 0.0,
+            "cvss_score": float(cvss) if isinstance(cvss, (int, float)) else 0.0,
             "stage": stage,
             "poc_url": poc_url,
             "cwe_ids": str(cwe_ids),
