@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-05 16:23:01",
+        "date_added": "2026-05-05 16:25:25",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_NVIDIA",
-            "diff_code": "import socket\nimport hashlib\n\n# Shared secret (password) for authentication\nSHARED_SECRET = \"securepassword123\"\n\ndef hash_password(password):\n    return hashlib.sha256(password.encode()).hexdigest()\n\ndef authenticate_client(client_socket):\n    # Receive the password hash from the client\n    client_password_hash = client_socket.recv(1024).decode()\n    # Hash the shared secret\n    expected_password_hash = hash_password(SHARED_SECRET)\n    # Compare the hashes\n    if client_password_hash == expected_password_hash:\n        client_socket.send(\"Authentication successful\".encode())\n        return True\n    else:\n        client_socket.send(\"Authentication failed\".encode())\n        return False\n\ndef start_server(host='127.0.0.1', port=65432):\n    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:\n        s.bind((host, port))\n        s.listen()\n        print(f\"Server listening on {host}:{port}\")\n        conn, addr = s.accept()\n        with conn:\n            print(f\"Connected by {addr}\")\n            if authenticate_client(conn):\n                # Proceed with handling commands\n                while True:\n                    data = conn.recv(1024)\n                    if not data:\n                        break\n                    print(f\"Received command: {data.decode()}\")\n                    # Execute command (example: echo back the command)\n                    conn.sendall(data)\n            else:\n                print(\"Client failed authentication\")\n\nif __name__ == \"__main__\":\n    start_server()",
-            "vulnerability_explanation": "** The NullRAT lacks proper authentication mechanisms, allowing an attacker to connect to the server and execute commands without proper authorization.\n\n###",
+            "diff_code": "import subprocess\nimport shlex\n\ndef execute_command(command):\n    # Validate the command to ensure it does not contain any malicious input\n    if not isinstance(command, str) or not command.strip():\n        raise ValueError(\"Invalid command\")\n\n    # Use shlex.split to safely split the command into a list of arguments\n    try:\n        command_args = shlex.split(command)\n    except ValueError as e:\n        raise ValueError(f\"Error parsing command: {e}\")\n\n    # Use subprocess.run with a list of arguments to avoid shell injection\n    try:\n        result = subprocess.run(command_args, check=True, text=True, capture_output=True)\n        return result.stdout\n    except subprocess.CalledProcessError as e:\n        return f\"Command failed with error: {e.stderr}\"",
+            "vulnerability_explanation": "The vulnerability lies in the improper validation of user inputs that are used to construct and execute system commands. An attacker could inject malicious commands leading to arbitrary command execution on the victim's machine.\n\n###",
             "mitigation_steps": [
-                "**Step 1:** Implement a secure authentication mechanism, such as the one provided in the patch, to ensure that only authorized clients can connect to the server.",
-                "**Step 2:** Use secure communication protocols like TLS to encrypt data transmitted between the client and server, preventing eavesdropping and man-in-the-middle attacks.",
-                "**Step 3:** Regularly update and patch the RAT software to address any newly discovered vulnerabilities and improve security practices."
+                "**Step 1:** Review and validate all user inputs to ensure they do not contain any malicious code or special characters that could be used for command injection.",
+                "**Step 2:** Use `shlex.split()` to safely parse and split the command string into a list of arguments, which helps prevent shell injection.",
+                "**Step 3:** Use `subprocess.run()` with the `shell=False` parameter (which is the default) and pass the command as a list of arguments to avoid shell injection. Always capture and handle errors appropriately to prevent information leakage."
             ]
         }
     },
