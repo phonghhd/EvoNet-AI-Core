@@ -1,7 +1,7 @@
 import os
 import re
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 _env_path = "/app/.env" if os.path.exists("/app/.env") else os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
 load_dotenv(_env_path, override=True)

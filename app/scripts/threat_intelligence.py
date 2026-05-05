@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 import feedparser
 import time
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 def get_env_safe(key_name):
     val = os.getenv(key_name)

@@ -1,11 +1,11 @@
 import os
 from typing import List, Dict
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import json
 from datetime import datetime
 import requests
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 
 class VectorStorage:

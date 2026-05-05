@@ -13,7 +13,7 @@ from typing import List, Optional, Any
 from functools import lru_cache
 from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from pinecone import Pinecone
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Request
@@ -146,10 +146,20 @@ class PineconeConnectionPool:
             self.pool.append(conn)
 
 
-pinecone_pool = PineconeConnectionPool(api_key=PINECONE_API_KEY, index_name="evonet-memory", pool_size=5)
-pc = Pinecone(api_key=PINECONE_API_KEY)
-memory_index = pc.Index("evonet-memory")
-print("Pinecone connected")
+pinecone_pool = None
+pc = None
+memory_index = None
+
+if PINECONE_API_KEY:
+    try:
+        pinecone_pool = PineconeConnectionPool(api_key=PINECONE_API_KEY, index_name="evonet-memory", pool_size=5)
+        pc = Pinecone(api_key=PINECONE_API_KEY)
+        memory_index = pc.Index("evonet-memory")
+        print("Pinecone connected")
+    except Exception as e:
+        print(f"Pinecone init failed: {e}")
+else:
+    print("PINECONE_API_KEY not set, Pinecone features disabled")
 
 
 # ============================================================
@@ -188,15 +198,20 @@ def retrieve_memory(query: str, namespace: str = "security_knowledge_clean"):
             return ""
 
         global pinecone_pool
-        index = pinecone_pool.get_connection()
-        try:
-            if index:
-                results = index.query(namespace=namespace, vector=query_vector, top_k=3, include_metadata=True)
-            else:
-                results = memory_index.query(namespace=namespace, vector=query_vector, top_k=3, include_metadata=True)
-        finally:
-            if index:
-                pinecone_pool.return_connection(index)
+        if pinecone_pool is None:
+            if memory_index is None:
+                return ""
+            results = memory_index.query(namespace=namespace, vector=query_vector, top_k=3, include_metadata=True)
+        else:
+            index = pinecone_pool.get_connection()
+            try:
+                if index:
+                    results = index.query(namespace=namespace, vector=query_vector, top_k=3, include_metadata=True)
+                else:
+                    results = memory_index.query(namespace=namespace, vector=query_vector, top_k=3, include_metadata=True)  # type: ignore[union-attr]
+            finally:
+                if index and pinecone_pool:
+                    pinecone_pool.return_connection(index)
 
         results_dict: dict = dict(results)  # type: ignore[arg-type]
 
@@ -337,12 +352,12 @@ def execute_master_update(chat_id):
     for step_name, script in steps:
         send_telegram_message(f"⚙️ <b>{step_name}:</b> Running {script}...")
         try:
-            subprocess.run(["python", f"scripts/{script}"], check=True, timeout=600)
+            subprocess.run([sys.executable, f"scripts/{script}"], check=True, timeout=600)
         except Exception as e:
             send_telegram_message(f"⚠️ {step_name} error: {e}")
 
-    subprocess.Popen(["python", "scripts/evo_architect_loop.py"])
-    subprocess.Popen(["python", "scripts/auto_update_system.py"])
+    subprocess.Popen([sys.executable, "scripts/evo_architect_loop.py"])
+    subprocess.Popen([sys.executable, "scripts/auto_update_system.py"])
     send_telegram_message("✅ <b>MASTER UPDATE COMPLETE!</b>")
 
 
@@ -372,47 +387,53 @@ def telegram_worker():
                     threading.Thread(target=execute_master_update, args=(TELEGRAM_CHAT_ID,)).start()
                 elif text == "/collect_threat":
                     send_telegram_message("Collecting threat intelligence...")
-                    threading.Thread(target=lambda: subprocess.run(["python", "scripts/threat_intel_collector.py"])).start()
+                    threading.Thread(target=lambda: subprocess.run([sys.executable, "scripts/threat_intel_collector.py"])).start()
                 elif text.startswith("/gat_cve"):
                     send_telegram_message("Collecting CVEs...")
-                    subprocess.Popen(["python", "scripts/cve_refinery.py"])
+                    subprocess.Popen([sys.executable, "scripts/cve_refinery.py"])
                 elif text.startswith("/gom_code"):
                     send_telegram_message("Harvesting codebase...")
-                    subprocess.Popen(["python", "scripts/code_harvester.py"])
+                    subprocess.Popen([sys.executable, "scripts/code_harvester.py"])
                 elif text.startswith("/test_autofix"):
                     send_telegram_message("Running auto-fix...")
-                    subprocess.Popen(["python", "scripts/evo_autofix.py"])
+                    subprocess.Popen([sys.executable, "scripts/evo_autofix.py"])
                 elif text.startswith("/threat_alert"):
                     send_telegram_message("Checking threats...")
-                    subprocess.Popen(["python", "scripts/threat_alert_system.py"])
+                    subprocess.Popen([sys.executable, "scripts/threat_alert_system.py"])
                 elif text.startswith("/simulate_attack"):
                     send_telegram_message("Simulating attacks...")
-                    subprocess.Popen(["python", "scripts/attack_simulator.py"])
+                    subprocess.Popen([sys.executable, "scripts/attack_simulator.py"])
                 elif text == "/duyet_tienhoa":
-                    draft_path = "/app/main_draft.py"
-                    target_path = "/app/main.py"
+                    _app_dir = os.path.dirname(os.path.abspath(__file__))
+                    draft_path = os.path.join(_app_dir, "main_draft.py")
+                    target_path = os.path.join(_app_dir, "main.py")
                     if os.path.exists(draft_path):
-                        backup_dir = "/app/logs/backups"
+                        backup_dir = os.path.join(os.path.dirname(_app_dir), "logs", "backups")
                         os.makedirs(backup_dir, exist_ok=True)
                         backup_name = f"main_backup_{int(time.time())}.py"
                         shutil.copy(target_path, os.path.join(backup_dir, backup_name))
-                        regex_blacklist_guardrail(open(draft_path).read())
+                        try:
+                            regex_blacklist_guardrail(open(draft_path).read())
+                        except Exception as e:
+                            send_telegram_message(f"Guardrail blocked patch: {e}")
+                            continue
                         shutil.copy(draft_path, target_path)
                         os.remove(draft_path)
-                        send_telegram_message(f"🚀 <b>APPROVED!</b> Backup: {backup_name}. Restarting...")
+                        send_telegram_message(f"APPROVED! Backup: {backup_name}. Restarting...")
                         sys.exit(1)
                     else:
                         send_telegram_message("No draft found")
                 elif text == "/tu_choi":
-                    draft = "/app/main_draft.py"
+                    _app_dir = os.path.dirname(os.path.abspath(__file__))
+                    draft = os.path.join(_app_dir, "main_draft.py")
                     if os.path.exists(draft):
                         os.remove(draft)
-                        send_telegram_message("🗑️ Draft rejected and deleted")
+                        send_telegram_message("Draft rejected and deleted")
                     else:
                         send_telegram_message("No draft to reject")
                 elif text.startswith("/auto_update"):
                     send_telegram_message("Starting auto-update...")
-                    subprocess.Popen(["python", "scripts/auto_update_system.py"])
+                    subprocess.Popen([sys.executable, "scripts/auto_update_system.py"])
                 else:
                     send_telegram_message("Processing...")
                     reply = process_ai_request(text)
@@ -637,6 +658,8 @@ async def system_stats():
 async def pinecone_stats():
     try:
         global pinecone_pool
+        if pinecone_pool is None:
+            return {"status": "not_configured"}
         conn = pinecone_pool.get_connection()
         if conn:
             pinecone_pool.return_connection(conn)

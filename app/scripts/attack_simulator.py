@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 from typing import Dict, List
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 
 def get_env_safe(key_name):

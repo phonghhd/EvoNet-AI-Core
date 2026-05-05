@@ -3,9 +3,9 @@ import json
 import requests
 import re
 from datetime import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 MITRE_ATTACK_URL = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"
 

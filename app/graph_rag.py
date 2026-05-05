@@ -2,9 +2,9 @@ import os
 import requests
 from typing import List, Dict, Optional
 from pinecone import Pinecone
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 
 class GraphRAG:

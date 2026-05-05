@@ -1,14 +1,14 @@
 import os
 import requests
 import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 try:
     from multi_language_support import MultiLanguageSupport
 except ImportError:
     from scripts.multi_language_support import MultiLanguageSupport
 
 # --- BƠM TIÊM CHÌA KHÓA SIÊU SẠCH ---
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 def get_env_safe(key_name):
     val = os.getenv(key_name)
@@ -154,10 +154,16 @@ def evolve():
         pc = Pinecone(api_key=pc_key)
         memory_index = pc.Index("evonet-memory")
         
-        dummy_vector = [0.0] * 768 
+        stats = memory_index.describe_index_stats()
+        ns = stats.get("namespaces", {})
+        cve_count = ns.get("security_knowledge_clean", {}).get("vector_count", 0)
+        if cve_count == 0:
+            print("No CVEs in knowledge base yet.")
+            return
+
         results = memory_index.query(
-            vector=dummy_vector, 
-            top_k=1, 
+            vector=[0.0] * 768,
+            top_k=1,
             namespace="security_knowledge_clean",
             include_metadata=True
         )

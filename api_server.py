@@ -251,7 +251,11 @@ async def approve_patch(request: Request):
         backup_dir.mkdir(parents=True, exist_ok=True)
         backup = backup_dir / f"main_backup_{int(time.time())}.py"
         shutil.copy(target, backup)
-        regex_blacklist_guardrail(draft.read_text())
+        try:
+            regex_blacklist_guardrail(draft.read_text())
+        except Exception as e:
+            send_telegram_message(f"Guardrail blocked patch: {e}")
+            raise HTTPException(status_code=400, detail=f"Guardrail blocked: {e}")
         shutil.copy(draft, target)
         draft.unlink()
         send_telegram_message(f"PATCH APPROVED. Backup: {backup.name}")
@@ -296,12 +300,13 @@ async def search_memory(q: str, namespace: str = "security_knowledge_clean"):
         query_vector = get_embedding(q)
         if not query_vector:
             return {"results": []}
-        results = memory_index.query(vector=query_vector, top_k=5, namespace=namespace, include_metadata=True)
+        raw = memory_index.query(vector=query_vector, top_k=5, namespace=namespace, include_metadata=True)
+        results: dict = dict(raw)  # type: ignore[arg-type]
         return {
             "query": q,
             "results": [
                 {"id": m["id"], "score": round(m["score"] * 100), "text": m.get("metadata", {}).get("text", "")[:300]}
-                for m in results.get("matches", [])
+                for m in results.get("matches", [])  # type: ignore[arg-type]
             ],
         }
     except Exception as e:

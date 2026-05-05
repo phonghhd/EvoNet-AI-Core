@@ -1,9 +1,9 @@
 import os
 import sys
 import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'utils'))
 from ai_failover import ask_ai, get_embedding, send_telegram

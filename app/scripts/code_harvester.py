@@ -1,10 +1,10 @@
 import os
 from pinecone.pinecone import Pinecone
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import hashlib
 import requests
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 WORKSPACE_DIR = "/workspace"
 IGNORE_DIRS = {".git", "node_modules", "venv", "__pycache__", ".next", "build", "dist"}

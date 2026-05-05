@@ -1,10 +1,10 @@
 import os
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from neo4j import GraphDatabase
 
 # Load environment variables
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +122,10 @@ class SecurityKnowledgeGraph:
             return False
         
         try:
+            allowed = {"MITIGATES", "RELATED_TO", "AFFECTS", "HAS_WEAKNESS"}
+            if relationship_type not in allowed:
+                logger.error(f"Invalid relationship type: {relationship_type}")
+                return False
             with self.driver.session() as session:
                 session.run(f"""
                 MATCH (d:DefenseSkill {{id: $skill_id}})
@@ -179,8 +183,10 @@ class SecurityKnowledgeGraph:
             return []
         
         try:
+            allowed_rel = {"HAS_WEAKNESS", "AFFECTS", "MITIGATES", "RELATED_TO"}
+            if relationship_type not in allowed_rel:
+                return []
             with self.driver.session() as session:
-                # Query for CVEs sharing CWEs or affected software
                 result = session.run(f"""
                 MATCH (c:CVE {{id: $cve_id}})-[r1:{relationship_type}]->(node)<-[r2:{relationship_type}]-(related:CVE)
                 WHERE related.id <> $cve_id

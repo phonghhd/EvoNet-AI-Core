@@ -1,9 +1,9 @@
 import os
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # 1. Ép hệ thống đọc file .env (Sếp nhớ đảm bảo file .env đang nằm đúng chỗ này)
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 def mask_key(key):
     if not key: return "❌ TRỐNG LỐC (Chưa đọc được file .env)"

@@ -1,7 +1,7 @@
 import pinecone
 import os
 from typing import List, Dict
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import json
 from datetime import datetime
 

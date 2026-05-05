@@ -2,12 +2,12 @@ import os
 import requests
 import feedparser
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import hashlib
 import json
 import re
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 
 def get_env_safe(key_name):

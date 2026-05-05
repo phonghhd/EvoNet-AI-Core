@@ -4,10 +4,10 @@ from typing import Dict, List, Any
 from pathlib import Path
 import numpy as np
 from datetime import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 class FeedbackLearningSystem:
     """Advanced feedback learning system for continuous improvement"""

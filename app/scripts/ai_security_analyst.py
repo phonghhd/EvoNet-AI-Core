@@ -4,11 +4,11 @@ import time
 from typing import Dict, List, Optional
 import requests
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import re
 
 # Load environment variables
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 def get_env_safe(key_name):
     val = os.getenv(key_name)

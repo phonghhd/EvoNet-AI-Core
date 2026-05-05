@@ -2,9 +2,9 @@ import os
 import requests
 from github import Github
 import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")

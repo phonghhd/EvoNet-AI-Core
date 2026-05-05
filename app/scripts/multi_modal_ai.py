@@ -3,12 +3,12 @@ import json
 import requests
 from pathlib import Path
 from typing import Dict, List, Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import subprocess
 from system_watchdog import regex_blacklist_guardrail
 
 # Load environment variables
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 def get_env_safe(key_name):
     val = os.getenv(key_name)

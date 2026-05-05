@@ -3,9 +3,9 @@ import os
 import sys
 import re
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 DATA_FILE = "data/latest_threats.json"
 

@@ -2,8 +2,8 @@ import os
 import requests
 from pinecone.pinecone import Pinecone
 import re
-from dotenv import load_dotenv
-load_dotenv("/app/.env", override=True)
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")

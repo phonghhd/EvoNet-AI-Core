@@ -2,11 +2,11 @@ import os
 import requests
 from pinecone.pinecone import Pinecone
 import subprocess
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import re
 import sys
 import traceback
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 # --- CẤU HÌNH ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -41,8 +41,11 @@ def regex_blacklist_guardrail(code_to_check):
     return True
 
 def send_telegram(msg):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "HTML"})
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "HTML"}, timeout=5)
+    except Exception:
+        pass
 
 def check_vulnerable_files():
     """Kiểm tra các file trong workspace có chứa lỗ hổng bảo mật"""

@@ -7,9 +7,9 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 app = FastAPI()
 
@@ -129,8 +129,9 @@ html_template = """<!DOCTYPE html>
 </html>"""
 
 template_file = templates_dir / "dashboard.html"
-template_file.write_text(html_template)
-templates = Jinja2Templates(directory="app/templates")
+if not template_file.exists():
+    template_file.write_text(html_template)
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 def get_pinecone_stats():
@@ -160,7 +161,8 @@ def get_system_metrics():
 
 
 def init_db():
-    conn = sqlite3.connect("app/dashboard.db")
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard.db")
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS activities (
         id INTEGER PRIMARY KEY, timestamp TEXT, action TEXT, details TEXT, status TEXT, status_class TEXT

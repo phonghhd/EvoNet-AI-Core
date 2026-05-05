@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
-load_dotenv("/app/.env", override=True)
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
 import sys
 import os
 
@@ -14,9 +14,10 @@ import json
 from main import send_telegram_message               # Mượn hàm nhắn tin từ phòng khách (main.py)
 from self_evolve import ask_ai_with_failover         # Mượn hàm AI 4 lớp từ phòng ngủ (self_evolve.py)
 
-TARGET_FILE = "/app/main.py"
-DRAFT_FILE = "/app/main_draft.py"
-BACKUP_DIR = "/app/logs/backups/"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+TARGET_FILE = os.path.join(PROJECT_ROOT, "app", "main.py")
+DRAFT_FILE = os.path.join(PROJECT_ROOT, "app", "main_draft.py")
+BACKUP_DIR = os.path.join(PROJECT_ROOT, "logs", "backups")
 FORBIDDEN_FILES = ["docker-compose.yml", ".env", "requirements.txt"]
 
 def clean_markdown_json(text):
@@ -78,10 +79,11 @@ def run_evolution_cycle():
             return
 
         # LUẬT 2: RÀ QUÉT AN NINH
-        # (Chỗ này sếp dùng hàm check Pinecone của sếp, tôi giả lập True)
-        is_safe = True 
-        if not is_safe:
-            send_telegram_message("❌ <b>HỦY:</b> Phát hiện rủi ro bảo mật (CVE) trong code mới.")
+        from system_watchdog import regex_blacklist_guardrail
+        try:
+            regex_blacklist_guardrail(new_code)
+        except Exception as e:
+            send_telegram_message(f"BLOCKED: Security risk in generated code: {e}")
             return
 
         # LUẬT 3: LƯU VÀO VÙNG CÁCH LY

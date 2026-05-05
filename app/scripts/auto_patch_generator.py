@@ -8,8 +8,8 @@ import subprocess
 from pathlib import Path
 from patch_tester import PatchTester
 from multi_language_support import MultiLanguageSupport
-from dotenv import load_dotenv
-load_dotenv("/app/.env", override=True)
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(), override=True)
 
 # --- CẤU HÌNH BIẾN ---
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")

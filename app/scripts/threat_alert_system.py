@@ -4,9 +4,9 @@ import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 from pinecone.pinecone import Pinecone
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv("/app/.env", override=True)
+load_dotenv(find_dotenv(), override=True)
 
 
 def get_env_safe(key_name):
