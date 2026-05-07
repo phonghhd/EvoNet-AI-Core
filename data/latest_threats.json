@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-07 16:47:16",
+        "date_added": "2026-05-07 19:40:49",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
-            "status": "Patched_by_NVIDIA",
-            "diff_code": "import subprocess\nimport shlex\n\ndef execute_command(command):\n    # Validate the command to ensure it does not contain any malicious input\n    if not isinstance(command, str) or not command.strip():\n        raise ValueError(\"Invalid command\")\n\n    # Use shlex.split to safely split the command into a list of arguments\n    try:\n        command_args = shlex.split(command)\n    except ValueError as e:\n        raise ValueError(f\"Error parsing command: {e}\")\n\n    # Use subprocess.run with a list of arguments to avoid shell injection\n    try:\n        result = subprocess.run(command_args, check=True, text=True, capture_output=True)\n        return result.stdout\n    except subprocess.CalledProcessError as e:\n        return f\"Command failed with error: {e.stderr}\"",
-            "vulnerability_explanation": "The vulnerability lies in the improper validation of user inputs that are used to construct and execute system commands. An attacker could inject malicious commands leading to arbitrary command execution on the victim's machine.\n\n###",
+            "status": "Patched_by_Groq",
+            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        return False\n    \n    # Receive data from the remote server\n    data = sock.recv(1024)\n    \n    # Calculate the hash of the received data\n    data_hash = hashlib.sha256(data).hexdigest()\n    \n    # Check if the hash matches a known malicious hash\n    if data_hash == \"malicious_hash\":\n        return False\n    \n    # Close the socket\n    sock.close()\n    \n    return True\n\ndef mitigate_nullrat(ip, port):\n    if not validate_connection(ip, port):\n        # Block the IP address\n        print(f\"Blocking IP address {ip}\")\n        # Add IP address to firewall rules\n        # ...\n\n# Example usage:\nmitigate_nullrat(\"192.168.1.100\", 8080)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT malware.",
             "mitigation_steps": [
-                "**Step 1:** Review and validate all user inputs to ensure they do not contain any malicious code or special characters that could be used for command injection.",
-                "**Step 2:** Use `shlex.split()` to safely parse and split the command string into a list of arguments, which helps prevent shell injection.",
-                "**Step 3:** Use `subprocess.run()` with a list of arguments instead of a single string to execute commands, as this avoids invoking a shell and reduces the risk of command injection."
+                "Identify the systems and networks that are potentially vulnerable to the NullRAT malware and take immediate action to isolate them from the rest of the network.",
+                "Implement a network-based intrusion detection system (NIDS) to monitor for suspicious traffic patterns and alert on potential NullRAT activity.",
+                "Apply the provided patch code to validate incoming connections and block IP addresses that exhibit malicious behavior, and ensure that all systems and software are up-to-date with the latest security patches and updates."
             ]
         }
     },
@@ -1955,6 +1955,70 @@
                 "Replace any existing insecure CSS fetching methods with the `fetch_css_securely` function provided in the patch.",
                 "Ensure that the `ssl` module is used to create a default SSL context that verifies SSL certificates.",
                 "Test the application to confirm that CSS files are fetched securely and that the application behaves as expected without loading malicious content."
+            ]
+        }
+    },
+    "GHSA-r736-2678-fcrx": {
+        "summary": "FacturaScripts vulnerable to stored XSS via product reference in sales/purchases",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-07 19:40:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "from html import escape\n\ndef sanitize_product_reference(product_reference):\n    # Escape HTML special characters to prevent XSS\n    return escape(product_reference)\n\n# Example usage in the code where product reference is being saved or displayed\nproduct_reference = \"<script>alert('XSS')</script>\"\nsanitized_product_reference = sanitize_product_reference(product_reference)\n# Use sanitized_product_reference for storage or display",
+            "vulnerability_explanation": "The vulnerability in FacturaScripts arises from improper handling of user input for product references in sales and purchases. An attacker can inject malicious scripts into the product reference field, which are then stored and executed in the browser of any user who views the affected product, leading to a stored Cross-Site Scripting (XSS) attack.",
+            "mitigation_steps": [
+                "Identify all parts of the code where product references are input, stored, and displayed.",
+                "Apply the `sanitize_product_reference` function to escape HTML special characters before storing or displaying the product reference.",
+                "Conduct a thorough security review of the application to ensure no other input fields are vulnerable to similar XSS attacks."
+            ]
+        }
+    },
+    "GHSA-gq5c-rw37-g46c": {
+        "summary": "FacturaScripts vulnerable to Reflected Cross-Site Scripting (XSS) via Cookie Manipulation",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-07 19:40:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\nfrom flask import request\n\n# Define a function to sanitize cookie values\ndef sanitize_cookie_value(value):\n    # Remove any HTML tags and JavaScript code from the value\n    sanitized_value = re.sub(r'<.*?>', '', value)\n    sanitized_value = re.sub(r'javascript:', '', sanitized_value, flags=re.IGNORECASE)\n    return sanitized_value\n\n# Define a function to validate and sanitize cookie values\ndef validate_and_sanitize_cookies():\n    # Get all cookie values from the request\n    cookie_values = request.cookies\n    \n    # Iterate over each cookie value and sanitize it\n    for key, value in cookie_values.items():\n        sanitized_value = sanitize_cookie_value(value)\n        # Update the cookie value with the sanitized value\n        request.cookies[key] = sanitized_value\n\n# Call the function to validate and sanitize cookie values at the beginning of each request\nfrom flask import before_request\n@Before_request\ndef before_request_func():\n    validate_and_sanitize_cookies()",
+            "vulnerability_explanation": "The FacturaScripts application is vulnerable to Reflected Cross-Site Scripting (XSS) via Cookie Manipulation, which allows an attacker to inject malicious scripts by manipulating cookies. This occurs when the application reflects user-input data from cookies without proper validation or sanitization, enabling an attacker to execute arbitrary JavaScript code in the user's browser. As a result, an attacker can steal sensitive information, perform unauthorized actions, or take control of the user's session.",
+            "mitigation_steps": [
+                "Identify all areas in the FacturaScripts application where cookie values are reflected or used, and ensure that the `validate_and_sanitize_cookies` function is called before processing these values.",
+                "Implement the `sanitize_cookie_value` function to remove any HTML tags and JavaScript code from cookie values, and update the `validate_and_sanitize_cookies` function to use this new function.",
+                "Test the application thoroughly to ensure that the patch does not introduce any regressions or issues, and verify that the Reflected XSS vulnerability via Cookie Manipulation is mitigated."
+            ]
+        }
+    },
+    "GHSA-q7f2-rv22-2xgr": {
+        "summary": "FacturaScripts Vulnerable to Unstripped Image Metadata (EXIF) Leakage via Library Module File Upload/Download",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-07 19:40:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from PIL import Image\nfrom PIL.ExifTags import TAGS\nimport io\n\ndef remove_exif_data(image_bytes):\n    \"\"\"\n    Remove EXIF data from an image.\n    \"\"\"\n    image = Image.open(io.BytesIO(image_bytes))\n    data = list(image.getdata())\n    image_without_exif = Image.new(image.mode, image.size)\n    image_without_exif.putdata(data)\n    byte_io = io.BytesIO()\n    image_without_exif.save(byte_io, format='JPEG', exif=None)\n    return byte_io.getvalue()\n\ndef upload_image(image_bytes):\n    \"\"\"\n    Upload an image after removing EXIF data.\n    \"\"\"\n    image_bytes_without_exif = remove_exif_data(image_bytes)\n    # Proceed with uploading the image without EXIF data\n    # Replace the following line with your actual upload logic\n    return image_bytes_without_exif\n\ndef download_image(image_bytes):\n    \"\"\"\n    Download an image after removing EXIF data.\n    \"\"\"\n    image_bytes_without_exif = remove_exif_data(image_bytes)\n    # Proceed with downloading the image without EXIF data\n    # Replace the following line with your actual download logic\n    return image_bytes_without_exif",
+            "vulnerability_explanation": "The vulnerability in FacturaScripts allows an attacker to leak sensitive information through unstripped image metadata (EXIF) when uploading or downloading files via the library module. This occurs because the application does not properly remove or sanitize metadata from uploaded images, potentially exposing sensitive data such as GPS coordinates, camera serial numbers, or other identifying information. By exploiting this vulnerability, an attacker could gain access to confidential information.",
+            "mitigation_steps": [
+                "Identify all image upload and download endpoints in the FacturaScripts application and modify them to use the `remove_exif_data` function to strip EXIF metadata from images before processing or storing them.",
+                "Update the library module to utilize the `upload_image` and `download_image` functions, ensuring that all images are sanitized of EXIF data during these operations.",
+                "Test the modified application to verify that EXIF metadata is properly removed from images during upload and download, preventing potential information leakage."
+            ]
+        }
+    },
+    "GHSA-3pgc-xqg9-cfr6": {
+        "summary": "FacturaScripts Vulnerable to Remote Code Execution (RCE) via Zip Slip in Plugin Upload Mechanism",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-07 19:40:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "import os\nimport zipfile\nfrom pathlib import Path\n\ndef safe_extract(zip_path, extract_to):\n    with zipfile.ZipFile(zip_path, 'r') as zip_ref:\n        for member in zip_ref.namelist():\n            # Resolve the full path of the extracted file\n            target_path = Path(extract_to).resolve() / member\n            # Ensure the target path is within the intended directory\n            if not target_path.is_relative_to(Path(extract_to).resolve()):\n                raise ValueError(f\"Attempted Path Traversal: {member}\")\n            zip_ref.extract(member, extract_to)\n\n# Usage example\n# safe_extract('malicious_plugin.zip', '/path/to/plugins')",
+            "vulnerability_explanation": "The vulnerability in FacturaScripts arises from improper handling of file paths during the plugin upload mechanism. An attacker can exploit this by uploading a malicious zip file containing files with paths designed to escape the intended upload directory, leading to arbitrary code execution.",
+            "mitigation_steps": [
+                "Replace the existing file extraction logic in the plugin upload mechanism with the `safe_extract` function provided above.",
+                "Ensure that all file paths are resolved and checked against the intended directory to prevent path traversal attacks.",
+                "Regularly update and audit the codebase to identify and fix similar vulnerabilities in file handling operations."
             ]
         }
     }
