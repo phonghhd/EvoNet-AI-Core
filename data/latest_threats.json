@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-08 13:27:06",
+        "date_added": "2026-05-08 16:12:21",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_NVIDIA",
-            "diff_code": "import subprocess\nimport shlex\n\ndef execute_command(command):\n    # Validate the command to ensure it does not contain any malicious input\n    if not isinstance(command, str) or not command.strip():\n        raise ValueError(\"Invalid command\")\n\n    # Use shlex.split to safely split the command into a list of arguments\n    try:\n        command_args = shlex.split(command)\n    except ValueError as e:\n        raise ValueError(f\"Error parsing command: {e}\")\n\n    # Use subprocess.run with a list of arguments to avoid shell injection\n    try:\n        result = subprocess.run(command_args, check=True, text=True, capture_output=True)\n        return result.stdout\n    except subprocess.CalledProcessError as e:\n        return f\"Command failed with error: {e.stderr}\"",
-            "vulnerability_explanation": "The vulnerability lies in the improper validation of user inputs that are used to construct and execute system commands. An attacker could inject malicious commands leading to arbitrary command execution on the victim's machine.\n\n###",
+            "diff_code": "import subprocess\nimport shlex\n\ndef execute_command(command):\n    # Validate and sanitize the command input\n    if not isinstance(command, str):\n        raise ValueError(\"Command must be a string\")\n    \n    # Use shlex.split to safely split the command string into a list\n    try:\n        safe_command = shlex.split(command)\n    except ValueError as e:\n        raise ValueError(f\"Invalid command format: {e}\")\n    \n    # Use subprocess.run with the safe_command list to avoid shell injection\n    try:\n        result = subprocess.run(safe_command, check=True, text=True, capture_output=True)\n        return result.stdout\n    except subprocess.CalledProcessError as e:\n        return f\"Command failed with error: {e.stderr}\"",
+            "vulnerability_explanation": "The vulnerability lies in the improper validation of user inputs that are used to execute system commands. An attacker could inject malicious commands leading to arbitrary code execution on the victim's machine.\n\n###",
             "mitigation_steps": [
-                "**Step 1:** Review and validate all user inputs to ensure they do not contain any malicious code or special characters that could be used for command injection.",
-                "**Step 2:** Use `shlex.split()` to safely parse and split the command string into a list of arguments, which helps prevent shell injection.",
-                "**Step 3:** Use `subprocess.run()` with a list of arguments instead of a single string to execute commands, as this avoids invoking a shell and reduces the risk of command injection."
+                "**Step 1:** Replace the existing command execution function with the `execute_command` function provided in the patch.",
+                "**Step 2:** Ensure that all command inputs are validated and sanitized before being executed. The use of `shlex.split` helps in safely parsing the command string.",
+                "**Step 3:** Test the modified code to ensure that it correctly handles both valid and malicious inputs without executing unintended commands."
             ]
         }
     },
@@ -2621,6 +2621,71 @@
                 "**Step 1:** Review all database interaction code to identify places where user inputs are directly concatenated into SQL queries.",
                 "**Step 2:** Replace direct string concatenation with parameterized queries or prepared statements to ensure that user inputs are treated as data and not executable code.",
                 "**Step 3:** Conduct thorough testing, including unit tests and security testing, to verify that the vulnerability has been mitigated and no new issues have been introduced."
+            ]
+        }
+    },
+    "GHSA-qf48-qfv4-jjm9": {
+        "summary": "OpenClaw: Feishu extension resolveUploadInput bypasses file-system sandbox and allows arbitrary file reads via upload_image",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-08 16:12:21",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "import os\nimport re\n\ndef is_safe_path(basedir, path):\n    # Resolve both paths to absolute paths\n    basedir = os.path.abspath(basedir)\n    path = os.path.abspath(path)\n    \n    # Check if the path is within the basedir\n    return os.path.commonpath([basedir, path]) == basedir\n\ndef resolveUploadInput(input_path, base_directory):\n    # Validate the input path to ensure it is within the base directory\n    if not is_safe_path(base_directory, input_path):\n        raise ValueError(\"Invalid file path. The file must be within the allowed directory.\")\n    \n    # Proceed with processing the file if the path is safe\n    # Example: read the file content\n    with open(input_path, 'rb') as file:\n        file_content = file.read()\n    return file_content",
+            "vulnerability_explanation": "The vulnerability in the Feishu extension, identified as CVE ID GHSA-qf48-qfv4-jjm9, allows an attacker to bypass the file-system sandbox by exploiting the `resolveUploadInput` function. This bypass enables arbitrary file reads via the `upload_image` feature, potentially exposing sensitive files on the user's system.",
+            "mitigation_steps": [
+                "Step 1: Implement the `is_safe_path` function to verify that the provided file path is within the expected base directory.",
+                "Step 2: Modify the `resolveUploadInput` function to use `is_safe_path` before processing the file. If the path is not safe, raise an exception to prevent file access.",
+                "Step 3: Test the modified function with various file paths, including malicious ones, to ensure that it correctly prevents access to files outside the intended directory."
+            ]
+        }
+    },
+    "GHSA-5mrq-x3x5-8v8f": {
+        "summary": "Jupyter Server's Authentication Cookies Remain Valid After Password Reset and Server Restart",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-08 16:12:21",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "# In the Jupyter Server codebase, locate the function responsible for handling password resets.\n# This is typically found in a module related to user authentication, such as `jupyter_server.auth`.\n# You need to ensure that all authentication cookies are invalidated upon a password reset.\n\n# Example patch in a hypothetical function `reset_password`:\ndef reset_password(user, new_password):\n    # Existing password reset logic...\n    user.password = hash_password(new_password)\n    user.save()\n\n    # Invalidate all existing authentication cookies for the user\n    invalidate_user_cookies(user)\n\ndef invalidate_user_cookies(user):\n    # This function should delete or invalidate all cookies associated with the user\n    # For example, if using a session store, you might clear the sessions for this user\n    session_store = get_session_store()\n    session_store.delete_sessions_for_user(user.id)",
+            "vulnerability_explanation": "The vulnerability in Jupyter Server allows authentication cookies to remain valid even after a user resets their password and restarts the server. This means that an attacker who has obtained a valid authentication cookie before the password reset can still use it to gain unauthorized access after the reset.",
+            "mitigation_steps": [
+                "Locate the `reset_password` function or equivalent in the Jupyter Server codebase.",
+                "Ensure that after updating the user's password, the `invalidate_user_cookies` function (or similar logic) is called to invalidate all existing authentication cookies for the user.",
+                "Test the patched code to confirm that authentication cookies are no longer valid after a password reset, even after a server restart."
+            ]
+        }
+    },
+    "GHSA-24qx-w28j-9m6p": {
+        "summary": "Jupyter Server has a  CORS Origin Validation Bypass via `re.match()` in `allow_origin_pat` (from huntr)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-08 16:12:21",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "import re\n\ndef is_valid_origin(origin, allow_origin_pat):\n    # Use re.fullmatch() instead of re.match() to ensure the entire origin string matches the pattern\n    if allow_origin_pat is None:\n        return False\n    return re.fullmatch(allow_origin_pat, origin) is not None",
+            "vulnerability_explanation": "The vulnerability in Jupyter Server arises from the use of `re.match()` for validating the `Origin` header against the `allow_origin_pat` regular expression pattern. This can be bypassed by carefully crafting the `Origin` header to match the pattern in an unintended way, potentially allowing unauthorized origins to access the server.",
+            "mitigation_steps": [
+                "Replace all instances of `re.match(allow_origin_pat, origin)` with `is_valid_origin(origin, allow_origin_pat)` in the Jupyter Server codebase.",
+                "Ensure that the `allow_origin_pat` is properly defined and tested to avoid unintended matches.",
+                "Review and update all regular expressions used for validation to prevent similar bypasses."
+            ]
+        }
+    },
+    "GHSA-jjgj-cx3q-pw4w": {
+        "summary": "OpenMRS ModuleResourcesServlet has Path Traversal that Leads to Arbitrary File Read",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-08 16:12:21",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "import os\nfrom urllib.parse import unquote\n\ndef get_safe_file_path(base_directory, user_input_path):\n    # Decode URL-encoded characters\n    decoded_path = unquote(user_input_path)\n    \n    # Normalize the path to remove any relative path components like '..'\n    normalized_path = os.path.normpath(decoded_path)\n    \n    # Construct the full path\n    full_path = os.path.join(base_directory, normalized_path)\n    \n    # Ensure the full path is still within the base directory\n    if not full_path.startswith(os.path.abspath(base_directory) + os.sep):\n        raise ValueError(\"Path traversal detected\")\n    \n    return full_path\n\n# Example usage within the servlet\nbase_directory = '/path/to/module/resources'\nuser_input_path = request.getParameter('filePath')  # Assume this is how the servlet gets the path from the request\ntry:\n    safe_file_path = get_safe_file_path(base_directory, user_input_path)\n    # Proceed with reading the file at safe_file_path\nexcept ValueError as e:\n    # Handle the error, e.g., log it and return an error response to the client\n    response.sendError(400, str(e))",
+            "vulnerability_explanation": "The vulnerability in the OpenMRS ModuleResourcesServlet arises from improper validation of user-supplied input used to construct file paths. This allows an attacker to traverse directories and read arbitrary files on the server, potentially leading to sensitive data exposure.",
+            "mitigation_steps": [
+                "Validate and sanitize all user-supplied input that is used to construct file paths.",
+                "Use `os.path.normpath` to normalize paths and remove any relative path components like `..`.",
+                "Ensure that the constructed file path is within the intended base directory by checking if it starts with the absolute path of the base directory.",
+                "Implement proper error handling to prevent information leakage in case of invalid paths."
             ]
         }
     }
