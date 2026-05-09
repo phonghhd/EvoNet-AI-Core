@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-09 13:11:40",
+        "date_added": "2026-05-09 15:49:29",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_NVIDIA",
-            "diff_code": "import socket\nimport hashlib\n\n# Shared secret (password) between client and server\nSHARED_SECRET = \"securepassword123\"\n\ndef hash_password(password):\n    return hashlib.sha256(password.encode()).hexdigest()\n\ndef authenticate_client(client_socket):\n    client_socket.sendall(b\"Enter password: \")\n    client_password = client_socket.recv(1024).strip().decode()\n    if hash_password(client_password) == hash_password(SHARED_SECRET):\n        client_socket.sendall(b\"Authentication successful.\\n\")\n        return True\n    else:\n        client_socket.sendall(b\"Authentication failed.\\n\")\n        return False\n\ndef handle_client(client_socket):\n    if not authenticate_client(client_socket):\n        client_socket.close()\n        return\n\n    while True:\n        command = client_socket.recv(1024).strip().decode()\n        if command.lower() == \"exit\":\n            break\n        # Execute command and send result back to client\n        result = execute_command(command)\n        client_socket.sendall(result.encode())\n\ndef execute_command(command):\n    # Dummy function to simulate command execution\n    return f\"Command '{command}' executed.\"\n\ndef start_server(host, port):\n    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server.bind((host, port))\n    server.listen(5)\n    print(f\"Listening on {host}:{port}\")\n\n    while True:\n        client_socket, addr = server.accept()\n        print(f\"Accepted connection from {addr[0]}:{addr[1]}\")\n        handle_client(client_socket)\n        client_socket.close()\n\nif __name__ == \"__main__\":\n    start_server('127.0.0.1', 4444)",
+            "diff_code": "import socket\nimport hashlib\n\n# Shared secret (password) between client and server\nSHARED_SECRET = \"securepassword123\"\n\ndef hash_password(password):\n    return hashlib.sha256(password.encode()).hexdigest()\n\ndef authenticate_client(client_socket):\n    client_socket.sendall(b\"Enter password: \")\n    client_password = client_socket.recv(1024).strip().decode()\n    if hash_password(client_password) == hash_password(SHARED_SECRET):\n        client_socket.sendall(b\"Authentication successful.\\n\")\n        return True\n    else:\n        client_socket.sendall(b\"Authentication failed.\\n\")\n        return False\n\ndef handle_client(client_socket):\n    if not authenticate_client(client_socket):\n        client_socket.close()\n        return\n\n    while True:\n        command = client_socket.recv(1024).strip().decode()\n        if command.lower() == \"exit\":\n            break\n        # Execute command and send result back to client\n        result = execute_command(command)\n        client_socket.sendall(result.encode())\n\ndef execute_command(command):\n    # Dummy function to simulate command execution\n    return f\"Command '{command}' executed.\"\n\ndef start_server(host, port):\n    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server.bind((host, port))\n    server.listen(5)\n    print(f\"Listening on {host}:{port}\")\n\n    while True:\n        client_socket, addr = server.accept()\n        print(f\"Accepted connection from {addr[0]}:{addr[1]}\")\n        handle_client(client_socket)\n        client_socket.close()\n\nif __name__ == \"__main__\":\n    HOST = '127.0.0.1'\n    PORT = 65432\n    start_server(HOST, PORT)",
             "vulnerability_explanation": "** The NullRAT lacks proper authentication mechanisms, allowing an attacker to connect to the server and execute commands without proper authorization.\n\n###",
             "mitigation_steps": [
-                "**Step 1:** Integrate the provided code patch into the NullRAT server code to implement a basic authentication mechanism.",
-                "**Step 2:** Ensure that the shared secret (password) is securely stored and not hard-coded in the source code. Consider using environment variables or secure vaults.",
-                "**Step 3:** Test the authentication mechanism thoroughly to ensure that it prevents unauthorized access and does not introduce new vulnerabilities. Consider implementing more robust security measures such as TLS for encrypted communication and multi-factor authentication."
+                "**Step 1:** Integrate the provided authentication mechanism into the NullRAT server code. Ensure that the `SHARED_SECRET` is securely stored and not hard-coded in a production environment.",
+                "**Step 2:** Test the authentication mechanism to ensure that only authorized clients can connect and execute commands.",
+                "**Step 3:** Consider implementing more robust security measures such as TLS for encrypted communication and stronger authentication methods like OAuth or SSH keys."
             ]
         }
     },
@@ -3106,6 +3106,22 @@
                 "**Step 1:** Review all SQL queries in the codebase to identify those that use string concatenation or interpolation to construct SQL statements.",
                 "**Step 2:** Replace these queries with parameterized queries or prepared statements, as shown in the patch, to ensure that user inputs are treated as data and not executable code.",
                 "**Step 3:** Conduct thorough testing, including unit tests and security testing, to ensure that the patch does not introduce new vulnerabilities and that the application behaves as expected."
+            ]
+        }
+    },
+    "GHSA-5rh7-8226-g7fr": {
+        "summary": "No description",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-09 15:49:29",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "from html import escape\n\ndef render_user_input(user_input):\n    # Sanitize user input to prevent XSS\n    sanitized_input = escape(user_input)\n    return f\"<div>{sanitized_input}</div>\"\n\n# Example usage\nuser_input = \"<script>alert('XSS');</script>\"\nsafe_html = render_user_input(user_input)\nprint(safe_html)",
+            "vulnerability_explanation": "The vulnerability is likely a Cross-Site Scripting (XSS) issue where user input is not properly sanitized before being included in web pages, allowing attackers to inject malicious scripts.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Identify all places in the code where user input is included in HTML output.",
+                "**Step 2:** Use a function like `html.escape()` from Python's `html` module to sanitize user input before including it in HTML.",
+                "**Step 3:** Test the application thoroughly to ensure that no user input can lead to XSS vulnerabilities. Consider using automated tools for security testing."
             ]
         }
     }
