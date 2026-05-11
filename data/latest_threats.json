@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-11 17:22:59",
+        "date_added": "2026-05-11 19:43:31",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
-            "status": "Patched_by_NVIDIA",
-            "diff_code": "import socket\nimport hashlib\n\n# Shared secret (password) between client and server\nSHARED_SECRET = \"securepassword123\"\n\ndef hash_password(password):\n    return hashlib.sha256(password.encode()).hexdigest()\n\ndef authenticate_client(client_socket):\n    client_socket.sendall(b\"Enter password: \")\n    client_password = client_socket.recv(1024).strip().decode()\n    if hash_password(client_password) == hash_password(SHARED_SECRET):\n        client_socket.sendall(b\"Authentication successful.\\n\")\n        return True\n    else:\n        client_socket.sendall(b\"Authentication failed.\\n\")\n        return False\n\ndef handle_client(client_socket):\n    if not authenticate_client(client_socket):\n        client_socket.close()\n        return\n\n    while True:\n        command = client_socket.recv(1024).strip().decode()\n        if command.lower() == \"exit\":\n            break\n        # Execute command and send result back to client\n        result = execute_command(command)\n        client_socket.sendall(result.encode())\n\ndef execute_command(command):\n    # Dummy function to simulate command execution\n    return f\"Command '{command}' executed.\"\n\ndef start_server(host, port):\n    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server.bind((host, port))\n    server.listen(5)\n    print(f\"Listening on {host}:{port}\")\n\n    while True:\n        client_socket, addr = server.accept()\n        print(f\"Accepted connection from {addr[0]}:{addr[1]}\")\n        handle_client(client_socket)\n        client_socket.close()\n\nif __name__ == \"__main__\":\n    HOST = '127.0.0.1'\n    PORT = 65432\n    start_server(HOST, PORT)",
-            "vulnerability_explanation": "** The NullRAT lacks proper authentication mechanisms, allowing an attacker to connect to the server and execute commands without proper authorization.\n\n###",
+            "status": "Patched_by_Groq",
+            "diff_code": "import socket\nimport hashlib\n\ndef authenticate_connection(sock):\n    # Authenticate incoming connections using a secure protocol\n    auth_token = sock.recv(1024)\n    expected_token = hashlib.sha256(\"secret_key\".encode()).hexdigest()\n    if auth_token.decode() != expected_token:\n        sock.close()\n        return False\n    return True\n\ndef secure_server():\n    # Create a secure server that only accepts authenticated connections\n    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server_sock.bind((\"localhost\", 8080))\n    server_sock.listen(5)\n    while True:\n        client_sock, address = server_sock.accept()\n        if authenticate_connection(client_sock):\n            # Handle authenticated connection\n            print(\"Authenticated connection from\", address)\n            # ... handle connection ...\n        else:\n            print(\"Unauthenticated connection attempt from\", address)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. To mitigate this vulnerability, it is essential to identify and address the underlying security weakness.",
             "mitigation_steps": [
-                "**Step 1:** Integrate the provided authentication mechanism into the NullRAT server code. Ensure that the `SHARED_SECRET` is securely stored and not hard-coded in a production environment.",
-                "**Step 2:** Test the authentication mechanism to ensure that only authorized clients can connect and execute commands.",
-                "**Step 3:** Consider implementing more robust security measures such as TLS for encrypted communication and stronger authentication methods like OAuth or SSH keys."
+                "Identify the system's security configuration and software versions to determine the potential entry point for the NullRAT.",
+                "Implement a secure authentication protocol, such as the one shown in the patch, to ensure that only authorized connections are accepted.",
+                "Regularly update and patch the system's software to prevent exploitation of known vulnerabilities, and consider implementing additional security measures such as firewalls and intrusion detection systems to detect and prevent malicious activity."
             ]
         }
     },
@@ -3859,6 +3859,263 @@
                 "**Step 2:** Use appropriate sanitization or escaping functions to neutralize any potentially malicious content in the user inputs. In the case of web applications, using libraries like `markupsafe` in Python can help.",
                 "**Step 3:** Regularly review and test your application for vulnerabilities, especially after making changes to how user inputs are handled. Consider using automated security tools and conducting manual security testing.",
                 "Site Scripting attacks. If the CVE is related to a different type of vulnerability, please provide more details so I can tailor the response accordingly."
+            ]
+        }
+    },
+    "GHSA-87f9-hvmw-gh4p": {
+        "summary": "Mermaid: Improper sanitization of configuration leads to CSS injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_config(config):\n    \"\"\"\n    Sanitizes the Mermaid configuration to prevent CSS injection.\n    \"\"\"\n    sanitized_config = {}\n    for key, value in config.items():\n        # Sanitize string values by escaping HTML characters\n        if isinstance(value, str):\n            sanitized_config[key] = html.escape(value)\n        else:\n            sanitized_config[key] = value\n    return sanitized_config\n\n# Example usage:\nconfig = {\n    \"theme\": \"default\",\n    \"css\": \"<script>alert('XSS')</script>\"  # Malicious CSS code\n}\n\nsanitized_config = sanitize_config(config)\nprint(sanitized_config)",
+            "vulnerability_explanation": "The Mermaid library is vulnerable to CSS injection due to improper sanitization of configuration inputs, allowing an attacker to inject malicious CSS code. This can lead to various security issues, including data theft, phishing, and cross-site scripting (XSS) attacks. The vulnerability can be exploited by manipulating the configuration options to inject malicious CSS code, which can then be executed by the browser.",
+            "mitigation_steps": [
+                "Identify all instances where the Mermaid configuration is being set or updated in your codebase.",
+                "Wrap the configuration setting or updating code with the `sanitize_config` function to ensure that all string values are properly sanitized.",
+                "Verify that the `sanitize_config` function is correctly escaping HTML characters in the configuration values to prevent CSS injection attacks.",
+                "Test your application thoroughly to ensure that the patch does not introduce any regressions or issues."
+            ]
+        }
+    },
+    "GHSA-6m6c-36f7-fhxh": {
+        "summary": "Mermaid Gantt Charts are vulnerable to an Infinite Loop DoS",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import mermaid\n\ndef render_gantt_chart(data):\n    # Add a counter to track the number of iterations\n    iteration_count = 0\n    max_iterations = 1000  # Define a maximum number of iterations\n\n    while True:\n        # Render the Gantt chart\n        try:\n            mermaid.render_gantt_chart(data)\n            break\n        except Exception as e:\n            # If an exception occurs, increment the iteration count\n            iteration_count += 1\n            if iteration_count > max_iterations:\n                # If the maximum number of iterations is exceeded, raise an error\n                raise Exception(\"Infinite loop detected\")\n            # Continue rendering the chart\n            continue",
+            "vulnerability_explanation": "The Mermaid Gantt Charts vulnerability is caused by an infinite loop that can be triggered by a malicious input, leading to a Denial of Service (DoS) attack. This occurs when the chart rendering algorithm enters an infinite loop, consuming excessive system resources and causing the system to become unresponsive. The vulnerability can be exploited by crafting a specific input that triggers the infinite loop.",
+            "mitigation_steps": [
+                "Identify the Mermaid Gantt Charts library version being used and check if it's vulnerable to the infinite loop DoS attack.",
+                "Apply the provided patch code to the `render_gantt_chart` function to add a counter that tracks the number of iterations and raises an error if the maximum number of iterations is exceeded.",
+                "Test the patched code to ensure that it correctly mitigates the vulnerability and prevents the infinite loop DoS attack."
+            ]
+        }
+    },
+    "GHSA-ghcm-xqfw-q4vr": {
+        "summary": "Mermaid: Improper sanitization of `classDef` in state diagrams leads to HTML injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_class_def(class_def):\n    \"\"\"\n    Sanitizes the classDef attribute to prevent HTML injection.\n    \"\"\"\n    # Use html.escape to escape any special characters in the classDef attribute\n    sanitized_class_def = html.escape(class_def)\n    return sanitized_class_def\n\ndef render_state_diagram(class_def):\n    \"\"\"\n    Renders the state diagram with the sanitized classDef attribute.\n    \"\"\"\n    sanitized_class_def = sanitize_class_def(class_def)\n    # Render the state diagram using the sanitized classDef attribute\n    # ...\n    return rendered_diagram\n\n# Example usage:\nclass_def = \"<script>alert('XSS')</script>\"\nrendered_diagram = render_state_diagram(class_def)",
+            "vulnerability_explanation": "The vulnerability in Mermaid's state diagrams occurs due to improper sanitization of the `classDef` attribute, allowing an attacker to inject malicious HTML code. This can lead to HTML injection attacks, potentially resulting in unauthorized access or code execution. The lack of proper input validation and sanitization enables an attacker to manipulate the `classDef` attribute and inject malicious content.",
+            "mitigation_steps": [
+                "Identify all instances where the `classDef` attribute is used in the Mermaid state diagrams and apply the `sanitize_class_def` function to sanitize the input.",
+                "Update the rendering logic to use the sanitized `classDef` attribute, as shown in the `render_state_diagram` function.",
+                "Verify that the sanitization is effective by testing the patched code with various input scenarios, including malicious HTML injection attempts."
+            ]
+        }
+    },
+    "GHSA-xcj9-5m2h-648r": {
+        "summary": "Mermaid: Improper sanitization of `classDefs` in diagrams leads to CSS injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_class_defs(class_defs):\n    \"\"\"\n    Sanitizes the classDefs to prevent CSS injection.\n    \"\"\"\n    sanitized_defs = {}\n    for class_name, class_def in class_defs.items():\n        # Sanitize the class name\n        sanitized_name = html.escape(class_name)\n        \n        # Sanitize the class definition\n        sanitized_def = html.escape(class_def)\n        \n        # Only allow specific CSS properties\n        allowed_properties = ['color', 'background-color', 'font-size']\n        sanitized_def = ';'.join([prop for prop in sanitized_def.split(';') if any(allowed_prop in prop for allowed_prop in allowed_properties)])\n        \n        sanitized_defs[sanitized_name] = sanitized_def\n    return sanitized_defs\n\n# Example usage:\nclass_defs = {\n    'class1': 'color: red; background-color: blue;',\n    'class2': 'font-size: 20px;'\n}\n\nsanitized_defs = sanitize_class_defs(class_defs)\nprint(sanitized_defs)",
+            "vulnerability_explanation": "The Mermaid library is vulnerable to CSS injection due to improper sanitization of the `classDefs` in diagrams. This allows an attacker to inject malicious CSS code, potentially leading to unauthorized access or data theft. The vulnerability can be exploited by crafting a malicious diagram with specially designed `classDefs` that inject CSS code.",
+            "mitigation_steps": [
+                "Identify all instances where `classDefs` are used in your Mermaid diagrams and apply the `sanitize_class_defs` function to sanitize the input.",
+                "Update your Mermaid library to the latest version, if available, as the vulnerability may have been patched in a newer release.",
+                "Implement additional security measures, such as input validation and output encoding, to prevent similar vulnerabilities in the future."
+            ]
+        }
+    },
+    "GHSA-f633-865q-2mhh": {
+        "summary": "MantisBT is Vulnerable to Stored XSS in Saved-Filter Owner Column",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "# In the file where the filter owner is displayed, ensure that the owner's name is properly escaped.\nfrom html import escape\n\ndef display_filter_owner(owner_name):\n    # Escape the owner's name to prevent XSS\n    escaped_owner_name = escape(owner_name)\n    # Display the escaped owner's name in the filter list\n    return f\"<span>{escaped_owner_name}</span>\"",
+            "vulnerability_explanation": "The vulnerability in MantisBT arises from improper handling of user input in the \"Owner\" column of saved filters. This allows an attacker to inject malicious scripts that are then stored and executed in the browser of any user who views the saved filter, leading to a Stored Cross-Site Scripting (XSS) attack.",
+            "mitigation_steps": [
+                "Locate the section of the MantisBT codebase where the filter owner's name is being displayed.",
+                "Replace the direct output of the owner's name with the `escape` function from Python's `html` module to ensure that any HTML or JavaScript content is properly escaped.",
+                "Test the application to ensure that the vulnerability has been mitigated and that the application functions as expected without introducing new issues."
+            ]
+        }
+    },
+    "GHSA-6jh4-47v2-4g37": {
+        "summary": "MantisBT has Potential Referer-Based Reflected HTML Injection / XSS in Tag Update Page",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "# Assuming the vulnerable code is in a function that processes the Referer header\nfrom html import escape\n\ndef process_referer_header(referer):\n    # Sanitize the Referer header to prevent XSS\n    sanitized_referer = escape(referer)\n    # Use the sanitized_referer in the response\n    return sanitized_referer",
+            "vulnerability_explanation": "The vulnerability in MantisBT arises from improper handling of user input in the tag update page. Specifically, the application does not sanitize or encode the `Referer` header before reflecting it back to the user, which can lead to reflected HTML injection or XSS attacks.",
+            "mitigation_steps": [
+                "Identify the part of the code where the `Referer` header is used and reflected back to the user.",
+                "Apply HTML escaping to the `Referer` header using Python's `html.escape()` function before it is included in any response.",
+                "Test the application to ensure that the vulnerability is mitigated and no XSS payloads can be injected via the `Referer` header."
+            ]
+        }
+    },
+    "GHSA-9c3j-xm6v-j7j3": {
+        "summary": "MantisBT has a Content Security Policy bypass via attachments",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Define a function to validate and sanitize attachment filenames\ndef validate_attachment_filename(filename):\n    \"\"\"\n    Validate and sanitize attachment filenames to prevent CSP bypass.\n    \n    Args:\n        filename (str): The filename of the attachment.\n    \n    Returns:\n        str: The sanitized filename.\n    \"\"\"\n    # Remove any special characters from the filename\n    sanitized_filename = ''.join(e for e in filename if e.isalnum() or e in ['.', '_'])\n    \n    # Check if the filename has a valid extension\n    valid_extensions = ['.txt', '.pdf', '.docx', '.jpg', '.png']\n    if not any(sanitized_filename.endswith(ext) for ext in valid_extensions):\n        # If the filename does not have a valid extension, append a default extension\n        sanitized_filename += '.txt'\n    \n    return sanitized_filename\n\n# Modify the attachment upload function to use the validate_attachment_filename function\ndef upload_attachment(attachment):\n    \"\"\"\n    Upload an attachment to the server.\n    \n    Args:\n        attachment (dict): The attachment to be uploaded.\n    \n    Returns:\n        bool: True if the upload was successful, False otherwise.\n    \"\"\"\n    # Validate and sanitize the attachment filename\n    sanitized_filename = validate_attachment_filename(attachment['filename'])\n    \n    # Upload the attachment with the sanitized filename\n    # ... (rest of the upload code remains the same)\n    \n    return True",
+            "vulnerability_explanation": "The vulnerability in MantisBT allows an attacker to bypass the Content Security Policy (CSP) via attachments, potentially leading to cross-site scripting (XSS) attacks. This occurs when an attacker uploads a malicious attachment that can execute scripts, bypassing the CSP restrictions. The vulnerability can be exploited by tricking a user into accessing the malicious attachment, which can then execute arbitrary code.",
+            "mitigation_steps": [
+                "Identify the attachment upload functionality in the MantisBT codebase and modify it to use the `validate_attachment_filename` function to sanitize attachment filenames.",
+                "Update the `upload_attachment` function to use the sanitized filename when uploading attachments to the server.",
+                "Test the updated code to ensure that it correctly validates and sanitizes attachment filenames, preventing CSP bypass attacks."
+            ]
+        }
+    },
+    "GHSA-j3v9-553h-x28j": {
+        "summary": "MantisBT is Vulnerable to XSS leading to account takeover via updating a user's font family preference",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef update_font_family_preference(user_id, font_family):\n    # Sanitize user input to prevent XSS attacks\n    sanitized_font_family = html.escape(font_family)\n    \n    # Update the user's font family preference\n    # Assuming a database or storage system is used to store user preferences\n    user_preferences = get_user_preferences(user_id)\n    user_preferences['font_family'] = sanitized_font_family\n    save_user_preferences(user_id, user_preferences)\n\ndef get_user_preferences(user_id):\n    # Retrieve user preferences from database or storage system\n    # This is a placeholder function and should be implemented according to the actual storage system\n    pass\n\ndef save_user_preferences(user_id, preferences):\n    # Save user preferences to database or storage system\n    # This is a placeholder function and should be implemented according to the actual storage system\n    pass",
+            "vulnerability_explanation": "The MantisBT vulnerability allows an attacker to perform a Cross-Site Scripting (XSS) attack by updating a user's font family preference, potentially leading to account takeover. This occurs when user input is not properly sanitized, allowing malicious scripts to be injected into the application. As a result, an attacker can execute arbitrary JavaScript code, compromising the security of the application and its users.",
+            "mitigation_steps": [
+                "Identify the code responsible for updating user preferences, specifically the font family preference, and locate the input validation and sanitization mechanisms.",
+                "Implement proper input validation and sanitization using libraries like `html.escape()` to prevent malicious scripts from being injected into the application.",
+                "Update the code to use the sanitized input when updating the user's font family preference, as shown in the provided patch, to prevent XSS attacks and ensure the security of the application and its users."
+            ]
+        }
+    },
+    "GHSA-qj6w-v29q-4rgx": {
+        "summary": "MantisBT is Vulnerable to Stored XSS in Custom Field Textarea Values",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_textarea_value(value):\n    \"\"\"\n    Sanitizes the textarea value to prevent XSS attacks.\n    \n    Args:\n        value (str): The textarea value to be sanitized.\n    \n    Returns:\n        str: The sanitized textarea value.\n    \"\"\"\n    # Use html.escape to replace special characters with their corresponding HTML entities\n    sanitized_value = html.escape(value)\n    \n    return sanitized_value\n\n# Example usage:\ncustom_field_value = \"<script>alert('XSS')</script>\"\nsanitized_value = sanitize_textarea_value(custom_field_value)\nprint(sanitized_value)  # Output: &lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;",
+            "vulnerability_explanation": "The MantisBT vulnerability to Stored XSS in Custom Field Textarea Values occurs when an attacker injects malicious JavaScript code into a custom field's textarea value, which is then stored and executed when other users view the affected page. This happens because the textarea values are not properly sanitized, allowing the injected code to be executed. As a result, an attacker can steal user sessions, perform unauthorized actions, or take control of the application.",
+            "mitigation_steps": [
+                "Identify all locations in the MantisBT code where custom field textarea values are stored and displayed, and apply the `sanitize_textarea_value` function to these values.",
+                "Update the database to store the sanitized values instead of the original user input.",
+                "Test the application thoroughly to ensure that the sanitization function is working correctly and that no other vulnerabilities are introduced."
+            ]
+        }
+    },
+    "GHSA-5vpg-rj7q-qpw2": {
+        "summary": "Yii 2: Local file inclusion via view parameter name collision",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "# In the view rendering function, sanitize and validate the view parameter to prevent directory traversal and file inclusion attacks.\ndef render_view(view_name):\n    import os\n    import re\n    \n    # Define a safe pattern for view names (e.g., alphanumeric characters and underscores)\n    safe_pattern = re.compile(r'^[a-zA-Z0-9_]+$')\n    \n    # Check if the view name matches the safe pattern\n    if not safe_pattern.match(view_name):\n        raise ValueError(\"Invalid view name provided.\")\n    \n    # Construct the full path to the view file\n    base_path = '/path/to/views'\n    view_path = os.path.join(base_path, view_name + '.php')\n    \n    # Ensure the view path is within the base path to prevent directory traversal\n    if not os.path.commonpath([base_path, view_path]) == base_path:\n        raise ValueError(\"Invalid view path constructed.\")\n    \n    # Proceed with rendering the view\n    with open(view_path, 'r') as file:\n        view_content = file.read()\n        # Render logic here\n        return view_content",
+            "vulnerability_explanation": "The vulnerability in Yii 2 arises from a local file inclusion issue due to a parameter name collision in the view rendering process. An attacker could exploit this by manipulating the view parameter to include arbitrary local files, potentially leading to sensitive information disclosure or code execution.",
+            "mitigation_steps": [
+                "Step 1: Identify the function or method in the Yii 2 application responsible for rendering views using the `view_name` parameter.",
+                "Step 2: Apply the patch by sanitizing and validating the `view_name` parameter to ensure it only contains safe characters and does not lead to directory traversal.",
+                "Step 3: Test the application thoroughly to ensure that the vulnerability is mitigated and that the application functions as expected with valid input."
+            ]
+        }
+    },
+    "GHSA-crmx-4p49-46m2": {
+        "summary": "MantisBT: Bugnote Revision Page Leaks Private Issue Metadata After Issue Access Is Revoked",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Check if the user has access to the issue before displaying bugnote revisions\ndef bugnote_revision_page(issue_id, user_id):\n    # Get the issue object\n    issue = Issue.query.get(issue_id)\n    \n    # Check if the user has access to the issue\n    if not issue.is_accessible_by(user_id):\n        # If the user does not have access, return an error message\n        return \"Access denied\"\n    \n    # If the user has access, display the bugnote revisions\n    bugnotes = Bugnote.query.filter_by(issue_id=issue_id).all()\n    return render_template(\"bugnote_revisions.html\", bugnotes=bugnotes)\n\n# Update the is_accessible_by method in the Issue class to check for current permissions\nclass Issue:\n    # ...\n    def is_accessible_by(self, user_id):\n        # Get the user object\n        user = User.query.get(user_id)\n        \n        # Check if the user has the necessary permissions to access the issue\n        if user.has_permission(Permission.ISSUE_VIEW) and user.in_project(self.project_id):\n            return True\n        return False",
+            "vulnerability_explanation": "The MantisBT bugnote revision page vulnerability allows an attacker to access private issue metadata even after their access to the issue has been revoked. This occurs because the bugnote revision page does not properly check the user's current permissions before displaying the issue metadata. As a result, an attacker can still view sensitive information about the issue, potentially leading to unauthorized access or data breaches.",
+            "mitigation_steps": [
+                "Identify the affected MantisBT version and verify that the bugnote revision page is vulnerable to the issue metadata leak.",
+                "Apply the provided patch to the `bugnote_revision_page` function and the `is_accessible_by` method in the `Issue` class to ensure that users can only access issue metadata if they have the necessary permissions.",
+                "Test the patched code to ensure that users who no longer have access to an issue can no longer view its private metadata on the bugnote revision page."
+            ]
+        }
+    },
+    "GHSA-h4x5-gvx6-3rwc": {
+        "summary": "MantisBT has an Authorization Bypass that Allows Uploading Attachments to Private Issues via REST API",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary modules\nfrom mantisbt import User, Issue, Attachment\n\n# Define a function to check user permissions before uploading attachments\ndef check_upload_permissions(user_id, issue_id):\n    \"\"\"\n    Check if the user has permission to upload attachments to the given issue.\n    \n    Args:\n        user_id (int): The ID of the user attempting to upload the attachment.\n        issue_id (int): The ID of the issue to which the attachment is being uploaded.\n    \n    Returns:\n        bool: True if the user has permission, False otherwise.\n    \"\"\"\n    user = User(user_id)\n    issue = Issue(issue_id)\n    \n    # Check if the issue is private and the user is not the reporter or assigned to the issue\n    if issue.is_private and user.id not in [issue.reporter_id, issue.assigned_to_id]:\n        # Check if the user has the necessary permissions to access the private issue\n        if not user.has_permission('view_private_issues') and not user.has_permission('update_private_issues'):\n            return False\n    \n    return True\n\n# Modify the attachment upload function to include the permission check\ndef upload_attachment(user_id, issue_id, attachment):\n    \"\"\"\n    Upload an attachment to the given issue.\n    \n    Args:\n        user_id (int): The ID of the user uploading the attachment.\n        issue_id (int): The ID of the issue to which the attachment is being uploaded.\n        attachment (Attachment): The attachment to be uploaded.\n    \n    Returns:\n        bool: True if the upload is successful, False otherwise.\n    \"\"\"\n    if not check_upload_permissions(user_id, issue_id):\n        return False\n    \n    # Upload the attachment (implementation depends on the MantisBT API)\n    # ...\n    return True",
+            "vulnerability_explanation": "The vulnerability in MantisBT allows unauthorized users to upload attachments to private issues via the REST API, bypassing the normal authorization checks. This is likely due to a flaw in the API's authentication or authorization mechanism, which fails to properly validate the user's permissions before allowing the upload. As a result, an attacker could potentially access or modify sensitive information by uploading malicious attachments to private issues.",
+            "mitigation_steps": [
+                "Identify the REST API endpoint responsible for uploading attachments to issues and modify it to include the `check_upload_permissions` function.",
+                "Update the `upload_attachment` function to call `check_upload_permissions` before uploading the attachment, and return an error if the user lacks permission.",
+                "Test the modified API endpoint to ensure that it correctly enforces authorization and prevents unauthorized users from uploading attachments to private issues."
+            ]
+        }
+    },
+    "GHSA-rmp5-5jj7-gmvf": {
+        "summary": "MantisBT has an authorization bypass that allows reading attachments after losing access to a private issue",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# In the file that handles attachment access, add a check for user permissions\ndef get_attachment(attachment_id, user_id):\n    # First, retrieve the issue ID associated with the attachment\n    issue_id = db.query(\"SELECT issue_id FROM mantis_bug_file_table WHERE id = %s\", attachment_id).fetch_one()\n    \n    # Check if the issue exists and the user has access to it\n    if issue_id and not has_access_to_issue(issue_id, user_id):\n        # If the user does not have access, return an error\n        return None\n    \n    # If the user has access, retrieve and return the attachment\n    return db.query(\"SELECT * FROM mantis_bug_file_table WHERE id = %s\", attachment_id).fetch_one()\n\ndef has_access_to_issue(issue_id, user_id):\n    # Query the database to check if the user has access to the issue\n    result = db.query(\"SELECT * FROM mantis_bug_table WHERE id = %s AND (reporter_id = %s OR handler_id = %s OR id IN (SELECT issue_id FROM mantis_bugnote_table WHERE reporter_id = %s))\", issue_id, user_id, user_id, user_id).fetch_one()\n    \n    # If the user is the reporter, handler, or has a bugnote on the issue, they have access\n    if result:\n        return True\n    \n    # Otherwise, check if the user is a member of a project that has access to the issue\n    project_id = db.query(\"SELECT project_id FROM mantis_bug_table WHERE id = %s\", issue_id).fetch_one()\n    if project_id:\n        project_members = db.query(\"SELECT user_id FROM mantis_project_user_table WHERE project_id = %s\", project_id).fetch_all()\n        if user_id in [member[0] for member in project_members]:\n            return True\n    \n    # If none of the above conditions are met, the user does not have access to the issue\n    return False",
+            "vulnerability_explanation": "The vulnerability in MantisBT allows an attacker to bypass authorization and read attachments from a private issue even after they have lost access to it. This is likely due to an issue with the access control mechanism, where the system fails to properly check the user's permissions when accessing attachments. As a result, an attacker can exploit this vulnerability to gain unauthorized access to sensitive information.",
+            "mitigation_steps": [
+                "Identify the file that handles attachment access in the MantisBT codebase and modify it to include the `get_attachment` function with the added permission check.",
+                "Update the `has_access_to_issue` function to accurately reflect the access control rules for issues in MantisBT, which may involve checking the user's role, project membership, or other factors.",
+                "Test the updated code to ensure that users can no longer access attachments from private issues after losing access to them, and that authorized users can still access attachments as expected."
+            ]
+        }
+    },
+    "GHSA-ggw7-9675-6v4v": {
+        "summary": "MantisBT has an authorization bypass in private issue monitoring",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "# Assume this function is responsible for checking if a user can monitor an issue\ndef can_user_monitor_issue(user, issue):\n    # Original code might not properly check user permissions\n    # return True  # Vulnerable code\n\n    # Patched code to ensure proper permission checking\n    if user.is_admin() or issue.is_public or user.id in issue.subscribers:\n        return True\n    return False",
+            "vulnerability_explanation": "The vulnerability in MantisBT allows unauthorized users to bypass authorization checks and monitor private issues. This occurs due to improper validation of user permissions when accessing issue monitoring functionalities.",
+            "mitigation_steps": [
+                "Review the `can_user_monitor_issue` function or equivalent in the MantisBT codebase to ensure it correctly checks user permissions.",
+                "Implement the patch provided above to verify that only authorized users (administrators, issue subscribers, or users with explicit permissions) can monitor private issues.",
+                "Test the patched function with various user roles and issue privacy settings to confirm that the authorization bypass is mitigated."
+            ]
+        }
+    },
+    "GHSA-fvjf-68wh-rwp2": {
+        "summary": "MantisBT is Vulnerable to Stored HTML Injection/XSS in Clone Issue Form",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "from html import escape\n\ndef sanitize_input(user_input):\n    # Escape HTML special characters to prevent XSS\n    return escape(user_input)\n\n# Example usage in the context of handling user input from the clone issue form\ndef handle_clone_issue_form(request):\n    # Assume request.form['description'] contains user input from the form\n    sanitized_description = sanitize_input(request.form['description'])\n    # Proceed with storing or processing the sanitized description\n    store_issue_description(sanitized_description)",
+            "vulnerability_explanation": "The vulnerability in MantisBT arises from improper sanitization of user input in the clone issue form. This allows an attacker to inject malicious HTML or JavaScript, which can be executed in the browser of any user who views the cloned issue, leading to potential Cross-Site Scripting (XSS) attacks.",
+            "mitigation_steps": [
+                "Implement the `sanitize_input` function to escape HTML special characters in all user inputs that are rendered in the browser.",
+                "Review and update all form handling functions to ensure that user inputs are sanitized before being stored or displayed.",
+                "Conduct security testing, including penetration testing and code reviews, to identify and fix any remaining vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-frf7-jhp9-jxm6": {
+        "summary": "MantisBT Vulnerable to Privilege Escalation from Manager to Administrator",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-11 19:43:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_NVIDIA",
+            "diff_code": "def grant_admin_privileges(user_id, current_user_role):\n    # Check if the current user has administrator privileges\n    if current_user_role != 'administrator':\n        raise PermissionError(\"Only administrators can grant admin privileges.\")\n    \n    # Proceed with granting admin privileges\n    # (This is a placeholder for the actual logic to grant admin privileges)\n    print(f\"Admin privileges granted to user {user_id}\")",
+            "vulnerability_explanation": "The vulnerability in MantisBT allows a user with manager privileges to escalate their privileges to administrator level. This is likely due to insufficient checks or improper validation of user roles during certain operations, enabling a manager to perform actions that should be restricted to administrators.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Identify all functions in the MantisBT codebase that modify user roles or permissions.",
+                "**Step 2:** Add checks to ensure that only users with the 'administrator' role can execute these functions. Use the pattern demonstrated in the patch above.",
+                "**Step 3:** Test the modified code thoroughly to ensure that the vulnerability is fixed and no regressions have been introduced. Verify that managers cannot escalate their privileges and that only administrators can perform role-modifying actions."
             ]
         }
     }
