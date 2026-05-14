@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-14 11:12:06",
+        "date_added": "2026-05-14 14:04:01",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_request(request):\n    # Assuming a secret key is stored in an environment variable\n    secret_key = os.environ.get('SECRET_KEY')\n    if not secret_key:\n        raise ValueError(\"SECRET_KEY environment variable is not set\")\n\n    # Calculate the expected HMAC signature\n    expected_signature = hmac.new(secret_key.encode(), request.encode(), hashlib.sha256).hexdigest()\n\n    # Get the provided HMAC signature from the request\n    provided_signature = request.headers.get('X-HMAC-Signature')\n\n    # Compare the expected and provided signatures\n    if not hmac.compare_digest(expected_signature, provided_signature):\n        raise ValueError(\"Invalid HMAC signature\")\n\n# Example usage:\n# authenticate_request(request_data)",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to insecure coding practices or misconfigured systems that allow the RAT to gain unauthorized access.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(\"random_string\")).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the client's response\n    response = client_socket.recv(1024).decode()\n\n    # Verify the client's response\n    expected_response = hmac.new(b\"secret_key\", challenge.encode(), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        client_socket.close()\n        return False\n\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Handle the client's requests\n        while True:\n            request = client_socket.recv(1024).decode()\n            if not request:\n                break\n            # Process the request\n            client_socket.sendall(\"Request processed\".encode())\n    else:\n        print(\"Authentication failed\")\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(5)\n\nprint(\"Server is listening...\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n    print(\"Connection from:\", address)\n\n    # Handle the client\n    handle_client(client_socket)",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to insecure communication protocols or authentication mechanisms.",
             "mitigation_steps": [
-                "Identify the vulnerable systems and applications that may be affected by the NullRAT malware and prioritize their mitigation.",
-                "Implement secure coding practices, such as input validation, secure authentication mechanisms, and proper error handling, to prevent unauthorized access to systems and data.",
-                "Configure systems and applications to use secure communication protocols, such as HTTPS, and ensure that all communication is encrypted and authenticated using techniques like HMAC signatures, as shown in the provided patch code."
+                "**Implement secure authentication mechanisms**: Use secure authentication protocols such as HMAC or digital signatures to verify the identity of clients and ensure that only authorized access is granted.",
+                "**Use secure communication protocols**: Use secure communication protocols such as TLS or SSL to encrypt data in transit and prevent eavesdropping or tampering.",
+                "**Keep software up-to-date**: Regularly update and patch software to ensure that any known vulnerabilities are addressed, and consider implementing a web application firewall (WAF) to detect and prevent common web attacks."
             ]
         }
     },
@@ -4725,6 +4725,86 @@
                 "Identify all instances of date/time serialization using the Mysql backend in your codebase.",
                 "Replace the existing serialization code with the provided `serialize_datetime` function, ensuring correct handling of padding bytes.",
                 "Update any deserialization code to use the provided `deserialize_datetime` function, which correctly removes padding bytes and unpacks the datetime components."
+            ]
+        }
+    },
+    "GHSA-mxmp-wr3w-rvqx": {
+        "summary": "Fleet: IP spoofing allows bypassing API rate limiting",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-14 14:04:01",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ipaddress\nfrom flask import request\n\n# Assuming 'app' is the Flask application instance\nfrom flask import Flask\napp = Flask(__name__)\n\n# Define a function to get the client's IP address\ndef get_client_ip():\n    \"\"\"Get the client's IP address from the request.\"\"\"\n    if 'X-Forwarded-For' in request.headers:\n        # If the request is proxied, use the X-Forwarded-For header\n        ip = request.headers['X-Forwarded-For'].split(',')[0].strip()\n    else:\n        # Otherwise, use the remote address\n        ip = request.remote_addr\n    return ipaddress.ip_address(ip)\n\n# Define a rate limiter function\ndef rate_limiter(max_requests, time_window):\n    \"\"\"Rate limiter function.\"\"\"\n    ip_address = get_client_ip()\n    # Use a cache or database to store the request counts\n    # For simplicity, we'll use a dictionary here\n    request_counts = {}\n    if ip_address not in request_counts:\n        request_counts[ip_address] = 0\n    if request_counts[ip_address] >= max_requests:\n        # If the rate limit is exceeded, return an error\n        return \"Rate limit exceeded\", 429\n    request_counts[ip_address] += 1\n    # Reset the request count after the time window\n    # For simplicity, we'll use a simple timer here\n    import time\n    if time.time() - request_counts.get('timestamp', 0) > time_window:\n        request_counts['timestamp'] = time.time()\n        request_counts[ip_address] = 1\n    return None\n\n# Apply the rate limiter to the API endpoint\n@app.route('/api/endpoint', methods=['GET'])\ndef api_endpoint():\n    \"\"\"API endpoint with rate limiting.\"\"\"\n    result = rate_limiter(100, 60)  # 100 requests per minute\n    if result:\n        return result\n    # Process the API request\n    return \"API request processed\"",
+            "vulnerability_explanation": "The vulnerability in Fleet allows an attacker to bypass API rate limiting by spoofing IP addresses, potentially leading to abuse or denial-of-service attacks. This is possible due to inadequate validation of the client's IP address, allowing an attacker to masquerade as a different client. By spoofing IP addresses, an attacker can circumvent rate limits and perform a large number of requests.",
+            "mitigation_steps": [
+                "**Update the API endpoint**: Modify the API endpoint to use the `rate_limiter` function to check the client's IP address and enforce rate limiting.",
+                "**Implement IP address validation**: Validate the client's IP address using the `get_client_ip` function to prevent IP spoofing.",
+                "**Configure rate limiting parameters**: Configure the `max_requests` and `time_window` parameters in the `rate_limiter` function to suit your specific use case and security requirements."
+            ]
+        }
+    },
+    "GHSA-q58j-g3f4-h26h": {
+        "summary": "CoreShop Vulnerable to Remote Code Execution (RCE) via Insecure `pull_request_target` Configuration",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-14 14:04:01",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import github\n\n# Define a function to validate the pull request target configuration\ndef validate_pull_request_target(configuration):\n    # Check if the configuration is valid and secure\n    if not configuration or not isinstance(configuration, dict):\n        return False\n    \n    # Validate the 'pull_request_target' setting\n    if 'pull_request_target' not in configuration or not configuration['pull_request_target']:\n        return False\n    \n    # Validate the repository and branch settings\n    if 'repository' not in configuration['pull_request_target'] or 'branch' not in configuration['pull_request_target']:\n        return False\n    \n    # Check if the repository and branch exist\n    try:\n        repo = github.Github().get_repo(configuration['pull_request_target']['repository'])\n        repo.get_branch(configuration['pull_request_target']['branch'])\n    except github.UnknownObjectException:\n        return False\n    \n    return True\n\n# Define a function to secure the pull request target configuration\ndef secure_pull_request_target(configuration):\n    # Validate the configuration\n    if not validate_pull_request_target(configuration):\n        raise ValueError(\"Invalid or insecure pull request target configuration\")\n    \n    # Secure the configuration by setting the 'pull_request_target' to a safe default\n    configuration['pull_request_target'] = {\n        'repository': 'your-secure-repo',\n        'branch': 'your-secure-branch'\n    }\n    \n    return configuration",
+            "vulnerability_explanation": "The CoreShop vulnerability allows for Remote Code Execution (RCE) due to an insecure configuration of the `pull_request_target` setting, which can be exploited by an attacker to execute arbitrary code. This vulnerability can be triggered when a pull request is made to a repository, and the `pull_request_target` configuration is not properly validated. As a result, an attacker can inject malicious code, leading to unauthorized access and potential system compromise.",
+            "mitigation_steps": [
+                "Identify the CoreShop configuration files that contain the `pull_request_target` setting and review them for any insecure configurations.",
+                "Apply the provided `secure_pull_request_target` function to the identified configuration files to secure the `pull_request_target` setting.",
+                "Implement additional security measures, such as input validation and authentication, to prevent unauthorized access to the CoreShop system and reduce the risk of RCE attacks."
+            ]
+        }
+    },
+    "GHSA-rjg2-95x7-8qmx": {
+        "summary": "Strapi may leak sensitive data via relational filtering due to lack of query sanitization",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-14 14:04:01",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from strapi.entity.service import EntityService\nfrom strapi.entity.models import Entity\nfrom strapi.utils import sanitize_query\n\nclass SanitizedEntityService(EntityService):\n    def find(self, query):\n        sanitized_query = sanitize_query(query)\n        return Entity.find(sanitized_query)\n\n    def findOne(self, query):\n        sanitized_query = sanitize_query(query)\n        return Entity.findOne(sanitized_query)\n\ndef sanitize_query(query):\n    # Implement query sanitization logic here\n    # For example, using a whitelist approach to only allow specific query parameters\n    allowed_params = ['id', 'name', 'email']\n    sanitized_query = {}\n    for param, value in query.items():\n        if param in allowed_params:\n            sanitized_query[param] = value\n    return sanitized_query",
+            "vulnerability_explanation": "The vulnerability in Strapi occurs due to a lack of query sanitization, allowing an attacker to potentially leak sensitive data via relational filtering. This means that an attacker could craft a malicious query to extract sensitive information from the database. The vulnerability is likely related to the way Strapi handles queries, specifically when using relational filtering, which can be exploited if user input is not properly sanitized.",
+            "mitigation_steps": [
+                "Identify the vulnerable Strapi version and upgrade to the latest version, if possible, as the latest version may have already addressed this vulnerability.",
+                "Implement a query sanitization mechanism, such as the one provided in the patch, to ensure that user input is properly sanitized before being used in database queries.",
+                "Review and test the application's query handling logic to ensure that it is secure and does not allow for relational filtering attacks, and consider implementing additional security measures such as input validation and error handling."
+            ]
+        }
+    },
+    "GHSA-9vcr-g537-3w5v": {
+        "summary": "Fleet vulnerable to OS command injection in software packages",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-14 14:04:01",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport shlex\n\n# Define a function to safely execute system commands\ndef safe_execute_command(command, *args):\n    # Use shlex to split the command into a list of arguments\n    command_args = shlex.split(command)\n    \n    # Extend the command arguments with any additional arguments\n    command_args.extend(args)\n    \n    # Use subprocess to execute the command with the arguments\n    try:\n        subprocess.check_call(command_args)\n    except subprocess.CalledProcessError as e:\n        # Handle any errors that occur during command execution\n        print(f\"Error executing command: {e}\")\n\n# Example usage:\n# Replace any direct calls to subprocess with the safe_execute_command function\n# safe_execute_command(\"echo\", \"Hello, World!\")",
+            "vulnerability_explanation": "The vulnerability mechanism in Fleet involves an OS command injection flaw in software packages, which allows an attacker to inject malicious system commands. This can occur when user input is not properly sanitized or validated, enabling an attacker to execute arbitrary system commands. As a result, an attacker can potentially gain unauthorized access to sensitive data or disrupt system operations.",
+            "mitigation_steps": [
+                "Identify all areas in the Fleet codebase where system commands are executed using user input or external data.",
+                "Replace any direct calls to system commands (e.g., `subprocess` or `os.system`) with the `safe_execute_command` function to ensure proper input validation and sanitization.",
+                "Verify that all command arguments are properly escaped and quoted to prevent injection attacks, and test the updated code to ensure that it functions as expected and does not introduce any new vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-x67p-9m2r-fxqv": {
+        "summary": "Fleet server may terminate unexpectedly when handling certain gRPC requests",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-14 14:04:01",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import logging\n\n# Define a custom exception for gRPC request handling errors\nclass GRPCRequestError(Exception):\n    pass\n\n# Define a decorator to catch and handle gRPC request handling errors\ndef handle_grpc_errors(func):\n    def wrapper(*args, **kwargs):\n        try:\n            return func(*args, **kwargs)\n        except Exception as e:\n            logging.error(f\"gRPC request handling error: {e}\")\n            raise GRPCRequestError(\"Error handling gRPC request\") from e\n    return wrapper\n\n# Apply the decorator to the gRPC request handling function\n@handle_grpc_errors\ndef handle_grpc_request(request):\n    # Existing gRPC request handling code here\n    pass",
+            "vulnerability_explanation": "The Fleet server may terminate unexpectedly when handling certain gRPC requests, indicating a potential issue with the server's ability to handle malformed or unexpected input. This could be due to a lack of proper error handling or input validation in the gRPC request processing code. As a result, an attacker could potentially cause a denial-of-service (DoS) condition by sending specially crafted gRPC requests.",
+            "mitigation_steps": [
+                "Identify the gRPC request handling code in the Fleet server that is vulnerable to termination due to certain requests.",
+                "Apply the `handle_grpc_errors` decorator to the gRPC request handling function to catch and handle any exceptions that occur during request processing.",
+                "Implement proper error handling and input validation in the gRPC request handling code to prevent unexpected server termination and potential DoS conditions."
             ]
         }
     }
