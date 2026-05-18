@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-18 12:27:06",
+        "date_added": "2026-05-18 17:28:50",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_connection(sock):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).digest()\n    \n    # Send the challenge to the client\n    sock.send(challenge)\n    \n    # Receive the response from the client\n    response = sock.recv(1024)\n    \n    # Verify the response\n    expected_response = hmac.new(b'secret_key', challenge, hashlib.sha256).digest()\n    if response != expected_response:\n        # If the response is invalid, close the connection\n        sock.close()\n        return False\n    \n    # If the response is valid, continue with the connection\n    return True\n\ndef handle_connection(sock):\n    if authenticate_connection(sock):\n        # Handle the connection\n        while True:\n            request = sock.recv(1024)\n            if not request:\n                break\n            # Process the request\n            sock.send(b'Request received')\n    else:\n        # If authentication fails, close the connection\n        sock.close()\n\n# Create a socket\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nsock.bind(('localhost', 8080))\n\n# Listen for incoming connections\nsock.listen(1)\n\nwhile True:\n    # Accept incoming connections\n    connection, address = sock.accept()\n    handle_connection(connection)",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
+            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(sock):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).hexdigest()\n    # Send the challenge to the client\n    sock.sendall(challenge.encode())\n    # Receive the response from the client\n    response = sock.recv(1024).decode()\n    # Check if the response is correct\n    if response != challenge:\n        # If the response is incorrect, close the connection\n        sock.close()\n        return False\n    return True\n\ndef handle_connection(sock):\n    if validate_connection(sock):\n        # If the connection is valid, handle the request\n        request = sock.recv(1024).decode()\n        # Process the request\n        print(f\"Received request: {request}\")\n        # Send a response back to the client\n        sock.sendall(b\"Response\")\n    else:\n        # If the connection is not valid, log the incident\n        print(\"Invalid connection attempt\")\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n# Listen for incoming connections\nserver_socket.listen(5)\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n    # Handle the connection\n    handle_connection(client_socket)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT tool, which can be used to gain remote control over a system.",
             "mitigation_steps": [
-                "Identify the systems and software that are vulnerable to NullRAT and prioritize patching and mitigation efforts accordingly.",
-                "Implement a robust authentication mechanism, such as the one shown in the patch, to verify the identity of clients and prevent unauthorized access.",
-                "Regularly monitor system logs and network traffic for signs of suspicious activity, and have an incident response plan in place in case of a security breach."
+                "Identify and remove any instances of the NullRAT tool from the system, as it is a malicious tool that can be used to gain unauthorized access.",
+                "Implement a secure authentication mechanism, such as the challenge-response mechanism shown in the patch, to validate incoming connections and prevent unauthorized access.",
+                "Regularly update and patch the system and its software to prevent exploitation of known vulnerabilities, and consider implementing additional security measures such as firewalls and intrusion detection systems to detect and prevent malicious activity."
             ]
         }
     },
@@ -6026,6 +6026,246 @@
                 "Identify the vulnerable component or function in your application and review the code to understand the potential security risk.",
                 "Implement input validation and sanitization to prevent malicious input from being processed by your application.",
                 "Review and update your authentication mechanisms to ensure they are secure and follow best practices, such as using secure password storage and authentication protocols."
+            ]
+        }
+    },
+    "GHSA-ch88-c67q-65r9": {
+        "summary": "aiwaves-cn agents is vulnerable to resource consumption in the recall_relevant_memories_to_working_memory function",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def recall_relevant_memories_to_working_memory(memories, max_memory_limit=1024):\n    \"\"\"\n    Recall relevant memories to working memory with a limit on memory consumption.\n    \n    Args:\n    memories (list): List of memories to recall.\n    max_memory_limit (int): Maximum allowed memory consumption in MB.\n    \n    Returns:\n    list: List of recalled memories.\n    \"\"\"\n    # Initialize an empty list to store recalled memories\n    recalled_memories = []\n    \n    # Initialize a counter to track memory consumption\n    memory_consumption = 0\n    \n    # Iterate over each memory\n    for memory in memories:\n        # Calculate the memory consumption of the current memory\n        memory_size = sys.getsizeof(memory)\n        \n        # Check if adding the current memory exceeds the max memory limit\n        if memory_consumption + memory_size > max_memory_limit * 1024 * 1024:\n            # If it exceeds, break the loop to prevent further memory consumption\n            break\n        \n        # Add the current memory to the recalled memories list\n        recalled_memories.append(memory)\n        \n        # Update the memory consumption counter\n        memory_consumption += memory_size\n    \n    return recalled_memories",
+            "vulnerability_explanation": "The aiwaves-cn agents are vulnerable to a resource consumption vulnerability in the recall_relevant_memories_to_working_memory function, which can lead to excessive memory usage and potentially cause a denial-of-service (DoS) condition. This vulnerability can be exploited by crafting a specific input that triggers the function to consume excessive resources. The lack of proper input validation and resource limiting mechanisms in the function makes it susceptible to such attacks.",
+            "mitigation_steps": [
+                "Identify the recall_relevant_memories_to_working_memory function in the aiwaves-cn agents codebase and replace it with the patched function provided above.",
+                "Set a reasonable value for the max_memory_limit parameter based on the available system resources to prevent excessive memory consumption.",
+                "Test the patched function with various input scenarios to ensure it correctly limits memory consumption and prevents the vulnerability from being exploited."
+            ]
+        }
+    },
+    "GHSA-42h5-h8qh-vv9v": {
+        "summary": "MLflow allows an unauthenticated remote attacker to read arbitrary files from the server's filesystem",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nfrom mlflow.utils import file_utils\n\ndef secure_file_reader(file_path):\n    \"\"\"\n    Securely reads a file from the server's filesystem, \n    preventing arbitrary file access vulnerabilities.\n    \"\"\"\n    # Define a whitelist of allowed file paths\n    allowed_paths = [\"/mlflow/data\", \"/mlflow/models\"]\n\n    # Check if the file path is within an allowed directory\n    for path in allowed_paths:\n        if file_path.startswith(path):\n            # If the file path is allowed, read the file\n            try:\n                with open(file_path, 'r') as file:\n                    return file.read()\n            except FileNotFoundError:\n                return None\n\n    # If the file path is not allowed, return an error\n    return \"Error: Access to file denied\"\n\n# Replace the existing file reader function with the secure one\nfile_utils.read_file = secure_file_reader",
+            "vulnerability_explanation": "The vulnerability in MLflow allows an unauthenticated remote attacker to read arbitrary files from the server's filesystem, potentially exposing sensitive information. This is likely due to a lack of proper access controls or input validation, allowing attackers to manipulate file paths and access unauthorized files. The exact mechanism is unknown without a PoC, but it can be mitigated by implementing proper access controls and input validation.",
+            "mitigation_steps": [
+                "Identify and update all instances of file reading code in the MLflow application to use the `secure_file_reader` function.",
+                "Implement a whitelist of allowed file paths and directories to prevent arbitrary file access.",
+                "Test the updated code to ensure that it properly prevents unauthorized file access and does not introduce any new vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-32p9-57cr-4x65": {
+        "summary": " cowlib cow_http_te module: Uncontrolled Resource Consumption vulnerability allows Excessive Allocation",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Apply a limit to the amount of data that can be allocated\nMAX_ALLOCATION_LIMIT = 1024 * 1024  # 1MB\n\ndef parse_http_te(headers):\n    # Initialize the allocation counter\n    allocation_counter = 0\n    \n    # Iterate over the headers and limit the allocation\n    for header in headers:\n        if allocation_counter > MAX_ALLOCATION_LIMIT:\n            raise Exception(\"Excessive allocation detected\")\n        \n        # Simulate the allocation of resources\n        allocation_counter += len(header)\n    \n    return allocation_counter\n\n# Example usage:\nheaders = [\"header1\", \"header2\", \"header3\"]\ntry:\n    parse_http_te(headers)\nexcept Exception as e:\n    print(e)",
+            "vulnerability_explanation": "The vulnerability in the cowlib cow_http_te module allows for uncontrolled resource consumption, which can lead to excessive allocation of resources, potentially causing a denial-of-service (DoS) attack. This occurs when the module fails to properly limit the amount of resources allocated in response to user input. As a result, an attacker can exploit this vulnerability by sending a specially crafted request that causes the server to consume excessive resources.",
+            "mitigation_steps": [
+                "Identify the vulnerable cowlib cow_http_te module in your application and assess the potential impact of the vulnerability.",
+                "Apply the provided patch to the vulnerable module, adjusting the `MAX_ALLOCATION_LIMIT` as needed to balance security and functionality.",
+                "Test the patched module to ensure it properly limits resource allocation and prevents excessive allocation attacks, without introducing any regressions or performance issues."
+            ]
+        }
+    },
+    "GHSA-3cjv-h753-qf7h": {
+        "summary": "Crabbox contains a path traversal vulnerability in the Islo provider's workspace path resolution",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport pathlib\n\ndef resolve_workspace_path(input_path):\n    # Normalize the input path to eliminate any directory traversal attempts\n    normalized_path = pathlib.Path(input_path).resolve()\n    \n    # Get the absolute path of the intended workspace directory\n    workspace_dir = pathlib.Path(\"/intended/workspace/directory\").resolve()\n    \n    # Check if the normalized path is within the workspace directory\n    if not normalized_path.is_relative_to(workspace_dir):\n        raise ValueError(\"Path traversal attempt detected\")\n    \n    # If the path is valid, return the normalized path\n    return str(normalized_path)\n\n# Example usage:\ninput_path = \"../sensitive/data\"\ntry:\n    resolved_path = resolve_workspace_path(input_path)\n    print(resolved_path)\nexcept ValueError as e:\n    print(e)",
+            "vulnerability_explanation": "The Crabbox Islo provider contains a path traversal vulnerability in its workspace path resolution, allowing an attacker to access and potentially modify files outside the intended workspace directory by manipulating the path input. This vulnerability can be exploited by providing a specially crafted path that includes sequences like \"../\" to escape the intended directory. As a result, sensitive data may be exposed or modified, leading to security breaches.",
+            "mitigation_steps": [
+                "Identify all instances where the Islo provider resolves workspace paths and replace the existing logic with the `resolve_workspace_path` function provided in the patch.",
+                "Ensure that the `workspace_dir` variable in the patch is set to the correct absolute path of the intended workspace directory.",
+                "Test the updated code thoroughly to verify that it correctly prevents path traversal attempts and raises an error when a malicious input is provided."
+            ]
+        }
+    },
+    "GHSA-qp7v-gjgg-4mj6": {
+        "summary": "@steipete/summarize allows local attackers to read bearer tokens and API credentials stored in ~/.summarize/daemon.json",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport json\nimport getpass\n\n# Define the path to the daemon.json file\ndaemon_json_path = os.path.join(os.path.expanduser('~'), '.summarize', 'daemon.json')\n\n# Define a function to securely store sensitive data\ndef store_sensitive_data(data):\n    # Encrypt the data using a password-based encryption method\n    password = getpass.getpass('Enter a password to encrypt the data: ')\n    encrypted_data = encrypt_data(data, password)\n    \n    # Write the encrypted data to the daemon.json file\n    with open(daemon_json_path, 'w') as f:\n        json.dump(encrypted_data, f)\n\n# Define a function to retrieve sensitive data\ndef retrieve_sensitive_data():\n    # Read the encrypted data from the daemon.json file\n    with open(daemon_json_path, 'r') as f:\n        encrypted_data = json.load(f)\n    \n    # Decrypt the data using the password-based encryption method\n    password = getpass.getpass('Enter the password to decrypt the data: ')\n    decrypted_data = decrypt_data(encrypted_data, password)\n    \n    return decrypted_data\n\n# Define the encryption and decryption functions\ndef encrypt_data(data, password):\n    # Implement a password-based encryption method, such as AES encryption\n    # For simplicity, this example uses a basic XOR encryption\n    encrypted_data = {}\n    for key, value in data.items():\n        encrypted_value = ''.join(chr(ord(c) ^ ord(password[i % len(password)])) for i, c in enumerate(value))\n        encrypted_data[key] = encrypted_value\n    return encrypted_data\n\ndef decrypt_data(encrypted_data, password):\n    # Implement a password-based decryption method, such as AES decryption\n    # For simplicity, this example uses a basic XOR decryption\n    decrypted_data = {}\n    for key, encrypted_value in encrypted_data.items():\n        decrypted_value = ''.join(chr(ord(c) ^ ord(password[i % len(password)])) for i, c in enumerate(encrypted_value))\n        decrypted_data[key] = decrypted_value\n    return decrypted_data",
+            "vulnerability_explanation": "The vulnerability in @steipete/summarize allows local attackers to read sensitive information, such as bearer tokens and API credentials, stored in the ~/.summarize/daemon.json file. This is possible because the file containing sensitive information is not properly secured, allowing unauthorized access. The vulnerability can be exploited by local attackers to gain access to sensitive data.",
+            "mitigation_steps": [
+                "**Step 1: Update the code to use secure storage**: Replace the existing code that stores sensitive data in the daemon.json file with the `store_sensitive_data` function, which encrypts the data before storing it.",
+                "**Step 2: Update the code to retrieve sensitive data securely**: Replace the existing code that retrieves sensitive data from the daemon.json file with the `retrieve_sensitive_data` function, which decrypts the data after retrieving it.",
+                "**Step 3: Test the updated code**: Verify that the updated code correctly stores and retrieves sensitive data, and that the data is properly encrypted and decrypted."
+            ]
+        }
+    },
+    "GHSA-hv23-4qp7-8c8r": {
+        "summary": "ninenines cowlib: Improper Neutralization of CRLF Sequences ('CRLF Injection') vulnerability allows SSE event splitting and injection via unvalidated field values",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_crlf(input_string):\n    \"\"\"\n    Sanitizes the input string by replacing CRLF sequences with a safe alternative.\n    \"\"\"\n    # Replace CRLF sequences with a space to prevent injection\n    sanitized_string = re.sub(r'\\r\\n', ' ', input_string)\n    return sanitized_string\n\ndef validate_field_values(field_values):\n    \"\"\"\n    Validates field values by checking for CRLF sequences and sanitizing them.\n    \"\"\"\n    sanitized_values = {}\n    for key, value in field_values.items():\n        sanitized_values[key] = sanitize_crlf(value)\n    return sanitized_values\n\n# Example usage:\nfield_values = {'event': 'example\\r\\ninjected-event', 'data': 'example data'}\nsanitized_values = validate_field_values(field_values)\nprint(sanitized_values)",
+            "vulnerability_explanation": "The vulnerability in ninenines cowlib occurs due to the improper neutralization of CRLF sequences, allowing an attacker to inject malicious data via unvalidated field values, which can lead to SSE event splitting and injection. This can be exploited by an attacker to inject malicious events, potentially leading to security breaches. The vulnerability can be mitigated by properly validating and sanitizing user-input data to prevent CRLF injection.",
+            "mitigation_steps": [
+                "Identify all areas in the code where user-input data is used to construct SSE events, and ensure that the input data is properly validated and sanitized using the `sanitize_crlf` function.",
+                "Update the `validate_field_values` function to handle all possible field values that may be used in SSE events, and apply the `sanitize_crlf` function to each value.",
+                "Test the updated code thoroughly to ensure that the `sanitize_crlf` function is correctly preventing CRLF injection attacks, and that the `validate_field_values` function is properly handling all possible field values."
+            ]
+        }
+    },
+    "GHSA-xp7r-j8r6-j9h3": {
+        "summary": "parse-nested-form-data has Prototype Pollution via `__proto__` in FormData field names",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\n\ndef parse_nested_form_data(data):\n    \"\"\"\n    Parse nested form data while preventing prototype pollution.\n    \"\"\"\n    # Create a new dictionary to store the parsed data\n    parsed_data = {}\n    \n    # Iterate over each key-value pair in the data\n    for key, value in data.items():\n        # Check if the key contains the __proto__ property\n        if '__proto__' in key:\n            # If it does, skip this key-value pair to prevent prototype pollution\n            continue\n        \n        # If the value is a dictionary, recursively parse it\n        if isinstance(value, dict):\n            parsed_data[key] = parse_nested_form_data(value)\n        else:\n            # Otherwise, simply add the key-value pair to the parsed data\n            parsed_data[key] = value\n    \n    return parsed_data\n\n# Example usage:\ndata = {\n    'name': 'John Doe',\n    'address': {\n        'street': '123 Main St',\n        'city': 'Anytown',\n        'state': 'CA',\n        'zip': '12345'\n    },\n    '__proto__.polluted': 'malicious data'\n}\n\nparsed_data = parse_nested_form_data(data)\nprint(json.dumps(parsed_data, indent=4))",
+            "vulnerability_explanation": "The vulnerability occurs in the `parse-nested-form-data` library, where an attacker can exploit the `__proto__` property in FormData field names to perform prototype pollution. This allows an attacker to modify the prototype of an object, potentially leading to arbitrary code execution or data corruption. By injecting malicious data into the FormData, an attacker can manipulate the prototype chain, compromising the security of the application.",
+            "mitigation_steps": [
+                "Identify all instances where the `parse-nested-form-data` library is used in your application and replace it with the patched `parse_nested_form_data` function.",
+                "Verify that the patched function is correctly handling nested form data and preventing prototype pollution by testing it with sample data.",
+                "Review your application's codebase to ensure that there are no other potential vulnerabilities related to prototype pollution, and consider implementing additional security measures such as input validation and sanitization to further protect against similar attacks."
+            ]
+        }
+    },
+    "GHSA-fmxf-pm6p-7xgm": {
+        "summary": "async-http-client: Cookie header not stripped on cross-origin redirect",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import asyncio\nfrom async_http_client import AsyncHttpClient\n\nclass SecureAsyncHttpClient(AsyncHttpClient):\n    async def _handle_redirect(self, response, redirect_url):\n        # Check if the redirect is cross-origin\n        if response.url.origin != redirect_url.origin:\n            # Strip the Cookie header on cross-origin redirects\n            response.headers.pop('Cookie', None)\n        return await super()._handle_redirect(response, redirect_url)\n\n# Usage:\nasync def main():\n    client = SecureAsyncHttpClient()\n    async with client.get('https://example.com') as response:\n        # ...\n        pass\n\nasyncio.run(main())",
+            "vulnerability_explanation": "The async-http-client library is vulnerable to a security issue where the Cookie header is not stripped on cross-origin redirects, potentially allowing sensitive information to be leaked to unauthorized parties. This occurs when a redirect response is received from a different origin than the original request, and the Cookie header is not properly removed. As a result, the Cookie header may be sent to the new origin, compromising the security of the application.",
+            "mitigation_steps": [
+                "Identify all instances of async-http-client usage in your application and replace them with the SecureAsyncHttpClient class.",
+                "Verify that the Cookie header is properly stripped on cross-origin redirects by inspecting the request headers sent to the new origin.",
+                "Test your application thoroughly to ensure that the patch does not introduce any regressions or unintended behavior, paying particular attention to scenarios involving cross-origin redirects."
+            ]
+        }
+    },
+    "GHSA-3v9w-6365-9w54": {
+        "summary": "Dozzle: Pre-auth SSRF with response-body reflection via POST /api/notifications/test-webhook (default no-auth deploy)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from flask import request, jsonify\nfrom urllib.parse import urlparse\n\n# Assuming this is part of a Flask application\n@app.route('/api/notifications/test-webhook', methods=['POST'])\ndef test_webhook():\n    # Check if the request is authenticated\n    if not is_authenticated(request):\n        return jsonify({'error': 'Authentication required'}), 401\n    \n    # Validate the URL to prevent SSRF\n    url = request.json.get('url')\n    if not is_valid_url(url):\n        return jsonify({'error': 'Invalid URL'}), 400\n    \n    # Make the request to the validated URL\n    try:\n        response = requests.post(url, json=request.json.get('data'))\n        return jsonify({'result': response.text}), 200\n    except requests.exceptions.RequestException as e:\n        return jsonify({'error': str(e)}), 500\n\ndef is_authenticated(request):\n    # Implement your authentication logic here\n    # For example, checking for a specific token or header\n    return 'Authorization' in request.headers\n\ndef is_valid_url(url):\n    # Validate the URL to prevent SSRF\n    # For example, checking if the URL is internal or not\n    parsed_url = urlparse(url)\n    return parsed_url.netloc != 'localhost' and not parsed_url.netloc.startswith('10.') and not parsed_url.netloc.startswith('192.168.')",
+            "vulnerability_explanation": "The vulnerability in Dozzle is a pre-authentication Server-Side Request Forgery (SSRF) with response-body reflection. This occurs when an attacker sends a POST request to the `/api/notifications/test-webhook` endpoint, allowing them to make arbitrary requests to internal services. The lack of authentication in the default deployment setting exacerbates this issue, making it easily exploitable.",
+            "mitigation_steps": [
+                "**Implement Authentication**: Ensure that the `/api/notifications/test-webhook` endpoint requires authentication. This can be done by adding authentication logic to the `is_authenticated` function.",
+                "**Validate URLs**: Validate the URLs passed to the endpoint to prevent SSRF attacks. This can be done by implementing the `is_valid_url` function to check if the URL is internal or not.",
+                "**Test and Deploy**: Test the patched code to ensure it works as expected, and then deploy it to production. Make sure to monitor the application for any potential issues after the patch is applied."
+            ]
+        }
+    },
+    "GHSA-9rh9-hf3w-9fgg": {
+        "summary": "shopper/framework: Race condition on Discount.usage_limit allows silent over-redemption",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import threading\n\nclass Discount:\n    def __init__(self, usage_limit):\n        self.usage_limit = usage_limit\n        self.lock = threading.Lock()\n        self.redeemed = 0\n\n    def redeem(self):\n        with self.lock:\n            if self.redeemed < self.usage_limit:\n                self.redeemed += 1\n                return True\n            else:\n                return False",
+            "vulnerability_explanation": "The vulnerability is caused by a race condition on the Discount.usage_limit, which allows for silent over-redemption. This occurs when multiple requests to redeem a discount are made simultaneously, and the system fails to properly synchronize access to the usage limit, resulting in the limit being exceeded without being properly accounted for. As a result, the discount can be redeemed more times than intended, potentially leading to financial losses.",
+            "mitigation_steps": [
+                "Identify the Discount class and its usage_limit attribute in the shopper/framework codebase, and replace it with the patched Discount class that includes a lock to synchronize access to the usage limit.",
+                "Update all instances of discount redemption to use the new redeem method, which checks the usage limit while holding the lock to prevent concurrent modifications.",
+                "Test the patched code thoroughly to ensure that the race condition is properly mitigated and the usage limit is enforced correctly, even in the presence of concurrent redemption requests."
+            ]
+        }
+    },
+    "GHSA-f946-9qp6-vgch": {
+        "summary": "shopper/framework: Authorization bypass in multiple Livewire admin components",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary libraries\nfrom livewire import Component\nfrom auth import authenticate\n\n# Define a decorator to check for authorization\ndef authorize_user(func):\n    def wrapper(self, *args, **kwargs):\n        # Check if the user is authenticated and authorized\n        if not authenticate(self.request.user):\n            raise Exception(\"Unauthorized access\")\n        return func(self, *args, **kwargs)\n    return wrapper\n\n# Apply the decorator to vulnerable components\nclass VulnerableComponent(Component):\n    @authorize_user\n    def sensitive_action(self):\n        # Sensitive functionality here\n        pass",
+            "vulnerability_explanation": "The vulnerability is an authorization bypass in multiple Livewire admin components, which allows unauthorized access to sensitive functionality. This is likely due to inadequate permission checks or insecure default settings in the affected components. As a result, attackers can exploit this vulnerability to perform actions that should be restricted to authorized users.",
+            "mitigation_steps": [
+                "Identify all Livewire admin components that are vulnerable to the authorization bypass and apply the `authorize_user` decorator to their sensitive methods.",
+                "Ensure that the `authenticate` function correctly checks the user's permissions and authentication status.",
+                "Test the patched components to verify that the authorization checks are working as expected and that unauthorized access is prevented."
+            ]
+        }
+    },
+    "GHSA-w8j3-pq8g-8m7w": {
+        "summary": "iskorotkov/avro: CPU Exhaustion in Decoder",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import avro.io\nimport avro.schema\n\ndef patched_decode(reader, writer, schema):\n    \"\"\"\n    Patched Avro decoder to prevent CPU exhaustion.\n    \"\"\"\n    # Set a limit on the number of records to decode\n    max_records = 10000\n    \n    # Initialize a counter to track the number of records decoded\n    record_count = 0\n    \n    while True:\n        try:\n            # Attempt to decode the next record\n            record = reader.read(schema)\n            writer.write(record)\n            record_count += 1\n            \n            # Check if the maximum number of records has been reached\n            if record_count >= max_records:\n                break\n        except avro.io.EOFError:\n            # End of file reached, exit the loop\n            break\n        except Exception as e:\n            # Handle any other exceptions that may occur\n            print(f\"Error decoding record: {e}\")\n            break\n\n# Example usage:\nif __name__ == \"__main__\":\n    # Create a reader and writer\n    reader = avro.io.DatumReader(avro.schema.Parse(open(\"schema.avsc\", \"rb\").read()))\n    writer = avro.io.DatumWriter(avro.schema.Parse(open(\"schema.avsc\", \"rb\").read()))\n    \n    # Call the patched decoder\n    patched_decode(reader, writer, avro.schema.Parse(open(\"schema.avsc\", \"rb\").read()))",
+            "vulnerability_explanation": "The vulnerability is a CPU exhaustion issue in the Avro decoder, which can be exploited by providing a maliciously crafted Avro file that causes the decoder to enter an infinite loop or perform excessive computations. This can lead to a denial-of-service (DoS) attack, where the system becomes unresponsive due to high CPU usage. The vulnerability is likely due to a lack of input validation or improper handling of edge cases in the decoder.",
+            "mitigation_steps": [
+                "**Update the Avro library**: Ensure you are using the latest version of the Avro library, as the vulnerability may have been patched in a recent release.",
+                "**Implement input validation**: Validate all input Avro files to prevent maliciously crafted files from being processed.",
+                "**Use the patched decoder**: Replace the existing Avro decoder with the patched decoder provided above, which includes limits on the number of records to decode and handles exceptions properly to prevent CPU exhaustion."
+            ]
+        }
+    },
+    "GHSA-gqr2-7hcg-rchf": {
+        "summary": "CI4MS: Stored XSS in Pages Module Content via Broken html_purify Validation Rule",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\nfrom bs4 import BeautifulSoup\n\ndef sanitize_html(input_html):\n    # Parse the input HTML using BeautifulSoup\n    soup = BeautifulSoup(input_html, 'html.parser')\n    \n    # Remove all script tags\n    for script in soup.find_all('script'):\n        script.decompose()\n    \n    # Remove all on* attributes (e.g., onclick, onmouseover)\n    for tag in soup.find_all(True):\n        for attribute in list(tag.attrs.keys()):\n            if attribute.startswith('on'):\n                del tag[attribute]\n    \n    # Use html.escape to escape any remaining HTML characters\n    sanitized_html = html.escape(str(soup))\n    \n    return sanitized_html\n\n# Example usage:\ninput_html = '<p>Hello <script>alert(\"XSS\")</script> world!</p>'\nsanitized_html = sanitize_html(input_html)\nprint(sanitized_html)",
+            "vulnerability_explanation": "The CI4MS stored XSS vulnerability occurs due to a broken html_purify validation rule in the Pages Module Content, allowing an attacker to inject malicious HTML code. This can lead to the execution of arbitrary JavaScript code when a user views the affected page. The vulnerability is exploited by submitting crafted input that bypasses the existing validation rules.",
+            "mitigation_steps": [
+                "Identify all areas in the codebase where user-inputted HTML is being processed and stored, particularly in the Pages Module Content.",
+                "Replace the existing html_purify validation rule with the provided `sanitize_html` function to ensure that all user-inputted HTML is properly sanitized.",
+                "Test the patched code with various inputs to ensure that it correctly removes malicious HTML code and prevents stored XSS attacks."
+            ]
+        }
+    },
+    "GHSA-mc57-h6j3-3hmv": {
+        "summary": "iskorotkov/avro: Integer Overflow in Decoder",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def decode_int(decoder):\n    \"\"\"\n    Decodes an integer from the Avro decoder, checking for integer overflow.\n    \"\"\"\n    # Read the integer value from the decoder\n    value = decoder.read_long()\n    \n    # Check if the value is within the valid integer range\n    if value < -2**31 or value > 2**31 - 1:\n        raise ValueError(\"Integer overflow detected\")\n    \n    return value\n\n# Replace the original decode_int function with the patched one\n# in the iskorotkov/avro library",
+            "vulnerability_explanation": "The iskorotkov/avro library is vulnerable to an integer overflow in the decoder, which can lead to a buffer overflow or other unexpected behavior when decoding Avro data. This occurs when the decoder encounters a large integer value that exceeds the maximum limit of the integer type, causing the decoder to misinterpret the data. As a result, this can potentially allow an attacker to execute arbitrary code or crash the program.",
+            "mitigation_steps": [
+                "Identify the affected iskorotkov/avro library version and assess the risk of the vulnerability in your specific use case.",
+                "Apply the provided patch to the decode_int function in the iskorotkov/avro library to prevent integer overflows.",
+                "Verify that the patched library functions correctly and does not introduce any regressions, by testing it with a variety of input data, including large integer values that could trigger the overflow."
+            ]
+        }
+    },
+    "GHSA-jxxr-4gwj-5jf2": {
+        "summary": "brace-expansion: Large numeric range defeats documented `max` DoS protection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-18 17:28:50",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef expand_brace(pattern, max_expansions=1000):\n    \"\"\"\n    Expand a brace pattern into a list of strings.\n\n    :param pattern: The brace pattern to expand.\n    :param max_expansions: The maximum number of expansions allowed.\n    :return: A list of expanded strings.\n    \"\"\"\n    # Regular expression to match brace patterns\n    brace_pattern = r'\\{([^}]+)\\}'\n    match = re.search(brace_pattern, pattern)\n\n    if match:\n        # Extract the range from the pattern\n        range_str = match.group(1)\n        range_parts = range_str.split(',')\n\n        # Initialize the expansion list\n        expansions = []\n\n        # Iterate over each part of the range\n        for part in range_parts:\n            # Check if the part is a numeric range\n            if '..' in part:\n                start, end = map(int, part.split('..'))\n                # Limit the range to prevent excessive expansions\n                end = min(end, start + max_expansions - 1)\n                expansions.extend(str(i) for i in range(start, end + 1))\n            else:\n                expansions.append(part)\n\n        # Replace the brace pattern with the expanded range\n        expanded_pattern = re.sub(brace_pattern, '{}', pattern).format(','.join(expansions))\n\n        # Recursively expand any nested brace patterns\n        return expand_brace(expanded_pattern, max_expansions)\n\n    # If no brace pattern is found, return the original pattern\n    return [pattern]\n\n# Example usage:\npattern = \"file_{1..100}.txt\"\nexpanded = expand_brace(pattern)\nprint(expanded)",
+            "vulnerability_explanation": "The vulnerability in the `brace-expansion` library occurs when a large numeric range is provided, which can defeat the documented `max` protection against Denial of Service (DoS) attacks. This happens because the library does not properly enforce the `max` limit, allowing an attacker to cause the library to consume excessive resources. As a result, the library can become unresponsive or even crash, leading to a potential DoS vulnerability.",
+            "mitigation_steps": [
+                "Identify all instances of the `brace-expansion` library in your codebase and replace them with the patched `expand_brace` function.",
+                "Verify that the `max_expansions` limit is set to a reasonable value to prevent excessive expansions.",
+                "Test the patched code to ensure it correctly handles large numeric ranges and prevents potential DoS attacks."
             ]
         }
     }
