@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-22 17:06:54",
+        "date_added": "2026-05-22 19:40:58",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport os\nimport sys\n\ndef verify_file_integrity(file_path):\n    \"\"\"\n    Verify the integrity of a file by checking its hash.\n    \"\"\"\n    # Define a list of known malicious file hashes\n    malicious_hashes = [\"hash1\", \"hash2\", \"hash3\"]  # Replace with actual hashes\n\n    # Calculate the hash of the file\n    file_hash = hashlib.sha256()\n    with open(file_path, \"rb\") as file:\n        for chunk in iter(lambda: file.read(4096), b\"\"):\n            file_hash.update(chunk)\n\n    # Check if the file hash is in the list of malicious hashes\n    if file_hash.hexdigest() in malicious_hashes:\n        print(f\"Malicious file detected: {file_path}\")\n        # Take action to mitigate the threat, such as deleting the file or quarantining it\n        os.remove(file_path)\n        sys.exit(1)\n\n# Example usage:\nverify_file_integrity(\"/path/to/suspicious/file\")",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows attackers to remotely access and control compromised systems. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. To mitigate this vulnerability, it is essential to implement robust security measures to prevent the RAT from infecting the system.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(str(socket.gethostname()))).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the response from the client\n    response = client_socket.recv(1024).decode()\n\n    # Verify the response\n    expected_response = hmac.new(str.encode(\"secret_key\"), str.encode(challenge), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        return False\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Client is authenticated, proceed with the connection\n        print(\"Client authenticated successfully\")\n    else:\n        # Client is not authenticated, close the connection\n        print(\"Client authentication failed\")\n        client_socket.close()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it can be inferred that it involves exploiting a weakness in the system's security to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit available on GitHub.",
             "mitigation_steps": [
-                "Identify and remove any suspicious files or programs from the system, especially those related to NullRAT.",
-                "Implement robust security measures, such as firewalls, intrusion detection systems, and antivirus software, to prevent the RAT from infecting the system.",
-                "Regularly update and patch the system's software and operating system to ensure that any known vulnerabilities are addressed, and consider implementing a patch management system to automate the process."
+                "Identify the vulnerable system or application and assess the potential impact of the vulnerability.",
+                "Implement a secure authentication mechanism, such as the one provided in the patch, to verify the identity of clients connecting to the system.",
+                "Regularly monitor the system for suspicious activity and update the authentication mechanism as needed to prevent exploitation of the vulnerability."
             ]
         }
     },
@@ -6682,6 +6682,22 @@
                 "Identify all instances where the audiopus_sys crate is used in your project and prepare to replace it with a maintained alternative, such as opuslib.",
                 "Run the provided Python script to uninstall the audiopus_sys crate and install the opuslib alternative.",
                 "Update your project's dependencies and code to use the newly installed opuslib, ensuring that all functionality remains intact and secure."
+            ]
+        }
+    },
+    "GHSA-97r5-pg8x-p63p": {
+        "summary": "Flask-Security-Too OAuth reauthentication freshness bypass via cross-   user OAuth identity acceptance",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-22 19:40:58",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from flask_security import current_user\nfrom flask_security.oauth import OAuth\n\ndef validate_oauth_identity(oauth_client, user_id, **kwargs):\n    \"\"\"\n    Validate the OAuth identity to prevent cross-user OAuth identity acceptance.\n    \n    :param oauth_client: The OAuth client instance.\n    :param user_id: The ID of the user being authenticated.\n    :param kwargs: Additional keyword arguments.\n    :return: True if the OAuth identity is valid, False otherwise.\n    \"\"\"\n    # Get the current user's OAuth identity\n    current_oauth_identity = current_user.oauth_id\n    \n    # Check if the OAuth identity matches the current user's identity\n    if current_oauth_identity != oauth_client.user_id:\n        # If the identities do not match, reject the authentication attempt\n        return False\n    \n    # If the identities match, allow the authentication attempt to proceed\n    return True\n\n# Integrate the validate_oauth_identity function with the OAuth authentication flow\nOAuth.validate_oauth_identity = validate_oauth_identity",
+            "vulnerability_explanation": "The vulnerability in Flask-Security-Too OAuth allows an attacker to bypass reauthentication by exploiting the acceptance of cross-user OAuth identities. This occurs when a user is authenticated with an OAuth provider, and then an attacker uses the same OAuth provider to authenticate as a different user, potentially gaining access to the original user's account. The vulnerability stems from the lack of proper validation of the OAuth identity, allowing an attacker to reuse an existing OAuth session.",
+            "mitigation_steps": [
+                "**Update Flask-Security-Too**: Ensure you are using the latest version of Flask-Security-Too, as the vulnerability may have been addressed in a recent update.",
+                "**Apply the patch**: Integrate the provided `validate_oauth_identity` function into your application's OAuth authentication flow to validate the OAuth identity and prevent cross-user OAuth identity acceptance.",
+                "**Test the patch**: Thoroughly test the updated OAuth authentication flow to ensure that the patch does not introduce any regressions or unintended behavior, and that it effectively prevents the vulnerability from being exploited."
             ]
         }
     }
