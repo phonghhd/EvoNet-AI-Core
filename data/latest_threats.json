@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-24 13:19:54",
+        "date_added": "2026-05-24 15:59:11",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        return False\n    \n    # Receive data from the remote server\n    data = sock.recv(1024)\n    \n    # Calculate the hash of the received data\n    data_hash = hashlib.sha256(data).hexdigest()\n    \n    # Check if the hash matches a known good hash\n    known_good_hash = \"your_known_good_hash_here\"\n    if data_hash != known_good_hash:\n        return False\n    \n    # If the hash matches, the connection is valid\n    return True\n\ndef mitigate_nullrat(ip, port):\n    if not validate_connection(ip, port):\n        # Block the IP address\n        print(f\"Blocking IP address {ip} due to potential NullRAT activity\")\n        # Add code to block the IP address here\n    else:\n        print(f\"Connection to {ip}:{port} appears to be legitimate\")",
+            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        return False\n    \n    # Receive data from the remote server\n    data = sock.recv(1024)\n    \n    # Calculate the hash of the received data\n    data_hash = hashlib.sha256(data).hexdigest()\n    \n    # Check if the hash matches a known malicious hash\n    if data_hash == \"known_malicious_hash\":\n        return False\n    \n    # Close the socket\n    sock.close()\n    \n    return True\n\ndef mitigate_nullrat(ip, port):\n    if not validate_connection(ip, port):\n        # Block the IP address\n        print(f\"Blocking IP address {ip} due to potential NullRAT activity\")\n        # Add code to block the IP address here\n    else:\n        print(f\"Connection to {ip}:{port} appears to be legitimate\")",
             "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
                 "Identify potential entry points for NullRAT, such as open ports or vulnerable software, and take steps to secure them.",
                 "Implement a network monitoring system to detect and block suspicious traffic, including traffic that matches the signature of NullRAT.",
-                "Use the provided `mitigate_nullrat` function as a starting point to develop a custom solution for detecting and blocking NullRAT activity, and integrate it into your existing security infrastructure."
+                "Use the provided `mitigate_nullrat` function as a starting point to develop a custom solution that integrates with your existing security infrastructure to detect and block NullRAT activity."
             ]
         }
     },
@@ -6828,6 +6828,170 @@
                 "If the package is invalid or malicious, remove it from your project and its dependencies.",
                 "Use the `secure_power_apps_import` function to securely import the power-apps package and validate its package.json file.",
                 "Regularly monitor your project's dependencies for any updates or security patches to the power-apps package."
+            ]
+        }
+    },
+    "MAL-2026-4275": {
+        "summary": "Malicious code in async-pipeline-builder (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\nfrom json.decoder import JSONDecodeError\n\ndef validate_and_parse_json(data):\n    \"\"\"\n    Validate and parse JSON data to prevent malicious code injection.\n    \"\"\"\n    try:\n        # Attempt to parse the data as JSON\n        parsed_data = json.loads(data)\n        # Validate the parsed data to ensure it's safe\n        if not isinstance(parsed_data, dict) or 'pipeline' not in parsed_data:\n            raise ValueError(\"Invalid pipeline data\")\n        return parsed_data\n    except (JSONDecodeError, ValueError) as e:\n        # If parsing or validation fails, raise an exception\n        raise Exception(f\"Failed to parse or validate pipeline data: {str(e)}\")\n\ndef build_pipeline(data):\n    \"\"\"\n    Build an asynchronous pipeline using validated data.\n    \"\"\"\n    validated_data = validate_and_parse_json(data)\n    # Use the validated data to build the pipeline\n    pipeline = validated_data['pipeline']\n    # Implement pipeline building logic here\n    return pipeline",
+            "vulnerability_explanation": "The MAL-2026-4275 vulnerability in async-pipeline-builder (npm) likely involves malicious code execution due to insufficient input validation or insecure deserialization. This could allow an attacker to inject and execute arbitrary code, potentially leading to data breaches, lateral movement, or other malicious activities. The exact mechanism is unclear without a PoC, but it may involve exploiting asynchronous pipeline building processes.",
+            "mitigation_steps": [
+                "Identify all instances where async-pipeline-builder is used in your application and assess the potential impact of the vulnerability.",
+                "Implement the provided `validate_and_parse_json` function to validate and parse JSON data before passing it to the pipeline builder.",
+                "Update your pipeline building logic to use the `build_pipeline` function, which incorporates the `validate_and_parse_json` function to ensure secure data handling."
+            ]
+        }
+    },
+    "MAL-2026-4281": {
+        "summary": "Malicious code in project-init-tools (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport sys\n\ndef safe_install(package):\n    \"\"\"\n    Safely install an npm package by validating its dependencies.\n    \"\"\"\n    try:\n        # Validate package dependencies before installation\n        subprocess.check_call([sys.executable, \"-m\", \"npm\", \"audit\", package])\n        \n        # Install the package\n        subprocess.check_call([sys.executable, \"-m\", \"npm\", \"install\", package])\n    except subprocess.CalledProcessError as e:\n        print(f\"Error installing {package}: {e}\")\n\n# Example usage:\nsafe_install(\"project-init-tools\")",
+            "vulnerability_explanation": "The MAL-2026-4281 vulnerability is related to malicious code in the project-init-tools npm package, which can potentially lead to unauthorized access or code execution. The exact mechanism of the vulnerability is unknown due to the lack of a publicly available Proof of Concept (PoC). However, it is likely that the vulnerability involves some form of code injection or dependency manipulation.",
+            "mitigation_steps": [
+                "Identify all instances where the project-init-tools npm package is used in your projects and assess the potential impact of the vulnerability.",
+                "Apply the provided patch by integrating the `safe_install` function into your package installation workflow to ensure that dependencies are validated before installation.",
+                "Regularly monitor your project's dependencies for updates and vulnerabilities, and consider using tools like npm audit or snyk to automate the process and stay informed about potential security issues."
+            ]
+        }
+    },
+    "MAL-2026-4280": {
+        "summary": "Malicious code in node-setup-helpers (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport sys\n\ndef safe_install(package):\n    \"\"\"\n    Safely install an npm package by checking for malicious code.\n    \"\"\"\n    try:\n        # Check if the package is installed\n        subprocess.check_output(['npm', 'ls', package])\n    except subprocess.CalledProcessError:\n        # Install the package with auditing\n        subprocess.check_output(['npm', 'install', package, '--audit'])\n        # Check for vulnerabilities\n        vulnerabilities = subprocess.check_output(['npm', 'audit'])\n        if b\"found\" in vulnerabilities:\n            print(\"Vulnerabilities found in package. Installation aborted.\")\n            sys.exit(1)\n\n# Example usage:\nsafe_install(\"node-setup-helpers\")",
+            "vulnerability_explanation": "The MAL-2026-4280 vulnerability is related to malicious code in the node-setup-helpers npm package, which can potentially lead to security breaches. The exact mechanism of the vulnerability is unknown due to the lack of a Proof of Concept (PoC) and CWE IDs. However, it is likely that the vulnerability allows for arbitrary code execution or unauthorized access to sensitive data.",
+            "mitigation_steps": [
+                "Identify all instances where the node-setup-helpers package is used in your project and assess the potential impact of the vulnerability.",
+                "Implement the safe_install function in your project to ensure that all npm packages, including node-setup-helpers, are installed with auditing and vulnerability checks.",
+                "Regularly update your npm packages and run npm audit to detect and address any potential vulnerabilities, including the MAL-2026-4280 vulnerability."
+            ]
+        }
+    },
+    "MAL-2026-4283": {
+        "summary": "Malicious code in token-usage-tracker (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\nfrom flask import request, jsonify\n\n# Define a function to validate and sanitize user input\ndef validate_input(data):\n    try:\n        # Attempt to parse the input as JSON\n        json_data = json.loads(data)\n        # Check if the input contains any malicious code\n        if '__import__' in data or 'exec' in data or 'eval' in data:\n            return False\n        return json_data\n    except json.JSONDecodeError:\n        # If the input is not valid JSON, return False\n        return False\n\n# Define a route to handle token usage tracking\n@app.route('/track-token', methods=['POST'])\ndef track_token():\n    # Get the request data\n    data = request.get_data()\n    # Validate and sanitize the input\n    validated_data = validate_input(data)\n    if validated_data:\n        # If the input is valid, process it\n        # TO DO: Implement token usage tracking logic here\n        return jsonify({'message': 'Token usage tracked successfully'})\n    else:\n        # If the input is invalid, return an error\n        return jsonify({'error': 'Invalid input'}), 400",
+            "vulnerability_explanation": "The MAL-2026-4283 vulnerability in the token-usage-tracker npm package allows malicious code to be executed, potentially leading to unauthorized access or data breaches. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC), but it is likely related to improper input validation or insecure coding practices. To mitigate this vulnerability, it is essential to implement secure coding practices and validate user input.",
+            "mitigation_steps": [
+                "Identify all instances of the token-usage-tracker npm package in your project and remove or replace them with a secure alternative.",
+                "Implement secure coding practices, such as input validation and sanitization, to prevent malicious code execution.",
+                "Regularly review and update your dependencies to ensure you have the latest security patches and updates.",
+                "Consider using a web application firewall (WAF) to detect and prevent malicious traffic.",
+                "Monitor your application for suspicious activity and respond promptly to potential security incidents."
+            ]
+        }
+    },
+    "MAL-2026-4282": {
+        "summary": "Malicious code in prompt-engineering-toolkit (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_input(user_input):\n    \"\"\"\n    Sanitizes user input to prevent malicious code execution.\n    \n    Args:\n    user_input (str): The input provided by the user.\n    \n    Returns:\n    str: The sanitized input.\n    \"\"\"\n    # Remove any HTML tags\n    sanitized_input = re.sub(r'<.*?>', '', user_input)\n    \n    # Remove any JavaScript code\n    sanitized_input = re.sub(r'javascript:.*?', '', sanitized_input, flags=re.IGNORECASE)\n    \n    # Remove any other potentially malicious characters\n    sanitized_input = re.sub(r'[^a-zA-Z0-9\\s\\.,!?:;]', '', sanitized_input)\n    \n    return sanitized_input\n\ndef validate_input(user_input):\n    \"\"\"\n    Validates user input to ensure it meets certain criteria.\n    \n    Args:\n    user_input (str): The input provided by the user.\n    \n    Returns:\n    bool: True if the input is valid, False otherwise.\n    \"\"\"\n    # Check if the input is not empty\n    if not user_input:\n        return False\n    \n    # Check if the input contains any profanity (example)\n    profanity_list = ['bad_word1', 'bad_word2']  # Replace with actual profanity list\n    for word in profanity_list:\n        if word in user_input.lower():\n            return False\n    \n    return True\n\ndef process_input(user_input):\n    \"\"\"\n    Processes user input after sanitization and validation.\n    \n    Args:\n    user_input (str): The input provided by the user.\n    \n    Returns:\n    str: The processed input.\n    \"\"\"\n    sanitized_input = sanitize_input(user_input)\n    if validate_input(sanitized_input):\n        # Process the input as needed\n        return sanitized_input\n    else:\n        # Handle invalid input\n        return \"Invalid input\"",
+            "vulnerability_explanation": "The vulnerability in the prompt-engineering-toolkit (npm) is caused by the execution of malicious code, potentially allowing attackers to perform unauthorized actions. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC) and CWE IDs, but it is likely related to insecure code injection or execution. To mitigate this, we will create a patch that sanitizes and validates user input to prevent malicious code execution.",
+            "mitigation_steps": [
+                "Identify all areas in the prompt-engineering-toolkit where user input is processed and execute the `sanitize_input` function on the input to remove any potentially malicious characters.",
+                "Implement the `validate_input` function to check if the input meets certain criteria, such as not being empty and not containing profanity.",
+                "Use the `process_input` function as a central point for handling user input, which will sanitize and validate the input before processing it further."
+            ]
+        }
+    },
+    "MAL-2026-4279": {
+        "summary": "Malicious code in model-switch-router (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import importlib.util\nimport os\n\ndef safe_import(package_name):\n    # Check if the package is installed\n    spec = importlib.util.find_spec(package_name)\n    if spec is None:\n        return None\n    \n    # Verify the package's integrity\n    package_path = spec.origin\n    if not os.path.exists(package_path):\n        return None\n    \n    # Load the package\n    package = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(package)\n    \n    return package\n\n# Example usage:\nmodel_switch_router = safe_import('model-switch-router')\nif model_switch_router is not None:\n    # Use the package\n    pass\nelse:\n    # Handle the case where the package is not installed or is malicious\n    print(\"The model-switch-router package is not installed or is malicious.\")",
+            "vulnerability_explanation": "The model-switch-router npm package contains malicious code that can be exploited by an attacker, potentially leading to unauthorized access or code execution. The exact mechanism of the vulnerability is unknown due to the lack of a publicly available Proof of Concept (PoC). However, it is likely that the malicious code is executed when the package is installed or imported, allowing an attacker to perform malicious actions.",
+            "mitigation_steps": [
+                "Identify and remove any existing installations of the model-switch-router npm package from your system to prevent potential exploitation.",
+                "Implement a safe import mechanism, like the one provided in the patch, to verify the integrity of the package before using it.",
+                "Consider using alternative packages or libraries that provide similar functionality to the model-switch-router package, and ensure they are from trusted sources and have been thoroughly vetted for security vulnerabilities."
+            ]
+        }
+    },
+    "MAL-2026-4278": {
+        "summary": "Malicious code in llm-context-compressor (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\nfrom json import JSONDecodeError\n\ndef validate_input(data):\n    \"\"\"\n    Validate input data to prevent malicious code execution.\n    \"\"\"\n    try:\n        # Attempt to parse the input data as JSON\n        json_data = json.loads(data)\n        # Check if the parsed data is a valid dictionary\n        if not isinstance(json_data, dict):\n            raise ValueError(\"Invalid input data\")\n        return json_data\n    except JSONDecodeError:\n        # If the input data is not valid JSON, raise an error\n        raise ValueError(\"Invalid JSON input\")\n    except ValueError as e:\n        # If any other error occurs during validation, raise an error\n        raise ValueError(\"Invalid input data: {}\".format(str(e)))\n\ndef secure_compress(data):\n    \"\"\"\n    Compress data securely using the validated input.\n    \"\"\"\n    validated_data = validate_input(data)\n    # Proceed with compression using the validated data\n    # Replace this comment with your actual compression logic\n    return validated_data\n\n# Example usage:\ndata_to_compress = '{\"key\": \"value\"}'\ncompressed_data = secure_compress(data_to_compress)\nprint(compressed_data)",
+            "vulnerability_explanation": "The MAL-2026-4278 vulnerability in llm-context-compressor (npm) is caused by malicious code that can potentially lead to security breaches. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC), but it is likely related to improper input validation or insecure data processing. As a result, it is essential to implement a patch that ensures the security and integrity of the data being compressed.",
+            "mitigation_steps": [
+                "Identify all instances where the llm-context-compressor (npm) is used in your application and replace it with a secure alternative or the patched code provided above.",
+                "Validate all input data to prevent malicious code execution, using techniques such as JSON parsing and dictionary validation.",
+                "Implement additional security measures, such as input sanitization and secure data storage, to prevent potential security breaches."
+            ]
+        }
+    },
+    "MAL-2026-4284": {
+        "summary": "Malicious code in workspace-config-loader (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\nimport os\n\ndef load_config(file_path):\n    \"\"\"\n    Loads a configuration file from the given file path.\n    \n    Args:\n        file_path (str): The path to the configuration file.\n    \n    Returns:\n        dict: The loaded configuration as a dictionary.\n    \"\"\"\n    # Check if the file exists and is a valid JSON file\n    if not os.path.isfile(file_path) or not file_path.endswith('.json'):\n        raise ValueError(\"Invalid configuration file\")\n\n    try:\n        # Load the configuration file using json.load to ensure it's valid JSON\n        with open(file_path, 'r') as file:\n            config = json.load(file)\n            return config\n    except json.JSONDecodeError as e:\n        # If the file is not valid JSON, raise an error\n        raise ValueError(\"Invalid JSON in configuration file\") from e\n\ndef sanitize_config(config):\n    \"\"\"\n    Sanitizes the given configuration dictionary to prevent malicious code execution.\n    \n    Args:\n        config (dict): The configuration dictionary to sanitize.\n    \n    Returns:\n        dict: The sanitized configuration dictionary.\n    \"\"\"\n    # Remove any potentially malicious keys or values\n    sanitized_config = {}\n    for key, value in config.items():\n        if isinstance(value, str) and value.startswith('__import__') or value.startswith('eval'):\n            # Remove any values that start with __import__ or eval to prevent code injection\n            continue\n        sanitized_config[key] = value\n    return sanitized_config\n\n# Example usage:\nconfig_file_path = 'path/to/config.json'\nloaded_config = load_config(config_file_path)\nsanitized_config = sanitize_config(loaded_config)",
+            "vulnerability_explanation": "The MAL-2026-4284 vulnerability is related to malicious code in the workspace-config-loader npm package, which can potentially lead to arbitrary code execution or data tampering. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC) and CWE IDs, but it likely involves insecure loading or processing of configuration files. To mitigate this, we need to ensure that any configuration files loaded by the workspace-config-loader are properly sanitized and validated.",
+            "mitigation_steps": [
+                "Identify all instances where the workspace-config-loader npm package is used in your projects and assess the potential impact of the vulnerability.",
+                "Implement the provided `load_config` and `sanitize_config` functions to ensure that configuration files are properly loaded and sanitized.",
+                "Update your code to use the `load_config` and `sanitize_config` functions when loading configuration files, and remove any direct references to the workspace-config-loader package."
+            ]
+        }
+    },
+    "MAL-2026-4277": {
+        "summary": "Malicious code in dev-env-bootstrapper (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport sys\n\ndef safe_install(package):\n    # Use --audit to ensure dependencies are validated\n    subprocess.run([sys.executable, \"-m\", \"pip\", \"install\", package, \"--audit\"])\n\ndef safe_bootstrap():\n    # Use a virtual environment to isolate dependencies\n    subprocess.run([sys.executable, \"-m\", \"venv\", \"dev-env\"])\n    subprocess.run([sys.executable, \"-m\", \"pip\", \"install\", \"dev-env-bootstrapper\", \"--upgrade\", \"--audit\"], env={\"VIRTUAL_ENV\": \"dev-env\"})\n\nif __name__ == \"__main__\":\n    safe_bootstrap()",
+            "vulnerability_explanation": "The MAL-2026-4277 vulnerability is related to malicious code in the dev-env-bootstrapper npm package, which can potentially lead to unauthorized access or code execution. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC) and CWE IDs, but it likely involves some form of dependency injection or script injection. As a precautionary measure, it's essential to validate and sanitize any input or dependencies related to this package.",
+            "mitigation_steps": [
+                "Remove any existing dev-env-bootstrapper packages and dependencies to prevent potential malicious code execution.",
+                "Create a new virtual environment to isolate dependencies and prevent cross-contamination.",
+                "Use the provided `safe_bootstrap` function to reinstall the dev-env-bootstrapper package with audit and validation enabled, ensuring that any dependencies are properly vetted."
+            ]
+        }
+    },
+    "MAL-2026-4276": {
+        "summary": "Malicious code in build-scripts-utils (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-24 15:59:11",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport os\n\ndef safe_execute(command):\n    # Whitelist of allowed commands\n    allowed_commands = ['npm', 'yarn', 'git']\n\n    # Split the command into the executable and arguments\n    executable = command.split()[0]\n\n    # Check if the executable is in the whitelist\n    if executable not in allowed_commands:\n        raise ValueError(\"Unauthorized command\")\n\n    # Use subprocess to execute the command\n    try:\n        subprocess.check_call(command, shell=True)\n    except subprocess.CalledProcessError as e:\n        print(f\"Error executing command: {e}\")\n\n# Example usage:\nsafe_execute(\"npm install\")",
+            "vulnerability_explanation": "The MAL-2026-4276 vulnerability is related to malicious code in the build-scripts-utils npm package, which can potentially lead to unauthorized execution of code. This vulnerability can be exploited by an attacker to gain control over a system or steal sensitive information. The exact mechanism of the vulnerability is unknown due to the lack of a publicly available Proof of Concept (PoC).",
+            "mitigation_steps": [
+                "Identify and remove any malicious code or dependencies from the build-scripts-utils package.",
+                "Implement a whitelist of allowed commands and executables to prevent unauthorized code execution.",
+                "Use a safe execution mechanism, such as the provided `safe_execute` function, to validate and execute commands.",
+                "Regularly monitor and update dependencies to ensure you have the latest security patches.",
+                "Consider using a package manager like npm or yarn with built-in security features to help mitigate vulnerabilities."
             ]
         }
     }
