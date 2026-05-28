@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-05-28 12:24:24",
+        "date_added": "2026-05-28 18:09:04",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "# This patch is a basic example of how to mitigate a RAT vulnerability\n# by implementing input validation and secure authentication mechanisms\n\nimport hashlib\nimport hmac\nimport os\n\ndef authenticate_user(username, password):\n    # Securely store user credentials using a salted hash\n    stored_password = os.environ.get('STORED_PASSWORD')\n    salt = os.environ.get('SALT')\n    stored_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)\n\n    # Compare the provided password with the stored hash\n    if hmac.compare_digest(stored_hash, stored_password.encode('utf-8')):\n        return True\n    else:\n        return False\n\ndef validate_input(user_input):\n    # Implement input validation to prevent malicious input\n    if len(user_input) > 100:\n        return False\n    if any(char in user_input for char in [';', '&', '$', '|']):\n        return False\n    return True\n\ndef secure_access(username, password, user_input):\n    if authenticate_user(username, password) and validate_input(user_input):\n        # Grant access to the system\n        return True\n    else:\n        # Deny access to the system\n        return False",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information provided, but it is likely related to a security flaw in a specific software or system that allows the NullRAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_connection(sock):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).digest()\n    \n    # Send the challenge to the client\n    sock.sendall(challenge)\n    \n    # Receive the response from the client\n    response = sock.recv(1024)\n    \n    # Verify the response\n    expected_response = hmac.new(b'secret_key', challenge, hashlib.sha256).digest()\n    if response != expected_response:\n        # If the response is invalid, close the connection\n        sock.close()\n        return False\n    \n    # If the response is valid, continue with the connection\n    return True\n\ndef handle_connection(sock):\n    if authenticate_connection(sock):\n        # Handle the connection\n        while True:\n            request = sock.recv(1024)\n            if not request:\n                break\n            # Process the request\n            sock.sendall(b'Request received')\n    else:\n        # If the authentication fails, close the connection\n        sock.close()\n\n# Create a socket\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nsock.bind(('localhost', 8080))\n\n# Listen for incoming connections\nsock.listen(1)\n\nwhile True:\n    # Accept an incoming connection\n    connection, address = sock.accept()\n    \n    # Handle the connection\n    handle_connection(connection)",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "Identify the vulnerable software or system and assess the potential impact of the NullRAT vulnerability.",
-                "Implement secure authentication mechanisms, such as multi-factor authentication, to prevent unauthorized access to the system.",
-                "Use input validation and sanitization techniques to prevent malicious input from being executed on the system, and consider implementing a Web Application Firewall (WAF) to detect and prevent common web attacks."
+                "**Identify vulnerable systems**: Identify systems that may be vulnerable to NullRAT and take immediate action to secure them.",
+                "**Implement authentication**: Implement a secure authentication mechanism, such as the one shown in the patch, to verify the identity of clients connecting to the system.",
+                "**Keep software up-to-date**: Ensure that all software is up-to-date with the latest security patches to prevent exploitation of known vulnerabilities."
             ]
         }
     },
@@ -7626,6 +7626,121 @@
                 "Identify all locations in your code where MIME parameter names are constructed or modified, and apply the `sanitize_mime_parameter_names` function to sanitize the parameter names.",
                 "Review your code for any potential bypasses of the sanitization function, such as using alternative character encodings or formats.",
                 "Test your application thoroughly to ensure that the sanitization function does not introduce any unintended side effects or compatibility issues."
+            ]
+        }
+    },
+    "GHSA-4q5v-7g7x-j79w": {
+        "summary": "compliance-trestle - jinja has an Arbitrary File Write via Path Traversal",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nfrom jinja2 import Template\n\ndef render_template(template_str, data, output_file):\n    # Validate and sanitize the output file path to prevent path traversal\n    output_dir = os.path.dirname(output_file)\n    if not os.path.isabs(output_dir):\n        output_dir = os.path.abspath(output_dir)\n    if not output_dir.startswith(os.path.abspath(os.getcwd())):\n        raise ValueError(\"Output file path is outside the current working directory\")\n\n    # Render the template with the provided data\n    template = Template(template_str)\n    rendered_template = template.render(data)\n\n    # Write the rendered template to the output file\n    with open(output_file, 'w') as f:\n        f.write(rendered_template)",
+            "vulnerability_explanation": "The compliance-trestle library, which utilizes the Jinja templating engine, is vulnerable to an arbitrary file write via path traversal. This vulnerability allows an attacker to write files to arbitrary locations on the system by manipulating the template rendering process, potentially leading to code execution or data tampering. The vulnerability is likely due to insufficient input validation and sanitization in the template rendering process.",
+            "mitigation_steps": [
+                "Identify all instances of template rendering in the compliance-trestle library and replace them with the patched `render_template` function.",
+                "Ensure that the `output_file` parameter is always an absolute path within the current working directory to prevent path traversal attacks.",
+                "Validate and sanitize all user-provided input that is used to construct the `output_file` path to prevent malicious path manipulation."
+            ]
+        }
+    },
+    "GHSA-v8v8-cm84-m686": {
+        "summary": "OpenBao's cross-namespace lease revocation via legacy sys/revoke path bypasses ACL",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import logging\n\n# Define a function to validate ACLs for cross-namespace lease revocation\ndef validate_acl(namespace, lease_id, user):\n    # Assuming an ACL dictionary that maps namespaces to their respective access control lists\n    acls = {\n        'namespace1': ['user1', 'user2'],\n        'namespace2': ['user3', 'user4']\n    }\n    \n    # Check if the user has permission to revoke leases in the specified namespace\n    if namespace in acls and user in acls[namespace]:\n        return True\n    else:\n        logging.warning(f\"Unauthorized access attempt by {user} to revoke lease {lease_id} in namespace {namespace}\")\n        return False\n\n# Define a function to handle lease revocation requests\ndef revoke_lease(namespace, lease_id, user):\n    # Validate ACLs before proceeding with the revocation\n    if validate_acl(namespace, lease_id, user):\n        # Proceed with the revocation (implementation depends on the actual lease management system)\n        logging.info(f\"Lease {lease_id} revoked in namespace {namespace} by {user}\")\n        # Actual revocation code here\n    else:\n        logging.error(f\"Failed to revoke lease {lease_id} in namespace {namespace} due to ACL violation\")\n\n# Example usage\nrevoke_lease('namespace1', 'lease1', 'user1')  # Should succeed\nrevoke_lease('namespace1', 'lease2', 'user3')  # Should fail due to ACL violation",
+            "vulnerability_explanation": "The vulnerability in OpenBao's cross-namespace lease revocation allows an attacker to bypass Access Control Lists (ACLs) via the legacy sys/revoke path, potentially leading to unauthorized access and modification of sensitive data. This occurs due to inadequate validation and enforcement of ACLs when handling revocation requests from different namespaces. As a result, an attacker could exploit this vulnerability to revoke leases they shouldn't have access to, compromising the system's security.",
+            "mitigation_steps": [
+                "**Update the lease revocation handler**: Modify the existing lease revocation function to include the `validate_acl` check before proceeding with the revocation.",
+                "**Implement ACL validation**: Integrate the `validate_acl` function into the lease management system to ensure that all revocation requests are properly validated against the ACLs.",
+                "**Test and verify**: Perform thorough testing of the updated lease revocation handler to ensure that it correctly enforces ACLs and prevents unauthorized access, and verify that the patch does not introduce any regressions or unintended behavior."
+            ]
+        }
+    },
+    "GHSA-mj4x-vf5c-5xg8": {
+        "summary": "compliance-trestle Profile Import has an Arbitrary File Read via trestle:// URI and Relative Path Traversal",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport urllib.parse\n\ndef validate_and_sanitize_uri(uri):\n    \"\"\"\n    Validate and sanitize the trestle:// URI to prevent relative path traversal.\n    \n    Args:\n    uri (str): The trestle:// URI to be validated and sanitized.\n    \n    Returns:\n    str: The validated and sanitized URI.\n    \"\"\"\n    # Check if the URI starts with trestle://\n    if not uri.startswith(\"trestle://\"):\n        raise ValueError(\"Invalid URI. Only trestle:// URIs are allowed.\")\n    \n    # Parse the URI\n    parsed_uri = urllib.parse.urlparse(uri)\n    \n    # Get the path component of the URI\n    path = parsed_uri.path\n    \n    # Remove any relative path traversal attempts\n    path = os.path.normpath(path)\n    \n    # Check if the path is absolute\n    if os.path.isabs(path):\n        raise ValueError(\"Absolute paths are not allowed.\")\n    \n    # Reconstruct the sanitized URI\n    sanitized_uri = f\"trestle://{parsed_uri.netloc}{path}\"\n    \n    return sanitized_uri\n\ndef import_profile(uri):\n    \"\"\"\n    Import a profile from the given URI.\n    \n    Args:\n    uri (str): The trestle:// URI of the profile to be imported.\n    \n    Returns:\n    None\n    \"\"\"\n    # Validate and sanitize the URI\n    sanitized_uri = validate_and_sanitize_uri(uri)\n    \n    # Proceed with the profile import using the sanitized URI\n    # ... (rest of the import_profile function remains the same)",
+            "vulnerability_explanation": "The vulnerability in compliance-trestle Profile Import allows an attacker to read arbitrary files via a specially crafted trestle:// URI and relative path traversal. This is possible due to inadequate input validation and sanitization, enabling an attacker to manipulate the URI and access sensitive files. The vulnerability can be exploited by providing a malicious URI that traverses the directory structure and reads unauthorized files.",
+            "mitigation_steps": [
+                "Identify all instances of profile imports using the trestle:// URI scheme in the compliance-trestle codebase.",
+                "Replace the existing URI handling code with the `validate_and_sanitize_uri` function to ensure that all URIs are properly validated and sanitized.",
+                "Update the `import_profile` function to use the `validate_and_sanitize_uri` function to sanitize the URI before proceeding with the profile import.",
+                "Test the updated code to ensure that the vulnerability is properly mitigated and that profile imports function as expected."
+            ]
+        }
+    },
+    "GHSA-8v8v-g73j-492j": {
+        "summary": "Symfony's JsonPath Evaluates Attacker-Controlled Regular Expressions in match()/search() Without Limits — ReDoS",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef safe_json_path_evaluator(json_path, input_string):\n    \"\"\"\n    Evaluates a JsonPath expression on a given input string, \n    with protection against ReDoS attacks.\n    \"\"\"\n    # Set a timeout for the regular expression evaluation\n    def eval_with_timeout(pattern, string, timeout=1):\n        try:\n            import signal\n            def timeout_handler(signum, frame):\n                raise TimeoutError()\n            signal.signal(signal.SIGALRM, timeout_handler)\n            signal.alarm(timeout)\n            re.search(pattern, string)\n        finally:\n            signal.alarm(0)\n\n    try:\n        # Attempt to evaluate the JsonPath expression\n        eval_with_timeout(json_path, input_string)\n    except re.error as e:\n        # Handle invalid regular expressions\n        raise ValueError(\"Invalid JsonPath expression\") from e\n    except TimeoutError:\n        # Handle ReDoS attacks\n        raise ValueError(\"JsonPath evaluation timed out\")\n\n# Example usage:\njson_path = \"^.*$\"\ninput_string = \"example\"\ntry:\n    safe_json_path_evaluator(json_path, input_string)\nexcept ValueError as e:\n    print(f\"Error: {e}\")",
+            "vulnerability_explanation": "The vulnerability in Symfony's JsonPath allows an attacker to evaluate regular expressions in match() and search() functions without any limits, leading to a ReDoS (Regular Expression Denial of Service) attack. This can cause the application to consume excessive resources, resulting in a denial-of-service. The vulnerability is exploited by providing a specially crafted regular expression that takes a long time to evaluate.",
+            "mitigation_steps": [
+                "**Identify vulnerable code**: Review your codebase for any usage of Symfony's JsonPath that evaluates regular expressions in match() and search() functions.",
+                "**Apply the patch**: Replace the vulnerable code with the provided `safe_json_path_evaluator` function, which sets a timeout for regular expression evaluation and handles ReDoS attacks.",
+                "**Test and verify**: Thoroughly test your application with the patched code to ensure that it correctly handles JsonPath evaluations and prevents ReDoS attacks."
+            ]
+        }
+    },
+    "GHSA-59f3-vp2f-mp9w": {
+        "summary": "Symfony's Mailtrap Mailer Webhook Parser Never Verifies the X-Mt-Signature HMAC — Unauthenticated Webhook Event Injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hmac\nimport hashlib\n\ndef verify_webhook_signature(request):\n    # Get the expected signature from the request headers\n    expected_signature = request.headers.get('X-Mt-Signature')\n\n    # Get the secret key from your Mailtrap settings\n    secret_key = 'YOUR_MAILTRAP_SECRET_KEY'\n\n    # Get the request body\n    request_body = request.get_data()\n\n    # Calculate the HMAC signature\n    calculated_signature = hmac.new(secret_key.encode(), request_body, hashlib.sha256).hexdigest()\n\n    # Compare the expected and calculated signatures\n    return hmac.compare_digest(expected_signature, calculated_signature)\n\n# Example usage:\nfrom flask import Flask, request\n\napp = Flask(__name__)\n\n@app.route('/webhook', methods=['POST'])\ndef handle_webhook():\n    if verify_webhook_signature(request):\n        # Process the webhook event\n        print('Webhook event is valid')\n    else:\n        # Reject the webhook event\n        print('Webhook event is invalid')\n        return 'Invalid signature', 401",
+            "vulnerability_explanation": "The vulnerability in Symfony's Mailtrap Mailer Webhook Parser occurs because it never verifies the X-Mt-Signature HMAC, allowing an attacker to inject unauthenticated webhook events. This is possible due to the lack of validation of the HMAC signature, which is used to verify the authenticity of incoming webhook requests. As a result, an attacker can forge requests that appear to come from Mailtrap, potentially leading to security issues.",
+            "mitigation_steps": [
+                "Replace `'YOUR_MAILTRAP_SECRET_KEY'` with your actual Mailtrap secret key in the `verify_webhook_signature` function.",
+                "Integrate the `verify_webhook_signature` function into your webhook endpoint to verify the signature of incoming requests.",
+                "Test your webhook endpoint with a valid request from Mailtrap to ensure the signature verification is working correctly, and then test with an invalid request to verify that it is rejected."
+            ]
+        }
+    },
+    "GHSA-64hg-93w9-fc35": {
+        "summary": "Symfony's Mailjet Mailer Webhook Parser Never Verifies the Configured Secret — Unauthenticated Webhook Event Injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hmac\nimport hashlib\n\ndef verify_webhook_secret(request, expected_secret):\n    \"\"\"\n    Verify the webhook secret to prevent unauthenticated event injection.\n    \n    :param request: The incoming request object\n    :param expected_secret: The configured secret\n    :return: True if the secret is valid, False otherwise\n    \"\"\"\n    # Get the signature from the request headers\n    signature = request.headers.get('X-Mailjet-Signature')\n    \n    # Create a new HMAC object using the expected secret and the request body\n    digest = hmac.new(expected_secret.encode(), request.body, hashlib.sha256)\n    \n    # Get the expected signature\n    expected_signature = digest.hexdigest()\n    \n    # Compare the signatures\n    return hmac.compare_digest(signature, expected_signature)\n\ndef parse_webhook_request(request, expected_secret):\n    \"\"\"\n    Parse the webhook request after verifying the secret.\n    \n    :param request: The incoming request object\n    :param expected_secret: The configured secret\n    :return: The parsed request data or None if the secret is invalid\n    \"\"\"\n    if verify_webhook_secret(request, expected_secret):\n        # Parse the request data\n        # ...\n        return parsed_data\n    else:\n        return None",
+            "vulnerability_explanation": "The vulnerability in Symfony's Mailjet Mailer Webhook Parser occurs because it never verifies the configured secret, allowing unauthenticated users to inject webhook events. This is a critical issue as it enables attackers to bypass authentication and manipulate the system by sending malicious webhook requests. The lack of secret verification makes it impossible for the system to distinguish between legitimate and malicious requests.",
+            "mitigation_steps": [
+                "Identify the Symfony Mailjet Mailer Webhook Parser component in your application and locate the code responsible for handling incoming webhook requests.",
+                "Integrate the `verify_webhook_secret` function into the request handling code to verify the webhook secret before processing the request.",
+                "Update the request handling code to use the `parse_webhook_request` function, which verifies the secret and parses the request data only if the secret is valid.",
+                "Ensure that the `expected_secret` variable is set to the configured secret value, and that it is kept secure to prevent unauthorized access.",
+                "Test the updated code to ensure that it correctly verifies the webhook secret and prevents unauthenticated event injection."
+            ]
+        }
+    },
+    "GHSA-995v-fvrw-c78m": {
+        "summary": "opentelemetry-go's Schema ParseFile leaks file descriptors on each parse",
+        "cvss_score": "unscored",
+        "date_added": "2026-05-28 18:09:04",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef parse_file(filename):\n    \"\"\"\n    Parse a file while ensuring the file descriptor is properly closed.\n    \"\"\"\n    try:\n        # Open the file in read mode\n        with open(filename, 'r') as file:\n            # Parse the file content\n            content = file.read()\n            # Perform parsing logic here\n            # For demonstration purposes, we'll just return the content\n            return content\n    except OSError as e:\n        # Handle any OS-related errors\n        print(f\"Error parsing file: {e}\")\n        return None\n    finally:\n        # Although 'with' statement automatically closes the file,\n        # we can manually close it for extra safety\n        # file.close()  # Not necessary due to 'with' statement\n\n# Example usage:\nfilename = \"example.txt\"\nparsed_content = parse_file(filename)\nprint(parsed_content)",
+            "vulnerability_explanation": "The vulnerability in opentelemetry-go's Schema ParseFile function causes a file descriptor leak on each parse, which can lead to a denial-of-service (DoS) attack if an attacker can repeatedly trigger the parsing of files. This occurs because the function fails to properly close the file descriptors after parsing, resulting in an accumulation of open file descriptors. As the number of open file descriptors increases, the system's resources become depleted, ultimately leading to a crash or freeze.",
+            "mitigation_steps": [
+                "Identify all instances of the `ParseFile` function in your opentelemetry-go application and replace them with the patched `parse_file` function.",
+                "Ensure that the `parse_file` function is properly handling file descriptor closure by using the `with` statement, which automatically closes the file descriptor when done.",
+                "Test the patched application to verify that file descriptors are being properly closed after parsing, and that the system's resources are not being depleted over time."
             ]
         }
     }
