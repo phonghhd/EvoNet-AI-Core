@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-04 09:52:03",
+        "date_added": "2026-06-04 14:52:53",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(connection):\n    # Generate a random challenge\n    challenge = os.urandom(32)\n    \n    # Send the challenge to the client\n    connection.send(challenge)\n    \n    # Receive the response from the client\n    response = connection.recv(32)\n    \n    # Calculate the expected response using a shared secret key\n    expected_response = hmac.new(b'shared_secret_key', challenge, hashlib.sha256).digest()\n    \n    # Check if the response matches the expected response\n    if response == expected_response:\n        return True\n    else:\n        return False\n\ndef mitigate_nullrat_vulnerability(connection):\n    if authenticate_connection(connection):\n        # Connection is authenticated, proceed with normal operations\n        print(\"Connection authenticated successfully\")\n    else:\n        # Connection is not authenticated, terminate the connection\n        print(\"Connection not authenticated, terminating connection\")\n        connection.close()",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access and control of a system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability. This vulnerability can be exploited by an attacker to gain unauthorized access to the system, steal sensitive information, or perform other malicious activities.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Expected secret key\n    secret_key = b\"your_secret_key_here\"\n\n    # Receive the client's message\n    client_message = client_socket.recv(1024)\n\n    # Calculate the expected HMAC\n    expected_hmac = hmac.new(secret_key, client_message, hashlib.sha256).digest()\n\n    # Receive the client's HMAC\n    client_hmac = client_socket.recv(32)\n\n    # Check if the HMACs match\n    if expected_hmac == client_hmac:\n        return True\n    else:\n        return False\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Handle authenticated client\n        print(\"Client authenticated successfully\")\n    else:\n        # Handle unauthenticated client\n        print(\"Client authentication failed\")\n        client_socket.close()\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(1)\n\nprint(\"Server listening on port 8080\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n\n    # Handle the client\n    handle_client(client_socket)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a security flaw in a specific software or system that allows the NullRAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT tool, which is hosted on a publicly available GitHub repository.",
             "mitigation_steps": [
-                "Identify the systems and software that are potentially vulnerable to the NullRAT malware and prioritize their mitigation.",
-                "Implement a secure authentication mechanism, such as the one provided in the patch code, to verify the identity of clients and servers before establishing a connection.",
-                "Keep all software and systems up to date with the latest security patches and updates to prevent exploitation of known vulnerabilities, and consider implementing additional security measures such as firewalls, intrusion detection systems, and antivirus software to detect and prevent malware infections."
+                "**Identify vulnerable systems**: Identify systems that may be vulnerable to the NullRAT tool by reviewing network logs and system access records.",
+                "**Implement authentication mechanisms**: Implement robust authentication mechanisms, such as HMAC-based authentication, to prevent unauthorized access to systems.",
+                "**Keep software up-to-date**: Ensure that all software and systems are up-to-date with the latest security patches to prevent exploitation of known vulnerabilities."
             ]
         }
     },
@@ -11790,6 +11790,22 @@
                 "Identify the specific component or module affected by the GHSA-qcpv-m3ww-37pw vulnerability and assess its impact on your system or application.",
                 "Implement input validation mechanisms, such as regular expressions, to ensure that user-provided data conforms to expected formats and patterns.",
                 "Develop and apply secure data handling practices, including proper sanitization and encoding of user-input data, to prevent potential security vulnerabilities."
+            ]
+        }
+    },
+    "OSV-2022-714": {
+        "summary": "Heap-buffer-overflow in dynapi_set_helper",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-04 14:52:53",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def dynapi_set_helper(buffer, size, data):\n    # Check if the data size exceeds the buffer size to prevent heap-buffer-overflow\n    if len(data) > size:\n        raise ValueError(\"Data size exceeds buffer size\")\n    \n    # Use slicing to ensure we don't exceed the buffer size\n    buffer[:len(data)] = data\n    \n    # Return the updated buffer\n    return buffer\n\n# Example usage:\nbuffer = bytearray(10)  # Allocate a buffer of size 10\ndata = b\"HelloWorld\"  # Data to be written to the buffer\ntry:\n    updated_buffer = dynapi_set_helper(buffer, len(buffer), data)\n    print(updated_buffer)\nexcept ValueError as e:\n    print(e)",
+            "vulnerability_explanation": "The OSV-2022-714 vulnerability is a heap-buffer-overflow issue in the `dynapi_set_helper` function, which can be exploited to potentially execute arbitrary code or cause a denial-of-service. This occurs when the function attempts to access memory beyond the bounds of a heap-allocated buffer. The exact mechanism is unknown due to the lack of a publicly available proof-of-concept (PoC), but it is likely related to insufficient bounds checking or incorrect buffer sizing.",
+            "mitigation_steps": [
+                "Identify all instances of the `dynapi_set_helper` function in your codebase and replace them with the patched version.",
+                "Verify that all buffer sizes are correctly calculated and passed to the `dynapi_set_helper` function to prevent potential overflows.",
+                "Test your application thoroughly to ensure the patch does not introduce any regressions or unexpected behavior, paying particular attention to scenarios where large or malformed input data is processed."
             ]
         }
     }
