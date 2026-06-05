@@ -2,17 +2,19 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-05 14:44:02",
+        "date_added": "2026-06-05 17:13:17",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_connection(sock):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).digest()\n    \n    # Send the challenge to the client\n    sock.sendall(challenge)\n    \n    # Receive the response from the client\n    response = sock.recv(1024)\n    \n    # Verify the response\n    expected_response = hmac.new(b'secret_key', challenge, hashlib.sha256).digest()\n    if response != expected_response:\n        # If the response is invalid, close the connection\n        sock.close()\n        return False\n    \n    # If the response is valid, proceed with the connection\n    return True\n\ndef handle_connection(sock):\n    if authenticate_connection(sock):\n        # Handle the authenticated connection\n        while True:\n            request = sock.recv(1024)\n            if not request:\n                break\n            # Process the request\n            response = b'OK'\n            sock.sendall(response)\n    else:\n        # Handle the unauthenticated connection\n        sock.close()\n\n# Create a socket\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nsock.bind(('localhost', 8080))\n\n# Listen for incoming connections\nsock.listen(1)\n\nwhile True:\n    # Accept an incoming connection\n    conn, addr = sock.accept()\n    \n    # Handle the connection\n    handle_connection(conn)",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a security flaw in a specific software or system that allows the NullRAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT tool, which is hosted on a publicly available GitHub repository.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef verify_signature(data, expected_signature):\n    # Generate a secret key for HMAC\n    secret_key = os.environ.get('SECRET_KEY')\n    \n    # Calculate the HMAC signature\n    calculated_signature = hmac.new(secret_key.encode(), data.encode(), hashlib.sha256).hexdigest()\n    \n    # Compare the calculated signature with the expected signature\n    return calculated_signature == expected_signature\n\ndef secure_data_transfer(data):\n    # Generate a random nonce\n    nonce = os.urandom(32)\n    \n    # Calculate the HMAC signature\n    signature = hmac.new(nonce, data.encode(), hashlib.sha256).hexdigest()\n    \n    # Verify the signature before processing the data\n    if verify_signature(data, signature):\n        # Process the data\n        return True\n    else:\n        # Reject the data\n        return False",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information provided, but it is likely related to a vulnerability in a specific software or system that allows the NullRAT to gain unauthorized access.",
             "mitigation_steps": [
-                "Identify the vulnerable software or system that is being exploited by the NullRAT tool and ensure it is up-to-date with the latest security patches.",
-                "Implement a secure authentication mechanism, such as the one shown in the patch code, to verify the identity of incoming connections and prevent unauthorized access.",
-                "Monitor the system for any suspicious activity and take immediate action if any signs of a NullRAT infection are detected, such as unusual network traffic or unexpected changes to system files."
+                "Identify the vulnerable software or system that is being targeted by the NullRAT and ensure it is up-to-date with the latest security patches.",
+                "Implement a secure authentication and authorization mechanism to prevent unauthorized access to the system, such as using HMAC signatures to verify the integrity of data transfers.",
+                "Use a Web Application Firewall (WAF) or an Intrusion Detection System (IDS) to detect and block malicious traffic, including NullRAT communications.",
+                "Monitor system logs and network traffic for suspicious activity and respond quickly to potential security incidents.",
+                "Consider using a sandboxing or containerization solution to isolate sensitive systems and data from potential attacks."
             ]
         }
     },
@@ -12465,6 +12467,250 @@
                 "**Identify Vulnerable Code**: Review the Appsmith application code to identify areas where user input is handled without proper validation and sanitization.",
                 "**Apply the Patch**: Replace the vulnerable code with the provided patch, ensuring that all user input is validated and sanitized using the `validate_input` function.",
                 "**Test the Patch**: Thoroughly test the patched application to ensure that it correctly handles user input and prevents potential security vulnerabilities, such as unauthorized access or data manipulation."
+            ]
+        }
+    },
+    "GHSA-x9f6-9rvm-mmrg": {
+        "summary": "Improper Access Control in vantage6 node",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary libraries\nfrom flask import request, jsonify\nfrom flask_login import current_user\n\n# Define a decorator to check for proper access control\ndef require_role(role):\n    def decorator(func):\n        def wrapper(*args, **kwargs):\n            if current_user.role != role:\n                return jsonify({\"error\": \"Unauthorized\"}), 401\n            return func(*args, **kwargs)\n        return wrapper\n    return decorator\n\n# Apply the decorator to sensitive routes\n@app.route('/sensitive-data', methods=['GET'])\n@require_role('admin')\ndef get_sensitive_data():\n    # Only users with the 'admin' role can access this data\n    return jsonify({\"data\": \"Sensitive data\"})\n\n# Alternatively, for existing functions without decorators\ndef check_access_control(user, required_role):\n    if user.role != required_role:\n        raise Exception(\"Unauthorized\")\n\n# Example usage in an existing function\ndef existing_function():\n    check_access_control(current_user, 'admin')\n    # Proceed with the function if access is granted",
+            "vulnerability_explanation": "The vulnerability GHSA-x9f6-9rvm-mmrg is related to improper access control in the vantage6 node, which could allow unauthorized access to sensitive data or functionality. This vulnerability may be exploited by attackers to gain unauthorized access, modify data, or disrupt the normal functioning of the vantage6 node. The exact mechanism is not specified due to the lack of a publicly available Proof of Concept (PoC), but it generally involves insufficient checks on user permissions or roles.",
+            "mitigation_steps": [
+                "**Identify Sensitive Endpoints**: Review the vantage6 node application to identify all endpoints that require restricted access, such as those handling sensitive data or critical operations.",
+                "**Implement Role-Based Access Control (RBAC)**: Integrate a role-based access control system into the application, ensuring that each user is assigned a role with specific permissions. Use the provided `require_role` decorator or similar mechanisms to protect sensitive endpoints.",
+                "**Test Access Control**: Thoroughly test the application to ensure that the access control mechanisms are correctly implemented and enforced. Attempt to access restricted endpoints with different user roles to verify that unauthorized access is properly blocked."
+            ]
+        }
+    },
+    "GHSA-fgmc-2hqj-86v4": {
+        "summary": "Vantage6: Set admin user and password from environment or configuration",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport secrets\n\n# Securely generate admin credentials if not already set\nif 'VANTAGE6_ADMIN_USER' not in os.environ or 'VANTAGE6_ADMIN_PASSWORD' not in os.environ:\n    admin_user = secrets.token_urlsafe(8)\n    admin_password = secrets.token_urlsafe(16)\n    os.environ['VANTAGE6_ADMIN_USER'] = admin_user\n    os.environ['VANTAGE6_ADMIN_PASSWORD'] = admin_password\n\n# Use the securely generated or existing admin credentials\nadmin_user = os.environ['VANTAGE6_ADMIN_USER']\nadmin_password = os.environ['VANTAGE6_ADMIN_PASSWORD']\n\n# Example usage in a configuration or setup function\ndef setup_vantage6():\n    # Ensure admin credentials are not directly logged or exposed\n    print(\"Vantage6 admin user and password have been securely set.\")\n    # Proceed with Vantage6 setup using the secured admin credentials",
+            "vulnerability_explanation": "The vulnerability in Vantage6 allows an attacker to set the admin user and password from environment variables or configuration, potentially leading to unauthorized access and control of the system. This occurs because the admin credentials are not properly secured, allowing them to be overwritten or accessed through external means. As a result, an attacker could exploit this vulnerability to gain administrative privileges.",
+            "mitigation_steps": [
+                "Identify all locations where admin credentials are set or used in the Vantage6 application, ensuring that they are handled securely and not directly exposed in code or logs.",
+                "Implement secure generation and storage of admin credentials, such as using environment variables or a secrets manager, to prevent them from being hardcoded or easily accessible.",
+                "Review and update all configuration files, scripts, or code snippets that may contain or set admin credentials, applying the secure practices demonstrated in the provided patch to mitigate the vulnerability."
+            ]
+        }
+    },
+    "GHSA-g72g-r7m4-9x4g": {
+        "summary": "NocoDB: OAuth Tokens Persist Through Security Events",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import jwt\nfrom nocodb.models import User, OAuthToken\n\ndef revoke_oauth_tokens(user_id):\n    \"\"\"\n    Revoke all OAuth tokens associated with a user.\n    \"\"\"\n    oauth_tokens = OAuthToken.objects.filter(user_id=user_id)\n    for token in oauth_tokens:\n        try:\n            # Attempt to decode the token to verify its validity\n            jwt.decode(token.token, options={\"verify_signature\": False})\n            # Revoke the token by setting its expiration time to the current time\n            token.expires_at = datetime.datetime.utcnow()\n            token.save()\n        except jwt.ExpiredSignatureError:\n            # If the token is already expired, it's not necessary to revoke it\n            pass\n\ndef handle_security_event(user_id):\n    \"\"\"\n    Handle a security event by revoking all OAuth tokens associated with a user.\n    \"\"\"\n    revoke_oauth_tokens(user_id)\n\n# Example usage:\n# When a user's account is deactivated or deleted\nuser_id = 123\nhandle_security_event(user_id)",
+            "vulnerability_explanation": "The vulnerability in NocoDB allows OAuth tokens to persist even after security events, such as a user's account being deactivated or deleted, potentially leading to unauthorized access. This occurs because the OAuth tokens are not properly revoked or deleted when a security event happens. As a result, an attacker could use a persisted OAuth token to gain unauthorized access to the system.",
+            "mitigation_steps": [
+                "Identify all locations in the codebase where security events occur, such as user account deactivation or deletion.",
+                "Call the `handle_security_event` function at each of these locations, passing the affected user's ID as an argument.",
+                "Ensure that the `revoke_oauth_tokens` function is properly implemented to revoke all OAuth tokens associated with a given user, including those that may be stored in external systems or caches."
+            ]
+        }
+    },
+    "GHSA-rm5c-5x2p-48wr": {
+        "summary": "Klever-Go KVM: Unauthenticated remote node crash (nil-pointer DoS) in klever-go P2P transaction interceptor (txVersionChecker nil RawData) - potential chain halt",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def txVersionChecker(tx):\n    # Check if RawData is None before attempting to access it\n    if tx.RawData is None:\n        # Handle the case where RawData is nil, e.g., by returning an error or skipping the transaction\n        return False, \"Transaction RawData is nil\"\n    \n    # Proceed with the original logic if RawData is not nil\n    # ... (rest of the function remains the same)",
+            "vulnerability_explanation": "The vulnerability in Klever-Go KVM occurs due to a nil-pointer dereference in the P2P transaction interceptor, specifically in the txVersionChecker function when RawData is nil. This allows an unauthenticated remote attacker to crash a node, potentially halting the chain. The issue arises from the lack of proper null checks on the RawData field before it is used.",
+            "mitigation_steps": [
+                "Identify all instances of the txVersionChecker function in the Klever-Go KVM codebase and apply the patch to ensure that RawData is checked for nil before being used.",
+                "Review the code for any similar nil-pointer dereference vulnerabilities in other functions that handle transactions or other data.",
+                "Deploy the patched version of the Klever-Go KVM software to all affected nodes to prevent potential chain halts due to this vulnerability."
+            ]
+        }
+    },
+    "GHSA-w4c6-7r69-w7j9": {
+        "summary": "klever-go: REST API slow-header connection exhaustion via Gin Engine.Run",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import time\nfrom gin import Engine\n\nclass TimeoutMiddleware:\n    def __init__(self, timeout):\n        self.timeout = timeout\n\n    def __call__(self, request):\n        start_time = time.time()\n        try:\n            # Simulate the Gin Engine's Run method\n            response = Engine().run(request)\n            if time.time() - start_time > self.timeout:\n                # Handle timeout, e.g., return an error response\n                return \"Timeout error\"\n            return response\n        except Exception as e:\n            # Handle exceptions, e.g., return an error response\n            return str(e)\n\n# Example usage:\nengine = Engine()\ntimeout_middleware = TimeoutMiddleware(timeout=5)  # 5-second timeout\nengine.use(timeout_middleware)",
+            "vulnerability_explanation": "The vulnerability in klever-go is related to the Gin Engine's Run method, which can lead to slow-header connection exhaustion via the REST API. This occurs when an attacker sends a request with a slow header, causing the server to wait for the complete header, resulting in connection exhaustion. To mitigate this, a timeout mechanism should be implemented to limit the time the server waits for the complete header.",
+            "mitigation_steps": [
+                "Identify the Gin Engine's Run method in your codebase and assess its vulnerability to slow-header connection exhaustion.",
+                "Implement a timeout mechanism, such as the provided TimeoutMiddleware class, to limit the time the server waits for the complete header.",
+                "Configure the timeout value according to your specific requirements, ensuring a balance between security and usability, and integrate the timeout mechanism into your existing codebase."
+            ]
+        }
+    },
+    "GHSA-hf2g-6j7h-98wg": {
+        "summary": "klever-go: Unbounded goroutine spawn on direct-message ingress enables peer-driven DoS",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import asyncio\n\nclass MessageHandler:\n    def __init__(self, max_goroutines):\n        self.max_goroutines = max_goroutines\n        self.current_goroutines = 0\n        self.semaphore = asyncio.Semaphore(max_goroutines)\n\n    async def handle_message(self, message):\n        async with self.semaphore:\n            # Handle the message here\n            print(f\"Handling message: {message}\")\n            # Simulate some work\n            await asyncio.sleep(1)\n\n    async def ingress(self, message):\n        if self.current_goroutines < self.max_goroutines:\n            self.current_goroutines += 1\n            try:\n                await self.handle_message(message)\n            finally:\n                self.current_goroutines -= 1\n        else:\n            # If the maximum number of goroutines is reached, drop the message\n            print(\"Maximum number of goroutines reached. Dropping message.\")\n\nasync def main():\n    handler = MessageHandler(max_goroutines=10)\n    # Simulate incoming messages\n    for i in range(20):\n        await handler.ingress(f\"Message {i}\")\n\nasyncio.run(main())",
+            "vulnerability_explanation": "The vulnerability in klever-go allows an attacker to spawn an unbounded number of goroutines on direct-message ingress, enabling a peer-driven Denial of Service (DoS) attack. This occurs because the system does not properly limit the number of goroutines that can be created in response to incoming direct messages. As a result, an attacker can flood the system with messages, causing it to consume excessive resources and potentially leading to a crash or significant performance degradation.",
+            "mitigation_steps": [
+                "**Identify the vulnerable component**: Locate the part of the klever-go codebase responsible for handling direct-message ingress and spawning goroutines.",
+                "**Implement rate limiting**: Introduce a mechanism to limit the number of goroutines that can be spawned within a certain time frame, similar to the semaphore used in the provided patch.",
+                "**Test and deploy the patch**: Apply the patch to the vulnerable component, test it thoroughly to ensure it effectively mitigates the vulnerability without introducing new issues, and then deploy it to production environments."
+            ]
+        }
+    },
+    "GHSA-fw38-pc54-jvx9": {
+        "summary": "Klever-Go KVM: Throttler slot leak in trie account-data sync causes epoch bootstrap / state sync DoS",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import threading\n\nclass Throttler:\n    def __init__(self, max_slots):\n        self.max_slots = max_slots\n        self.available_slots = max_slots\n        self.lock = threading.Lock()\n\n    def acquire_slot(self):\n        with self.lock:\n            if self.available_slots > 0:\n                self.available_slots -= 1\n                return True\n            return False\n\n    def release_slot(self):\n        with self.lock:\n            if self.available_slots < self.max_slots:\n                self.available_slots += 1\n\nclass TrieAccountDataSync:\n    def __init__(self, throttler):\n        self.throttler = throttler\n\n    def sync(self):\n        if self.throttler.acquire_slot():\n            try:\n                # Perform trie account-data sync\n                pass\n            finally:\n                self.throttler.release_slot()\n\n# Create a throttler with a maximum of 10 slots\nthrottler = Throttler(10)\n\n# Create a trie account-data sync instance with the throttler\ntrie_sync = TrieAccountDataSync(throttler)\n\n# Perform trie account-data sync\ntrie_sync.sync()",
+            "vulnerability_explanation": "The Klever-Go KVM throttler slot leak vulnerability occurs when the trie account-data sync mechanism fails to properly manage throttler slots, leading to a denial-of-service (DoS) attack during epoch bootstrap or state sync. This vulnerability allows an attacker to exploit the throttler slot leak, causing the system to become unresponsive or crash. The vulnerability is related to the improper handling of trie account-data sync, which can be mitigated by implementing proper slot management and synchronization mechanisms.",
+            "mitigation_steps": [
+                "Identify the throttler slot management mechanism in the Klever-Go KVM codebase and replace it with a thread-safe implementation, such as the one provided in the patch.",
+                "Ensure that the trie account-data sync mechanism properly acquires and releases throttler slots to prevent slot leaks.",
+                "Test the patched code to verify that the throttler slot leak vulnerability has been mitigated and that the system can handle epoch bootstrap and state sync without becoming unresponsive or crashing."
+            ]
+        }
+    },
+    "GHSA-hv83-ggc4-v385": {
+        "summary": "DbGate: Remote Code Execution via functionName injection in loadReader endpoint",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef validate_function_name(function_name):\n    \"\"\"\n    Validate the functionName parameter to prevent injection attacks.\n    \n    :param function_name: The functionName parameter from the loadReader endpoint\n    :return: True if the function_name is valid, False otherwise\n    \"\"\"\n    # Only allow alphanumeric characters and underscores\n    if not re.match(\"^[a-zA-Z0-9_]+$\", function_name):\n        return False\n    \n    # Check if the function_name is in a whitelist of allowed functions\n    allowed_functions = [\"allowed_function1\", \"allowed_function2\"]\n    if function_name not in allowed_functions:\n        return False\n    \n    return True\n\ndef load_reader_endpoint(function_name):\n    \"\"\"\n    Load reader endpoint with functionName injection mitigation.\n    \n    :param function_name: The functionName parameter from the request\n    :return: The result of the loadReader endpoint\n    \"\"\"\n    if not validate_function_name(function_name):\n        # If the function_name is not valid, return an error\n        return {\"error\": \"Invalid function name\"}\n    \n    # If the function_name is valid, proceed with the original logic\n    # ...",
+            "vulnerability_explanation": "The vulnerability in DbGate allows for Remote Code Execution (RCE) via functionName injection in the loadReader endpoint. This occurs when an attacker can manipulate the functionName parameter to execute arbitrary code on the server. The lack of proper input validation and sanitization enables this type of injection attack.",
+            "mitigation_steps": [
+                "Identify the loadReader endpoint in the DbGate application and locate where the functionName parameter is processed.",
+                "Implement the `validate_function_name` function to validate the functionName parameter, ensuring it only contains alphanumeric characters and underscores, and is in a whitelist of allowed functions.",
+                "Modify the loadReader endpoint to call the `validate_function_name` function and return an error if the functionName is not valid, preventing potential RCE attacks."
+            ]
+        }
+    },
+    "GHSA-g9qc-qf28-hhqx": {
+        "summary": "Apache Airflow Amazon provider: Prevent unauthorized access to team-scoped secrets in AWS Secrets Manager and SSM Parameter Store backends",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from airflow.providers.amazon.aws.hooks.base_aws import AwsBaseHook\nfrom airflow.providers.amazon.aws.operators.secrets_manager import SecretsManagerOperator\n\nclass CustomSecretsManagerOperator(SecretsManagerOperator):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.aws_hook = AwsBaseHook(aws_conn_id='aws_default')\n\n    def execute(self, context):\n        # Get the team ID from the context\n        team_id = context['dag'].owner\n\n        # Get the secret ID and region\n        secret_id = self.secret_id\n        region = self.region\n\n        # Use the AWS hook to get the secret value\n        secrets_manager = self.aws_hook.get_secrets_manager_client(region)\n\n        # Check if the team has access to the secret\n        if not self.has_team_access(team_id, secret_id, region):\n            raise PermissionError(f\"Team {team_id} does not have access to secret {secret_id}\")\n\n        # Get the secret value\n        secret_value = secrets_manager.get_secret_value(SecretId=secret_id)\n\n        # Return the secret value\n        return secret_value\n\n    def has_team_access(self, team_id, secret_id, region):\n        # Implement logic to check if the team has access to the secret\n        # This can be done by checking the team's permissions in the AWS IAM policy\n        # or by using an external authorization system\n        # For this example, we assume that the team ID is included in the secret's description\n        secrets_manager = self.aws_hook.get_secrets_manager_client(region)\n        secret_description = secrets_manager.describe_secret(SecretId=secret_id)\n        return team_id in secret_description['Description']",
+            "vulnerability_explanation": "The vulnerability in the Apache Airflow Amazon provider allows unauthorized access to team-scoped secrets stored in AWS Secrets Manager and SSM Parameter Store backends. This occurs due to inadequate permission checks, enabling unauthorized users to access sensitive information. The vulnerability can be exploited by manipulating the scope of secrets, allowing unauthorized access to sensitive data.",
+            "mitigation_steps": [
+                "Update the Apache Airflow Amazon provider to use the patched `CustomSecretsManagerOperator` class.",
+                "Configure the `aws_default` connection in Airflow to use the correct AWS credentials and region.",
+                "Implement the `has_team_access` method to check if the team has access to the secret, based on the organization's authorization system and policies.",
+                "Test the patched operator to ensure that it correctly prevents unauthorized access to team-scoped secrets.",
+                "Deploy the patched operator to production, and monitor for any issues or errors."
+            ]
+        }
+    },
+    "GHSA-524w-vq63-2xhf": {
+        "summary": "Apache Airflow CNCF Kubernetes provider: JWT Token Exposure in KubernetesExecutor Command-Line Arguments",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from airflow.providers.kubernetes.operators.kubernetes_pod import KubernetesPodOperator\nfrom airflow.configuration import conf\nfrom kubernetes.client import Configuration\n\n# Create a new KubernetesPodOperator that uses environment variables for JWT token\nclass SecureKubernetesPodOperator(KubernetesPodOperator):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.env_vars = self.env_vars or {}\n        self.env_vars['JWT_TOKEN'] = conf.get('kubernetes', 'jwt_token')\n\n    def execute(self, context):\n        # Use the JWT token from the environment variable\n        config = Configuration()\n        config.host = self.kube_config.host\n        config.api_key = {'authorization': f'Bearer {self.env_vars[\"JWT_TOKEN\"]}'}\n        # Rest of the execute method remains the same\n\n# Example usage:\nsecure_operator = SecureKubernetesPodOperator(\n    task_id='secure_task',\n    name='secure_task',\n    namespace='default',\n    image='ubuntu:latest',\n    cmds=['bash', '-cx'],\n    arguments=['echo \"Hello World!\"'],\n    env_vars={'JWT_TOKEN': '{{ conn.kubernetes.jwt_token }}'}\n)",
+            "vulnerability_explanation": "The vulnerability in Apache Airflow's CNCF Kubernetes provider exposes JWT tokens in the KubernetesExecutor command-line arguments, potentially allowing unauthorized access to sensitive information. This occurs when the `kubernetes_executor` passes the JWT token as a command-line argument, making it visible to other processes or users. As a result, an attacker with access to the system or process list could obtain the JWT token and use it to gain unauthorized access.",
+            "mitigation_steps": [
+                "Update the `airflow` package to the latest version that includes the fix for the CVE.",
+                "If an update is not possible, apply the provided patch by creating a new `SecureKubernetesPodOperator` class that uses environment variables for JWT tokens.",
+                "Replace all occurrences of `KubernetesPodOperator` with `SecureKubernetesPodOperator` in your Airflow DAGs to ensure that the JWT token is not exposed in command-line arguments."
+            ]
+        }
+    },
+    "GHSA-q4x5-8cj6-52wg": {
+        "summary": "Sync-in Server: SSRF protection bypass via IPv4-mapped IPv6 addresses in regExpPrivateIP",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ipaddress\nimport re\n\ndef is_private_ip(address):\n    try:\n        ip = ipaddress.ip_address(address)\n        if isinstance(ip, ipaddress.IPv4Address):\n            return ip.is_private\n        elif isinstance(ip, ipaddress.IPv6Address):\n            # Check for IPv4-mapped IPv6 addresses\n            if ip.ipv4_mapped:\n                return ipaddress.ip_address(ip.ipv4_mapped).is_private\n            return False\n    except ValueError:\n        # If the address is not a valid IP address, it's not private\n        return False\n\ndef regExpPrivateIP(address):\n    # Use the is_private_ip function to check if the address is private\n    if is_private_ip(address):\n        return True\n    # Additional checks can be added here if needed\n    return False\n\n# Example usage:\naddress = \"::ffff:192.168.1.1\"  # IPv4-mapped IPv6 address\nif regExpPrivateIP(address):\n    print(\"The address is private\")\nelse:\n    print(\"The address is not private\")",
+            "vulnerability_explanation": "The vulnerability occurs due to the Sync-in Server's SSRF protection bypass via IPv4-mapped IPv6 addresses in the regExpPrivateIP regular expression. This allows an attacker to bypass the intended IP address restrictions by using IPv4-mapped IPv6 addresses, which are not properly filtered by the existing regular expression. As a result, an attacker can potentially access internal resources or services that are not intended to be exposed.",
+            "mitigation_steps": [
+                "Identify the existing regExpPrivateIP function in the Sync-in Server codebase and replace it with the updated implementation provided in the patch.",
+                "Verify that the updated function correctly identifies private IP addresses, including IPv4-mapped IPv6 addresses, by testing it with various input addresses.",
+                "Deploy the updated code to the production environment and monitor for any potential issues or errors related to the SSRF protection mechanism."
+            ]
+        }
+    },
+    "GHSA-jjrm-hr5f-673x": {
+        "summary": "Source controller: Improper path handling allows traversal",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport pathlib\n\ndef normalize_path(input_path):\n    \"\"\"\n    Normalize the input path to prevent directory traversal.\n    \"\"\"\n    # Get the absolute path\n    absolute_path = os.path.abspath(input_path)\n    \n    # Get the real path (resolve symlinks)\n    real_path = os.path.realpath(absolute_path)\n    \n    # Check if the real path is within the expected directory\n    expected_dir = os.path.dirname(os.path.abspath(__file__))\n    if not real_path.startswith(expected_dir):\n        raise ValueError(\"Path traversal attempt detected\")\n    \n    return real_path\n\ndef secure_open_file(file_path):\n    \"\"\"\n    Open a file securely, preventing directory traversal.\n    \"\"\"\n    normalized_path = normalize_path(file_path)\n    return open(normalized_path, 'r')",
+            "vulnerability_explanation": "The vulnerability is caused by improper path handling in the source controller, allowing an attacker to traverse the directory structure and potentially access sensitive files or directories. This can be achieved by providing a specially crafted input that exploits the lack of proper path normalization and validation. As a result, an attacker can manipulate the path to access unauthorized resources.",
+            "mitigation_steps": [
+                "Identify all instances of file access and path manipulation in the source controller code.",
+                "Replace the existing file access and path manipulation functions with the `secure_open_file` and `normalize_path` functions provided in the patch.",
+                "Verify that the `expected_dir` variable in the `normalize_path` function is set to the correct directory, which should be the root directory of the application or the directory that contains the sensitive files."
+            ]
+        }
+    },
+    "GHSA-wm5r-5qp3-5vxf": {
+        "summary": "Authenticated Remote Code Execution via loadReader functionName code injection in DbGate",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef validate_function_name(function_name):\n    \"\"\"\n    Validate the function name to prevent code injection attacks.\n    \n    Args:\n    function_name (str): The name of the function to be validated.\n    \n    Returns:\n    bool: True if the function name is valid, False otherwise.\n    \"\"\"\n    # Define a regular expression pattern to match valid function names\n    pattern = r\"^[a-zA-Z_][a-zA-Z0-9_]*$\"\n    \n    # Check if the function name matches the pattern\n    if re.match(pattern, function_name):\n        return True\n    else:\n        return False\n\ndef load_reader(function_name):\n    \"\"\"\n    Load the reader function with the given name.\n    \n    Args:\n    function_name (str): The name of the function to be loaded.\n    \n    Returns:\n    function: The loaded function.\n    \"\"\"\n    # Validate the function name before loading it\n    if validate_function_name(function_name):\n        # Load the function using the validated function name\n        # This part may vary depending on how you load functions in your system\n        # For example, using getattr() or importlib\n        return globals()[function_name]\n    else:\n        # Raise an exception or return an error if the function name is invalid\n        raise ValueError(\"Invalid function name\")",
+            "vulnerability_explanation": "The vulnerability mechanism involves an authenticated remote code execution (RCE) via a code injection attack in the `loadReader` function of DbGate. This occurs when an attacker is able to inject malicious code into the `functionName` parameter, allowing them to execute arbitrary code on the system. This type of attack requires authentication, but once authenticated, an attacker can exploit this vulnerability to gain control over the system.",
+            "mitigation_steps": [
+                "Identify all instances where the `loadReader` function is used in the DbGate codebase and replace them with the patched `load_reader` function.",
+                "Ensure that the `validate_function_name` function is used to validate the `functionName` parameter before loading any functions.",
+                "Test the patched code thoroughly to ensure that it prevents code injection attacks and does not introduce any new vulnerabilities or bugs.",
+                "Consider implementing additional security measures, such as input validation and sanitization, to further prevent code injection attacks.",
+                "Review the codebase for any other potential vulnerabilities and address them accordingly."
+            ]
+        }
+    },
+    "GHSA-7p8g-6c6g-h9w7": {
+        "summary": "praisonai-platform: Agent endpoints accept any agent_id without workspace ownership check, cross-workspace read/update/delete IDOR",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from flask import request, jsonify\nfrom your_application import db, Agent, Workspace\n\n# Assuming this is the endpoint that accepts agent_id\n@app.route('/agent/<agent_id>', methods=['GET', 'PUT', 'DELETE'])\ndef handle_agent(agent_id):\n    # Get the current workspace from the request or user session\n    current_workspace = get_current_workspace()\n\n    # Query the Agent model to check if the agent_id belongs to the current workspace\n    agent = Agent.query.filter_by(id=agent_id, workspace_id=current_workspace.id).first()\n\n    # If the agent does not exist or does not belong to the current workspace, return an error\n    if agent is None:\n        return jsonify({'error': 'Agent not found or not accessible in this workspace'}), 403\n\n    # If the agent exists and belongs to the current workspace, proceed with the request\n    if request.method == 'GET':\n        # Handle GET request\n        return jsonify({'agent': agent.serialize()})\n    elif request.method == 'PUT':\n        # Handle PUT request\n        agent.update(request.json)\n        db.session.commit()\n        return jsonify({'agent': agent.serialize()})\n    elif request.method == 'DELETE':\n        # Handle DELETE request\n        db.session.delete(agent)\n        db.session.commit()\n        return jsonify({'message': 'Agent deleted'})",
+            "vulnerability_explanation": "The vulnerability exists in the agent endpoints of the praisonai-platform, where any agent_id is accepted without verifying the workspace ownership. This allows an attacker to perform cross-workspace read, update, and delete operations, leading to unauthorized access and potential data tampering. The lack of ownership check enables an attacker to exploit the system by providing any agent_id, bypassing the intended access controls.",
+            "mitigation_steps": [
+                "Identify all agent endpoints in the praisonai-platform that accept an agent_id and do not perform a workspace ownership check.",
+                "Modify these endpoints to include a check that verifies the agent_id belongs to the current workspace, similar to the patch code provided.",
+                "Ensure that the `get_current_workspace()` function is implemented to correctly retrieve the current workspace from the request or user session, and that the `Agent` model has a `workspace_id` field to establish the relationship between agents and workspaces."
+            ]
+        }
+    },
+    "GHSA-h535-j5hr-mv56": {
+        "summary": "DbGate: Zip Slip in archive/unzip allows arbitrary file write leading to RCE",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-05 17:13:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport zipfile\n\ndef safe_unzip(zip_file, extract_dir):\n    \"\"\"\n    Unzip a zip file to a directory while preventing Zip Slip attacks.\n    \n    :param zip_file: The path to the zip file to extract.\n    :param extract_dir: The directory to extract the zip file to.\n    \"\"\"\n    with zipfile.ZipFile(zip_file, 'r') as zip_ref:\n        for member in zip_ref.infolist():\n            # Construct the full path to the file\n            file_path = os.path.join(extract_dir, member.filename)\n            \n            # Check if the file path is within the extract directory\n            if not os.path.abspath(file_path).startswith(os.path.abspath(extract_dir)):\n                raise ValueError(\"Zip Slip attack detected: {}\".format(member.filename))\n            \n            # Create the directory if it does not exist\n            dir_path = os.path.dirname(file_path)\n            if not os.path.exists(dir_path):\n                os.makedirs(dir_path)\n            \n            # Extract the file\n            with open(file_path, 'wb') as f:\n                f.write(zip_ref.read(member.filename))\n\n# Example usage:\nzip_file = 'example.zip'\nextract_dir = 'extracted'\nsafe_unzip(zip_file, extract_dir)",
+            "vulnerability_explanation": "The vulnerability is a Zip Slip vulnerability in the archive/unzip functionality of DbGate, which allows an attacker to write arbitrary files to the system, potentially leading to Remote Code Execution (RCE). This occurs when the unzip function does not properly validate the file paths within the archive, allowing an attacker to create files outside of the intended directory. By crafting a malicious zip archive with specially crafted file paths, an attacker can exploit this vulnerability to write files to sensitive locations on the system.",
+            "mitigation_steps": [
+                "Identify all locations in the DbGate codebase where zip archives are extracted, and replace the existing unzip functionality with the `safe_unzip` function provided in the patch.",
+                "Verify that the `safe_unzip` function is properly handling zip archives with specially crafted file paths to prevent Zip Slip attacks.",
+                "Test the updated code to ensure that it correctly extracts zip archives without allowing arbitrary file writes, and that it raises an error when a Zip Slip attack is detected."
             ]
         }
     }
