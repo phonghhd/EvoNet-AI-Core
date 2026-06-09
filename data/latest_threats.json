@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-08 22:23:50",
+        "date_added": "2026-06-09 02:49:54",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(\"random_string\")).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the client's response\n    response = client_socket.recv(1024).decode()\n\n    # Verify the client's response\n    expected_response = hmac.new(b\"secret_key\", challenge.encode(), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        client_socket.close()\n        return False\n\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Handle the client's requests\n        while True:\n            request = client_socket.recv(1024).decode()\n            if not request:\n                break\n            # Process the request\n            client_socket.sendall(b\"Request processed\")\n    else:\n        print(\"Authentication failed\")\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(5)\n\nprint(\"Server listening on port 8080\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n    print(\"Connection from:\", address)\n\n    # Handle the client\n    handle_client(client_socket)",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to insecure communication protocols or authentication mechanisms.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(\"random_challenge\")).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the client's response\n    response = client_socket.recv(1024).decode()\n\n    # Verify the client's response\n    expected_response = hmac.new(str.encode(\"secret_key\"), challenge.encode(), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        return False\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Client is authenticated, allow access\n        while True:\n            request = client_socket.recv(1024).decode()\n            if request:\n                # Process the client's request\n                print(f\"Received request: {request}\")\n                # Send a response back to the client\n                client_socket.sendall(\"Response\".encode())\n            else:\n                break\n    else:\n        # Client is not authenticated, deny access\n        client_socket.sendall(\"Authentication failed\".encode())\n        client_socket.close()\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(5)\n\nprint(\"Server is listening for incoming connections...\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n    print(f\"Connection from {address} has been established.\")\n\n    # Handle the client\n    handle_client(client_socket)",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information provided, but it is likely related to a vulnerability in a specific software or system that allows the NullRAT to gain unauthorized access.",
             "mitigation_steps": [
-                "**Implement secure authentication mechanisms**: Use secure authentication protocols such as HMAC or digital signatures to verify the identity of clients and ensure that only authorized access is granted.",
-                "**Use secure communication protocols**: Use secure communication protocols such as TLS or SSL to encrypt data in transit and prevent eavesdropping or tampering.",
-                "**Keep software up-to-date**: Regularly update and patch software to ensure that any known vulnerabilities are addressed, and consider implementing a web application firewall (WAF) to detect and prevent common web attacks."
+                "**Implement Authentication**: Implement a secure authentication mechanism, such as a challenge-response authentication protocol, to verify the identity of clients connecting to the system.",
+                "**Use Secure Communication Protocols**: Use secure communication protocols, such as TLS or SSL, to encrypt data transmitted between the client and server, and prevent eavesdropping and tampering.",
+                "**Keep Software Up-to-Date**: Keep all software and systems up-to-date with the latest security patches and updates to prevent exploitation of known vulnerabilities."
             ]
         }
     },
@@ -14615,6 +14615,168 @@
                 "**Identify Vulnerable Code**: Review your application codebase to identify areas that may be vulnerable to common web application attacks such as SQL injection, XSS, or CSRF, focusing on user input handling and database query construction.",
                 "**Implement Input Validation**: Ensure that all user inputs are validated and sanitized to prevent malicious data from entering your application's workflow, using techniques such as regular expressions or dedicated validation libraries.",
                 "**Use Secure Coding Practices**: Adopt secure coding practices, including the use of parameterized queries for database interactions, proper error handling to prevent information disclosure, and regular security audits and testing to identify and mitigate vulnerabilities before they can be exploited."
+            ]
+        }
+    },
+    "GHSA-rcgg-9c38-7xpx": {
+        "summary": "OpenTelemetry Java SDK has Unbounded Memory Allocation in W3C Baggage Propagation",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import opentelemetry.sdk.trace.export import SpanExporter\nfrom opentelemetry.trace import Span\n\nclass BaggageSizeLimiter:\n    def __init__(self, max_baggage_size):\n        self.max_baggage_size = max_baggage_size\n\n    def limit_baggage(self, span: Span):\n        baggage = span.get_baggage()\n        if baggage is not None:\n            baggage_size = sum(len(key) + len(value) for key, value in baggage.items())\n            if baggage_size > self.max_baggage_size:\n                # Limit the baggage size by removing excess entries\n                limited_baggage = dict(list(baggage.items())[:self.max_baggage_size])\n                span.set_baggage(limited_baggage)\n\nclass SecureSpanExporter(SpanExporter):\n    def __init__(self, max_baggage_size):\n        self.baggage_limiter = BaggageSizeLimiter(max_baggage_size)\n\n    def export(self, spans):\n        for span in spans:\n            self.baggage_limiter.limit_baggage(span)\n        # Proceed with the original export logic\n\n# Usage:\nmax_baggage_size = 1024  # Define the maximum allowed baggage size\nsecure_exporter = SecureSpanExporter(max_baggage_size)",
+            "vulnerability_explanation": "The OpenTelemetry Java SDK is vulnerable to unbounded memory allocation in W3C baggage propagation, which can lead to a denial-of-service (DoS) attack. This occurs when an attacker sends a large amount of baggage data, causing the SDK to allocate an excessive amount of memory. As a result, the system may become unresponsive or even crash.",
+            "mitigation_steps": [
+                "Identify the OpenTelemetry Java SDK version in use and verify if it is vulnerable to the unbounded memory allocation issue.",
+                "Implement a baggage size limiter, as shown in the provided Python code patch, to restrict the amount of baggage data that can be propagated.",
+                "Integrate the `SecureSpanExporter` class into the existing OpenTelemetry setup, ensuring that all spans are processed through the `limit_baggage` method to enforce the maximum allowed baggage size."
+            ]
+        }
+    },
+    "GHSA-qrpw-gjvh-x5gm": {
+        "summary": "Nautobot: Object bulk rename UI actions vulnerable to denial of service by crafted regular expression (REDoS)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\nfrom django.core.exceptions import ValidationError\nfrom nautobot.core.forms import BulkRenameForm\n\ndef validate_regex(pattern):\n    \"\"\"Validate a regular expression to prevent REDoS attacks\"\"\"\n    try:\n        re.compile(pattern)\n    except re.error:\n        raise ValidationError(\"Invalid regular expression\")\n\ndef bulk_rename_objects(request, queryset):\n    \"\"\"Bulk rename objects with validated regular expressions\"\"\"\n    form = BulkRenameForm(request.POST)\n    if form.is_valid():\n        pattern = form.cleaned_data['pattern']\n        validate_regex(pattern)  # Validate the regular expression\n        # Proceed with bulk renaming using the validated pattern\n        # ...\n    else:\n        # Handle invalid form data\n        # ...",
+            "vulnerability_explanation": "The vulnerability in Nautobot's object bulk rename UI actions is caused by the lack of validation and sanitization of user-inputted regular expressions, making it vulnerable to denial of service (DoS) attacks by crafted regular expressions (REDoS). An attacker can craft a malicious regular expression that takes an excessive amount of time to process, leading to a denial of service. This can be mitigated by implementing proper validation and sanitization of user-inputted regular expressions.",
+            "mitigation_steps": [
+                "Identify the vulnerable code in Nautobot's object bulk rename UI actions that handles user-inputted regular expressions.",
+                "Replace the vulnerable code with the provided patch, which includes the `validate_regex` function to validate user-inputted regular expressions and prevent REDoS attacks.",
+                "Update the `bulk_rename_objects` function to call the `validate_regex` function before proceeding with bulk renaming, ensuring that only validated regular expressions are used."
+            ]
+        }
+    },
+    "GHSA-wpxj-44w3-2j6x": {
+        "summary": "Nautobot: REST API permits creation of GenericForeignKey references to objects that the user should not be able to reference",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# models.py\nfrom django.db import models\nfrom django.contrib.contenttypes.fields import GenericForeignKey\nfrom django.contrib.contenttypes.models import ContentType\nfrom django.contrib.auth.models import Permission\nfrom django.core.exceptions import PermissionDenied\n\nclass GenericForeignKeyModel(models.Model):\n    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)\n    object_id = models.PositiveIntegerField()\n    content_object = GenericForeignKey('content_type', 'object_id')\n\n    def save(self, *args, **kwargs):\n        # Check if the user has permission to create a reference to the object\n        if not self.request.user.has_perm('view', self.content_object):\n            raise PermissionDenied(\"You do not have permission to reference this object\")\n        super().save(*args, **kwargs)\n\n# views.py\nfrom rest_framework import status\nfrom rest_framework.response import Response\nfrom rest_framework.views import APIView\nfrom .models import GenericForeignKeyModel\nfrom .serializers import GenericForeignKeySerializer\n\nclass GenericForeignKeyView(APIView):\n    def post(self, request):\n        serializer = GenericForeignKeySerializer(data=request.data)\n        if serializer.is_valid():\n            try:\n                instance = serializer.save()\n                return Response(serializer.data, status=status.HTTP_201_CREATED)\n            except PermissionDenied as e:\n                return Response(str(e), status=status.HTTP_403_FORBIDDEN)\n        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)",
+            "vulnerability_explanation": "The vulnerability in Nautobot's REST API allows users to create GenericForeignKey references to objects that they should not have access to, potentially leading to unauthorized data access or modification. This is due to insufficient permission checks in the API, allowing malicious users to exploit this weakness. As a result, users can create references to sensitive objects, compromising the security of the system.",
+            "mitigation_steps": [
+                "Identify the models and views in your Nautobot application that use GenericForeignKey fields and update them to include permission checks, as shown in the patch code.",
+                "Update the `save` method of the affected models to raise a `PermissionDenied` exception if the user does not have permission to create a reference to the object.",
+                "Update the API views that handle creation of GenericForeignKey references to catch the `PermissionDenied` exception and return a 403 Forbidden response to the user."
+            ]
+        }
+    },
+    "GHSA-g8f2-4f4f-5jqw": {
+        "summary": "SandboxJS has a sandbox escape via Function.caller leakage of internal call op",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Define a wrapper function to prevent Function.caller leakage\ndef secure_call(func):\n    def wrapper(*args, **kwargs):\n        # Save the current caller\n        saved_caller = wrapper.caller\n        try:\n            # Set the caller to null to prevent leakage\n            wrapper.caller = None\n            return func(*args, **kwargs)\n        finally:\n            # Restore the saved caller\n            wrapper.caller = saved_caller\n    return wrapper\n\n# Apply the wrapper to all functions that may be called within the sandbox\ndef secure_sandbox(func):\n    def wrapper(*args, **kwargs):\n        # Apply the secure_call wrapper to all functions\n        for key, value in func.__dict__.items():\n            if callable(value):\n                setattr(func, key, secure_call(value))\n        return func(*args, **kwargs)\n    return wrapper\n\n# Example usage:\n@secure_sandbox\ndef example_function():\n    # Code that may be called within the sandbox\n    pass",
+            "vulnerability_explanation": "The vulnerability in SandboxJS is caused by a sandbox escape via Function.caller leakage of internal call operations, which allows an attacker to access and manipulate internal functions, potentially leading to code execution outside the sandbox. This leakage can occur when the Function.caller property is accessed within the sandbox, revealing the caller function and its context. By exploiting this vulnerability, an attacker can escape the sandbox and execute malicious code.",
+            "mitigation_steps": [
+                "Identify all functions that may be called within the sandbox and apply the `secure_sandbox` decorator to them.",
+                "Ensure that all functions within the sandbox are properly wrapped with the `secure_call` function to prevent Function.caller leakage.",
+                "Test the patched code thoroughly to ensure that the vulnerability is fully mitigated and that the sandbox remains secure."
+            ]
+        }
+    },
+    "GHSA-7fxv-8wr2-mfc4": {
+        "summary": "Local Path Provisioner Vulnerable to HelperPod Template Injection",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef validate_template(template):\n    # Define a set of allowed template keys\n    allowed_keys = {\"metadata\", \"spec\"}\n    \n    # Check if the template contains any disallowed keys\n    for key in template.keys():\n        if key not in allowed_keys:\n            raise ValueError(\"Disallowed key in template: {}\".format(key))\n    \n    # Check if the spec section contains any disallowed fields\n    if \"spec\" in template:\n        spec = template[\"spec\"]\n        disallowed_fields = [\"containers\", \"volumes\"]\n        for field in disallowed_fields:\n            if field in spec:\n                raise ValueError(\"Disallowed field in spec: {}\".format(field))\n    \n    # Validate the template using regular expressions\n    pattern = re.compile(r\"^(\\{.*\\})$\")\n    if not pattern.match(str(template)):\n        raise ValueError(\"Invalid template format\")\n    \n    return template\n\ndef sanitize_template(template):\n    # Remove any disallowed fields from the template\n    if \"spec\" in template:\n        spec = template[\"spec\"]\n        disallowed_fields = [\"containers\", \"volumes\"]\n        for field in disallowed_fields:\n            if field in spec:\n                del spec[field]\n    \n    return template\n\n# Example usage:\ntemplate = {\n    \"metadata\": {},\n    \"spec\": {\n        \"containers\": []  # Disallowed field\n    }\n}\n\ntry:\n    validated_template = validate_template(template)\n    sanitized_template = sanitize_template(validated_template)\n    print(sanitized_template)\nexcept ValueError as e:\n    print(e)",
+            "vulnerability_explanation": "The Local Path Provisioner is vulnerable to a helper pod template injection attack, which allows an attacker to inject malicious templates into the provisioner. This can lead to unauthorized access and control of the cluster's resources. The vulnerability occurs due to insufficient validation and sanitization of user-provided input in the helper pod template.",
+            "mitigation_steps": [
+                "Identify all instances of the Local Path Provisioner in your cluster and assess their configurations for potential vulnerabilities.",
+                "Apply the provided patch to the affected provisioner code, ensuring that all user-provided input is properly validated and sanitized.",
+                "Implement additional security measures, such as network policies and role-based access control (RBAC), to restrict access to the provisioner and its resources.",
+                "Regularly review and update the provisioner's configuration to prevent similar vulnerabilities from arising in the future.",
+                "Consider implementing a web application firewall (WAF) or an intrusion detection system (IDS) to detect and prevent potential attacks on the provisioner."
+            ]
+        }
+    },
+    "GHSA-423p-g724-fr39": {
+        "summary": "CloudNativePG's metrics exporter allows privilege escalation to PostgreSQL superuser and OS RCE",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import required libraries\nimport os\nimport psycopg2\nfrom psycopg2.extras import DictCursor\n\n# Define a function to validate and sanitize input\ndef validate_input(input_str):\n    # Remove any SQL injection attempts\n    input_str = input_str.replace(\";\", \"\").replace(\"--\", \"\")\n    return input_str\n\n# Define a function to execute SQL queries with elevated privileges\ndef execute_query(query, params):\n    # Establish a connection to the PostgreSQL database\n    conn = psycopg2.connect(\n        host=\"localhost\",\n        database=\"postgres\",\n        user=\"postgres\",\n        password=\"postgres\"\n    )\n    cur = conn.cursor(cursor_factory=DictCursor)\n\n    # Validate and sanitize input parameters\n    params = {k: validate_input(v) for k, v in params.items()}\n\n    # Execute the query with validated parameters\n    try:\n        cur.execute(query, params)\n        result = cur.fetchall()\n        conn.commit()\n    except psycopg2.Error as e:\n        print(f\"Error executing query: {e}\")\n        result = None\n    finally:\n        cur.close()\n        conn.close()\n    return result\n\n# Define a function to handle metrics exporter requests\ndef handle_metrics_request(query, params):\n    # Validate and sanitize input parameters\n    params = {k: validate_input(v) for k, v in params.items()}\n\n    # Execute the query with validated parameters\n    result = execute_query(query, params)\n    return result",
+            "vulnerability_explanation": "The CloudNativePG metrics exporter vulnerability allows an attacker to escalate privileges to a PostgreSQL superuser and potentially achieve remote code execution (RCE) on the operating system. This is possible due to inadequate access controls and input validation in the metrics exporter. As a result, an attacker can manipulate the exporter to execute arbitrary commands with elevated privileges.",
+            "mitigation_steps": [
+                "**Update dependencies**: Ensure that all dependencies, including CloudNativePG and PostgreSQL, are updated to the latest versions to prevent exploitation of known vulnerabilities.",
+                "**Apply the patch**: Integrate the provided patch code into the CloudNativePG metrics exporter to validate and sanitize input parameters, preventing SQL injection attacks and privilege escalation.",
+                "**Restrict privileges**: Limit the privileges of the PostgreSQL user account used by the metrics exporter to prevent RCE and minimize potential damage in case of exploitation. This can be achieved by creating a new user with restricted privileges and updating the metrics exporter configuration to use this new user."
+            ]
+        }
+    },
+    "GHSA-8p4x-wr7x-3788": {
+        "summary": "python-liquid: Absolute paths escape filesystem loader search path",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nfrom liquid import Template\n\ndef render_template(template_str, context):\n    # Create a new Template object with a custom loader that restricts absolute paths\n    class RestrictedLoader:\n        def get(self, template_name):\n            if os.path.isabs(template_name):\n                raise ValueError(\"Absolute paths are not allowed\")\n            # Proceed with the original loader logic\n            return self.original_loader.get(template_name)\n\n    # Create a new Template object with the restricted loader\n    template = Template(template_str, loader=RestrictedLoader())\n    return template.render(context)",
+            "vulnerability_explanation": "The python-liquid vulnerability allows absolute paths to escape the filesystem loader search path, potentially leading to arbitrary file access and code execution. This occurs when the liquid template engine is used to render templates, and an attacker can manipulate the template to include absolute paths, bypassing the intended search path. As a result, sensitive files or system files can be accessed or modified, posing a significant security risk.",
+            "mitigation_steps": [
+                "Identify all instances of liquid template rendering in your application and replace them with the patched `render_template` function.",
+                "Ensure that the `RestrictedLoader` class is properly integrated with your existing template loader logic to prevent absolute paths from being used.",
+                "Test your application thoroughly to verify that the patch does not introduce any regressions or break existing functionality, and that absolute paths are correctly restricted."
+            ]
+        }
+    },
+    "GHSA-q7m6-wpvf-mvwx": {
+        "summary": "Mapfish Print: Remote Code Injection (RCE) in Dynamic table",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_user_input(input_str):\n    \"\"\"\n    Sanitizes user input to prevent code injection.\n    \"\"\"\n    # Remove any HTML tags\n    input_str = re.sub(r'<.*?>', '', input_str)\n    \n    # Remove any JavaScript code\n    input_str = re.sub(r'javascript:', '', input_str, flags=re.IGNORECASE)\n    \n    # Remove any SQL keywords\n    sql_keywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP']\n    for keyword in sql_keywords:\n        input_str = re.sub(r'\\b' + keyword + r'\\b', '', input_str, flags=re.IGNORECASE)\n    \n    return input_str\n\ndef generate_dynamic_table(user_input):\n    \"\"\"\n    Generates a dynamic table based on user input.\n    \"\"\"\n    sanitized_input = sanitize_user_input(user_input)\n    # Use the sanitized input to generate the dynamic table\n    # ...\n    return dynamic_table",
+            "vulnerability_explanation": "The Mapfish Print vulnerability is a Remote Code Injection (RCE) issue that occurs in the dynamic table feature, allowing an attacker to inject malicious code. This is likely due to insufficient input validation and sanitization, enabling an attacker to execute arbitrary code on the server. The exact mechanism is unknown without a PoC, but it's essential to validate and sanitize user input to prevent such vulnerabilities.",
+            "mitigation_steps": [
+                "Identify all areas in the Mapfish Print codebase where user input is used to generate dynamic tables.",
+                "Apply the `sanitize_user_input` function to all user input before using it to generate dynamic tables.",
+                "Review the codebase for any other potential input validation and sanitization issues, and address them accordingly to prevent similar vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-rg65-45m7-hq57": {
+        "summary": "esm.sh: Path Traversal via package.json browser field allows reading arbitrary server files",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport json\n\ndef sanitize_browser_field(package_json):\n    \"\"\"\n    Sanitizes the browser field in package.json to prevent path traversal attacks.\n    \"\"\"\n    # Load package.json\n    with open(package_json, 'r') as f:\n        package_data = json.load(f)\n\n    # Check if browser field exists\n    if 'browser' in package_data:\n        # Sanitize the browser field by removing ../ and ./ patterns\n        sanitized_browser_field = os.path.normpath(package_data['browser'])\n        package_data['browser'] = sanitized_browser_field\n\n    # Save the sanitized package.json\n    with open(package_json, 'w') as f:\n        json.dump(package_data, f, indent=4)\n\n# Example usage:\nsanitize_browser_field('package.json')",
+            "vulnerability_explanation": "The vulnerability in esm.sh allows an attacker to perform a path traversal attack via the package.json browser field, enabling them to read arbitrary server files. This occurs because the browser field in package.json is not properly sanitized, allowing malicious input to traverse the directory structure. As a result, an attacker can access sensitive files on the server by manipulating the browser field.",
+            "mitigation_steps": [
+                "Identify all instances of esm.sh in your project and ensure you have the latest version, as the vulnerability may have been patched in recent updates.",
+                "Implement the provided `sanitize_browser_field` function to sanitize the browser field in your package.json files, preventing path traversal attacks.",
+                "Regularly review and update your package.json files to ensure the browser field is properly sanitized and does not contain any malicious input."
+            ]
+        }
+    },
+    "GHSA-3636-h3vx-6465": {
+        "summary": "esm.sh: Legacy Route Path Traversal Can Lead to RCE",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-09 02:49:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nfrom flask import Flask, request, send_file\n\napp = Flask(__name__)\n\n# Define a function to normalize and validate the input path\ndef normalize_path(input_path):\n    # Remove any directory traversal attempts\n    input_path = input_path.replace('../', '')\n    # Normalize the path to prevent any further traversal\n    input_path = os.path.normpath(input_path)\n    return input_path\n\n# Define a route that uses the normalized path\n@app.route('/legacy/<path:input_path>')\ndef handle_legacy_route(input_path):\n    # Normalize the input path\n    normalized_path = normalize_path(input_path)\n    # Check if the normalized path is within the allowed directory\n    if not normalized_path.startswith('allowed_directory/'):\n        return 'Access denied', 403\n    # If the path is valid, proceed with the original functionality\n    # For example, send a file from the normalized path\n    return send_file(normalized_path)\n\nif __name__ == '__main__':\n    app.run()",
+            "vulnerability_explanation": "The vulnerability in esm.sh is a Legacy Route Path Traversal issue that can lead to Remote Code Execution (RCE). This occurs when an attacker can manipulate the URL path to access unauthorized resources, potentially executing malicious code on the server. The lack of proper input validation and sanitization allows an attacker to traverse the directory structure and exploit the system.",
+            "mitigation_steps": [
+                "Identify all legacy routes in the esm.sh application that may be vulnerable to path traversal attacks.",
+                "Apply the `normalize_path` function to all user-inputted paths to prevent directory traversal attempts.",
+                "Implement input validation and sanitization for all user-inputted data to prevent any potential RCE exploits, ensuring that all input is properly checked and normalized before being used in the application."
             ]
         }
     }
