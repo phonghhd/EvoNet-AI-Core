@@ -2,7 +2,7 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-11 10:18:44",
+        "date_added": "2026-06-11 15:54:12",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
@@ -12,7 +12,7 @@
             "mitigation_steps": [
                 "**Implement secure authentication mechanisms**: Use secure authentication protocols such as SSL/TLS or HMAC to verify the identity of clients and ensure that only authorized access is allowed.",
                 "**Keep software up-to-date**: Regularly update and patch software to prevent exploitation of known vulnerabilities.",
-                "**Use intrusion detection and prevention systems**: Implement intrusion detection and prevention systems to detect and prevent malicious activity, such as the use of NullRAT."
+                "**Use intrusion detection and prevention systems**: Implement IDS/IPS systems to detect and prevent malicious activity, such as the use of NullRAT."
             ]
         }
     },
@@ -16638,6 +16638,55 @@
                 "Identify the vulnerable component or function in your application that is related to GHSA-5x25-c2rf-f2jx.",
                 "Implement input validation using regular expressions or other validation techniques to ensure user input conforms to expected formats.",
                 "Apply the provided patch code or similar validation logic to the vulnerable component or function to mitigate the potential security vulnerability."
+            ]
+        }
+    },
+    "GHSA-6g23-24mc-hx6x": {
+        "summary": "Spring Cloud Config vulnerable to Path Traversal",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-11 15:54:12",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nfrom spring_cloud_config.server import ConfigServer\n\ndef sanitize_path(path):\n    \"\"\"\n    Sanitize the input path to prevent path traversal attacks.\n    \"\"\"\n    # Normalize the path to eliminate any redundant separators or parent directory references\n    normalized_path = os.path.normpath(path)\n    \n    # Check if the normalized path is still within the intended directory\n    if not normalized_path.startswith('/intended/directory/'):\n        raise ValueError(\"Path traversal attempt detected\")\n    \n    return normalized_path\n\nclass SecureConfigServer(ConfigServer):\n    def get_config(self, path):\n        \"\"\"\n        Override the get_config method to sanitize the input path.\n        \"\"\"\n        sanitized_path = sanitize_path(path)\n        return super().get_config(sanitized_path)",
+            "vulnerability_explanation": "The Spring Cloud Config vulnerability to Path Traversal (GHSA-6g23-24mc-hx6x) allows an attacker to access sensitive files on the server by manipulating the URL path. This is possible due to inadequate input validation and sanitization in the Spring Cloud Config server, enabling an attacker to traverse the directory structure and access files outside the intended directory. As a result, an attacker can potentially read sensitive configuration files, including those containing credentials or other confidential information.",
+            "mitigation_steps": [
+                "Identify the Spring Cloud Config server version in use and verify if it is vulnerable to the Path Traversal attack (GHSA-6g23-24mc-hx6x).",
+                "Apply the provided patch by integrating the `sanitize_path` function and the `SecureConfigServer` class into the existing Spring Cloud Config server codebase, ensuring that all config requests are routed through the `SecureConfigServer` instance.",
+                "Test the patched Config server to ensure that it correctly sanitizes input paths and prevents path traversal attacks, while still serving configuration files as intended."
+            ]
+        }
+    },
+    "MAL-2026-5653": {
+        "summary": "Malicious code in pc-optimizer (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-11 15:54:12",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport sys\n\ndef safe_execute(command):\n    \"\"\"\n    Safely execute a command by validating its arguments and using subprocess.run.\n    \"\"\"\n    # Validate the command and its arguments\n    if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):\n        raise ValueError(\"Invalid command\")\n\n    # Use subprocess.run to execute the command with validated arguments\n    try:\n        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n        return result.stdout.decode('utf-8')\n    except subprocess.CalledProcessError as e:\n        print(f\"Error executing command: {e}\", file=sys.stderr)\n        return None\n\n# Example usage:\ncommand = [\"pc-optimizer\", \"--option1\", \"--option2\"]\noutput = safe_execute(command)\nif output is not None:\n    print(output)",
+            "vulnerability_explanation": "The MAL-2026-5653 vulnerability is related to malicious code in the pc-optimizer npm package, which can potentially lead to unauthorized access or execution of malicious code. The exact mechanism of the vulnerability is unknown due to the lack of a publicly available Proof of Concept (PoC) and CWE IDs. However, it is likely that the vulnerability involves some form of code injection or execution of untrusted input.",
+            "mitigation_steps": [
+                "Identify and remove any instances of the pc-optimizer npm package from your project dependencies to prevent further exploitation.",
+                "Implement a safe execution mechanism, such as the provided `safe_execute` function, to validate and execute commands with trusted input.",
+                "Regularly monitor your project's dependencies for any known vulnerabilities and update them accordingly to prevent similar issues in the future.",
+                "Consider using a dependency scanning tool to automatically identify and alert you to potential vulnerabilities in your project's dependencies."
+            ]
+        }
+    },
+    "GHSA-2mh5-3cw6-hrrq": {
+        "summary": "Spring Cloud Config has an Authorization Bypass Through User-Controlled Key ",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-11 15:54:12",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef validate_key(key):\n    \"\"\"\n    Validate user-controlled key to prevent authorization bypass.\n    \n    :param key: User-controlled key\n    :return: True if key is valid, False otherwise\n    \"\"\"\n    # Define a regular expression pattern to match valid key formats\n    pattern = r\"^[a-zA-Z0-9_-]+$\"\n    \n    # Check if the key matches the valid pattern\n    if re.match(pattern, key):\n        return True\n    else:\n        return False\n\ndef get_config(key):\n    \"\"\"\n    Retrieve configuration data for a given key, with authorization bypass mitigation.\n    \n    :param key: User-controlled key\n    :return: Configuration data if key is valid and authorized, None otherwise\n    \"\"\"\n    # Validate the user-controlled key\n    if not validate_key(key):\n        return None\n    \n    # Authenticate and authorize the user for the given key\n    if is_authorized(key):\n        # Retrieve configuration data from the secure storage\n        return retrieve_config(key)\n    else:\n        return None\n\ndef is_authorized(key):\n    \"\"\"\n    Check if the user is authorized to access the configuration data for a given key.\n    \n    :param key: User-controlled key\n    :return: True if user is authorized, False otherwise\n    \"\"\"\n    # Implement authorization logic based on the application's security requirements\n    # For example, check if the user has the required role or permission\n    # This function should be implemented according to the specific authorization mechanism\n    pass\n\ndef retrieve_config(key):\n    \"\"\"\n    Retrieve configuration data from the secure storage.\n    \n    :param key: Validated and authorized key\n    :return: Configuration data\n    \"\"\"\n    # Implement the logic to retrieve configuration data from the secure storage\n    # This function should be implemented according to the specific configuration storage mechanism\n    pass",
+            "vulnerability_explanation": "The vulnerability in Spring Cloud Config allows an attacker to bypass authorization by manipulating the user-controlled key, potentially granting unauthorized access to sensitive configuration data. This occurs due to inadequate validation and sanitization of user-inputted keys, which can be exploited to access restricted resources. As a result, an attacker could retrieve or modify confidential configuration information without proper authorization.",
+            "mitigation_steps": [
+                "**Validate user input**: Ensure that all user-controlled keys are validated and sanitized to prevent malicious input from being processed.",
+                "**Implement authorization checks**: Verify that the user is authorized to access the configuration data for a given key, using a robust authorization mechanism.",
+                "**Use secure storage**: Store configuration data in a secure storage mechanism, such as an encrypted database or a secure file system, to protect sensitive information from unauthorized access."
             ]
         }
     }
