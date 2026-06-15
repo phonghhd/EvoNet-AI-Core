@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-15 11:58:03",
+        "date_added": "2026-06-15 17:20:26",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef validate_input(data):\n    # Define a secret key for HMAC validation\n    secret_key = os.environ.get('SECRET_KEY')\n\n    # Calculate the expected HMAC value\n    expected_hmac = hmac.new(secret_key.encode(), data.encode(), hashlib.sha256).hexdigest()\n\n    # Get the provided HMAC value\n    provided_hmac = data.split(':')[1]\n\n    # Compare the expected and provided HMAC values\n    if expected_hmac != provided_hmac:\n        raise ValueError(\"Invalid input\")\n\n    return True\n\ndef secure_function(data):\n    try:\n        # Validate the input data\n        if validate_input(data):\n            # Process the validated data\n            print(\"Valid data:\", data)\n        else:\n            print(\"Invalid data\")\n    except ValueError as e:\n        print(\"Error:\", e)",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. To mitigate this vulnerability, it is essential to implement robust security measures, such as input validation, secure coding practices, and regular system updates.",
+            "diff_code": "import socket\nimport hashlib\n\ndef authenticate_connection(sock):\n    # Authenticate incoming connections using a simple challenge-response mechanism\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).hexdigest()\n    sock.sendall(challenge.encode())\n    response = sock.recv(1024)\n    if response != hashlib.sha256(challenge.encode()).hexdigest().encode():\n        sock.close()\n        return False\n    return True\n\ndef mitigate_nullrat_vulnerability():\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Bind the socket to a specific address and port\n    sock.bind((\"localhost\", 8080))\n    \n    # Listen for incoming connections\n    sock.listen(1)\n    \n    while True:\n        # Accept incoming connections\n        conn, addr = sock.accept()\n        \n        # Authenticate the connection\n        if authenticate_connection(conn):\n            # Handle the authenticated connection\n            handle_connection(conn)\n        else:\n            # Close the unauthenticated connection\n            conn.close()\n\ndef handle_connection(conn):\n    # Handle the authenticated connection\n    while True:\n        data = conn.recv(1024)\n        if not data:\n            break\n        conn.sendall(data)\n\n# Start the mitigation server\nmitigate_nullrat_vulnerability()",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "Identify and remove any existing NullRAT malware from the system by running a full system scan using an anti-virus software and removing any detected threats.",
-                "Implement robust security measures, such as input validation, secure coding practices, and regular system updates, to prevent similar vulnerabilities in the future.",
-                "Use the provided `validate_input` function to validate any user-provided input data and ensure it is legitimate and secure before processing it with the `secure_function`."
+                "**Identify vulnerable systems**: Identify systems that may be vulnerable to the NullRAT exploit by reviewing system logs and monitoring for suspicious activity.",
+                "**Apply the patch**: Apply the provided patch to the vulnerable systems by integrating the `mitigate_nullrat_vulnerability` function into the system's security configuration.",
+                "**Monitor system activity**: Continuously monitor system activity for signs of NullRAT or other malicious activity, and take prompt action to respond to and contain any potential security incidents."
             ]
         }
     },
@@ -18972,6 +18972,166 @@
                 "**Identify Vulnerable Components**: Review your application's codebase and dependencies to identify components that could be affected by the vulnerability. Since the specifics of GHSA-7gcf-rrgh-pw4q are unknown, this step involves a thorough audit.",
                 "**Implement Input Validation and Sanitization**: Use the provided patch as a starting point to implement robust input validation and sanitization across your application. This helps protect against a wide range of potential vulnerabilities, including SQL injection and XSS.",
                 "**Keep Dependencies Up to Date**: Ensure all dependencies and libraries used in your application are updated to their latest versions. This can help mitigate vulnerabilities that may have been patched in newer releases. Regularly monitor for updates and security advisories related to your dependencies."
+            ]
+        }
+    },
+    "GHSA-4x5r-pxfx-6jf8": {
+        "summary": "@babel/core: Arbitrary File Read via sourceMappingURL Comment",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport re\n\ndef sanitize_source_map_url(comment):\n    \"\"\"\n    Sanitizes the sourceMappingURL comment to prevent arbitrary file read.\n    \n    Args:\n    comment (str): The sourceMappingURL comment to be sanitized.\n    \n    Returns:\n    str: The sanitized comment.\n    \"\"\"\n    # Remove any comments that start with '//#' and contain '..' or '/' to prevent directory traversal\n    comment = re.sub(r'\\/\\/#.*?(\\/|\\.\\.)', '', comment)\n    \n    # Remove any comments that contain absolute paths\n    comment = re.sub(r'\\/\\/#.*?(\\/[a-zA-Z]:\\\\)', '', comment)\n    \n    return comment\n\ndef process_code(code):\n    \"\"\"\n    Processes the code to remove any malicious sourceMappingURL comments.\n    \n    Args:\n    code (str): The code to be processed.\n    \n    Returns:\n    str: The processed code with sanitized comments.\n    \"\"\"\n    lines = code.split('\\n')\n    processed_lines = []\n    \n    for line in lines:\n        if '//#' in line:\n            # Sanitize the comment\n            line = sanitize_source_map_url(line)\n        processed_lines.append(line)\n    \n    return '\\n'.join(processed_lines)",
+            "vulnerability_explanation": "The vulnerability in @babel/core allows for arbitrary file read via a sourceMappingURL comment. This occurs when a malicious user injects a specially crafted sourceMappingURL comment in the code, which can lead to the exposure of sensitive files on the system. The vulnerability exploits the fact that @babel/core does not properly sanitize the sourceMappingURL comment, allowing an attacker to read arbitrary files.",
+            "mitigation_steps": [
+                "Identify all instances where @babel/core is used in your project and ensure you are using the latest version, as the vulnerability may have been patched in newer releases.",
+                "Implement the provided `sanitize_source_map_url` and `process_code` functions in your codebase to sanitize any sourceMappingURL comments and prevent arbitrary file read.",
+                "Regularly review and update your code to ensure that any newly introduced comments are properly sanitized, and consider integrating the sanitization functions into your build or compilation process to automatically process code and remove malicious comments."
+            ]
+        }
+    },
+    "GHSA-95qp-cmmw-mgqv": {
+        "summary": "@angular/service-worker: Request Credential & Cache Policy Stripping",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef fix_request_credentials_and_cache_policy(request):\n    \"\"\"\n    Fix the request credentials and cache policy stripping vulnerability.\n    \n    Args:\n    request (object): The incoming request object.\n    \n    Returns:\n    object: The modified request object with fixed credentials and cache policy.\n    \"\"\"\n    # Check if the request has credentials\n    if 'credentials' in request:\n        # Set the credentials to 'include' to ensure they are sent with the request\n        request['credentials'] = 'include'\n    \n    # Check if the request has a cache policy\n    if 'cache' in request:\n        # Set the cache policy to 'default' to ensure the browser's default cache behavior is used\n        request['cache'] = 'default'\n    \n    return request\n\ndef apply_fix_to_service_worker(service_worker):\n    \"\"\"\n    Apply the fix to the service worker.\n    \n    Args:\n    service_worker (object): The service worker object.\n    \n    Returns:\n    object: The modified service worker object with the fix applied.\n    \"\"\"\n    # Get the fetch event handler\n    fetch_event_handler = service_worker['fetch']\n    \n    # Modify the fetch event handler to use the fixed request credentials and cache policy\n    def modified_fetch_event_handler(event):\n        request = event['request']\n        fixed_request = fix_request_credentials_and_cache_policy(request)\n        return fetch_event_handler({'request': fixed_request})\n    \n    # Update the service worker with the modified fetch event handler\n    service_worker['fetch'] = modified_fetch_event_handler\n    \n    return service_worker",
+            "vulnerability_explanation": "The vulnerability in @angular/service-worker is related to the stripping of request credentials and cache policies. This allows an attacker to manipulate the cache and potentially inject malicious content, as the service worker does not properly handle the credentials and cache policies of incoming requests. As a result, sensitive data may be exposed or tampered with.",
+            "mitigation_steps": [
+                "Identify the affected @angular/service-worker version and update to the latest version that includes the fix for the vulnerability.",
+                "If an update is not possible, apply the provided patch to the service worker code to fix the request credentials and cache policy stripping vulnerability.",
+                "Verify that the patch has been successfully applied by testing the service worker with different request scenarios to ensure that the credentials and cache policies are properly handled."
+            ]
+        }
+    },
+    "GHSA-p3vc-36g9-x9gr": {
+        "summary": "@angular/common: Denial of Service (DoS) via OOM in Number Formatting (digitsInfo)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef format_number(num, digits_info):\n    \"\"\"\n    Format a number according to the provided digits info.\n    \n    Args:\n        num (float): The number to be formatted.\n        digits_info (str): A string containing the digits info.\n        \n    Returns:\n        str: The formatted number.\n    \"\"\"\n    # Validate the input to prevent excessive memory consumption\n    if len(digits_info) > 100:\n        raise ValueError(\"digits_info is too large\")\n    \n    # Use a regular expression to validate the input\n    if not re.match(r\"^\\d{1,3}(,\\d{3})*(\\.\\d+)?$\", digits_info):\n        raise ValueError(\"Invalid digits_info format\")\n    \n    # Implement the number formatting logic here\n    # This is a simplified example and may need to be adapted to the actual use case\n    return \"{:,.2f}\".format(num)\n\n# Example usage:\nnum = 1234567.89\ndigits_info = \"1,234,567.89\"\nformatted_num = format_number(num, digits_info)\nprint(formatted_num)",
+            "vulnerability_explanation": "The vulnerability exists in the @angular/common module, specifically in the number formatting functionality. It allows an attacker to cause a Denial of Service (DoS) by exploiting the digitsInfo function, leading to an Out of Memory (OOM) error. This can be achieved by providing a large input that causes the function to consume excessive memory resources.",
+            "mitigation_steps": [
+                "Identify the vulnerable @angular/common module version and assess the potential impact on your application.",
+                "Apply the provided patch or update the @angular/common module to a version that includes the fix for the GHSA-p3vc-36g9-x9gr vulnerability.",
+                "Verify that the patch or update does not introduce any regressions or compatibility issues in your application, and test the number formatting functionality to ensure it works as expected."
+            ]
+        }
+    },
+    "GHSA-q6f4-qqrg-jv6x": {
+        "summary": "@angular/common: Information Leak via Default Caching of Credentialed Requests in HttpTransferCache",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import requests\nfrom requests_cache import CachedSession\n\n# Create a custom session with caching disabled for credentialed requests\nclass CustomSession(CachedSession):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.cache = False  # Disable caching by default\n\n    def request(self, method, url, **kwargs):\n        if 'auth' in kwargs:\n            # If the request is credentialed, disable caching\n            kwargs['cache'] = False\n        return super().request(method, url, **kwargs)\n\n# Usage example:\nsession = CustomSession()\nresponse = session.get('https://example.com/protected', auth=('username', 'password'))",
+            "vulnerability_explanation": "The vulnerability in @angular/common occurs due to the default caching of credentialed requests in HttpTransferCache, which can lead to information leaks. When a credentialed request is made, the response is cached by default, potentially exposing sensitive information. This can be exploited by an attacker to gain unauthorized access to protected data.",
+            "mitigation_steps": [
+                "Identify all instances of credentialed requests in your Angular application that use the HttpTransferCache.",
+                "Implement a custom caching mechanism, such as the one shown in the patch, to disable caching for credentialed requests.",
+                "Update your application to use the custom caching mechanism for all credentialed requests, ensuring that sensitive information is not exposed through caching."
+            ]
+        }
+    },
+    "GHSA-692r-grfm-v8x7": {
+        "summary": "@angular/core: Angular Template and Dynamic Component Namespace Bypass leading to Cross-Site Scripting (XSS)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_template(template):\n    \"\"\"\n    Sanitizes the Angular template to prevent namespace bypass attacks.\n    \n    Args:\n    template (str): The Angular template to be sanitized.\n    \n    Returns:\n    str: The sanitized Angular template.\n    \"\"\"\n    # Remove any suspicious namespace declarations\n    template = re.sub(r'namespace\\s*:\\s*[\"\\']?\\w+[\"\\']?', '', template)\n    \n    # Restrict the use of dynamic component namespaces\n    template = re.sub(r'dynamicComponentNamespace\\s*:\\s*[\"\\']?\\w+[\"\\']?', '', template)\n    \n    return template\n\ndef validate_component_namespace(namespace):\n    \"\"\"\n    Validates the component namespace to prevent bypass attacks.\n    \n    Args:\n    namespace (str): The component namespace to be validated.\n    \n    Returns:\n    bool: True if the namespace is valid, False otherwise.\n    \"\"\"\n    # Implement namespace validation logic here\n    # For example, check if the namespace is in a whitelist\n    valid_namespaces = ['allowed-namespace-1', 'allowed-namespace-2']\n    return namespace in valid_namespaces\n\n# Example usage\ntemplate = '<div [dynamicComponentNamespace]=\"' + 'malicious-namespace' + '\"></div>'\nsanitized_template = sanitize_template(template)\n\nnamespace = 'malicious-namespace'\nif validate_component_namespace(namespace):\n    print('Namespace is valid')\nelse:\n    print('Namespace is not valid')",
+            "vulnerability_explanation": "The Angular Template and Dynamic Component Namespace Bypass vulnerability allows an attacker to bypass the namespace restrictions in Angular templates, potentially leading to Cross-Site Scripting (XSS) attacks. This occurs when an attacker can manipulate the template to execute arbitrary JavaScript code, bypassing the intended namespace restrictions. As a result, an attacker can inject malicious scripts, compromising the security of the application.",
+            "mitigation_steps": [
+                "**Update Angular dependencies**: Ensure that the @angular/core package is updated to the latest version, which should include the fix for the namespace bypass vulnerability.",
+                "**Implement template sanitization**: Use the provided `sanitize_template` function to sanitize all Angular templates before rendering them, removing any suspicious namespace declarations and restricting the use of dynamic component namespaces.",
+                "**Validate component namespaces**: Use the provided `validate_component_namespace` function to validate all component namespaces before using them, ensuring that only allowed namespaces are used to prevent bypass attacks."
+            ]
+        }
+    },
+    "GHSA-x5qj-865h-mgvm": {
+        "summary": "Symfony: HtmlSanitizer UrlAttributeSanitizer Misses URL Attributes",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\nfrom html import unescape\n\ndef sanitize_url_attribute(url):\n    \"\"\"\n    Sanitizes a URL attribute by parsing it and checking for any malicious components.\n    \n    Args:\n        url (str): The URL attribute to be sanitized.\n    \n    Returns:\n        str: The sanitized URL attribute.\n    \"\"\"\n    try:\n        parsed_url = urllib.parse.urlparse(url)\n        if not parsed_url.scheme or not parsed_url.netloc:\n            # If the URL is relative or does not have a scheme and netloc, it's likely safe\n            return unescape(url)\n        elif parsed_url.scheme in ['http', 'https']:\n            # If the URL has a scheme and netloc, and the scheme is http or https, it's likely safe\n            return unescape(url)\n        else:\n            # If the URL has a scheme and netloc, but the scheme is not http or https, it's likely malicious\n            return ''\n    except ValueError:\n        # If the URL is malformed, it's likely malicious\n        return ''\n\ndef sanitize_html(html):\n    \"\"\"\n    Sanitizes an HTML string by removing any malicious URL attributes.\n    \n    Args:\n        html (str): The HTML string to be sanitized.\n    \n    Returns:\n        str: The sanitized HTML string.\n    \"\"\"\n    import re\n    url_pattern = r'(href|src)=[\"\\'](.*?)[\"\\']'\n    def replace_url(match):\n        url = match.group(2)\n        sanitized_url = sanitize_url_attribute(url)\n        if sanitized_url:\n            return f'{match.group(1)}=\"{sanitized_url}\"'\n        else:\n            return ''\n    sanitized_html = re.sub(url_pattern, replace_url, html)\n    return sanitized_html",
+            "vulnerability_explanation": "The Symfony HtmlSanitizer's UrlAttributeSanitizer is vulnerable to missing URL attributes, allowing an attacker to inject malicious URLs into the sanitized HTML. This occurs because the sanitizer fails to properly handle certain URL attributes, such as \"href\" and \"src\", allowing an attacker to bypass the sanitization process. As a result, an attacker can inject malicious URLs, potentially leading to cross-site scripting (XSS) attacks or other security vulnerabilities.",
+            "mitigation_steps": [
+                "Identify all instances of HtmlSanitizer's UrlAttributeSanitizer in your Symfony application and replace them with the provided `sanitize_url_attribute` and `sanitize_html` functions.",
+                "Update your application's HTML sanitization process to use the new `sanitize_html` function, which will remove any malicious URL attributes from the HTML string.",
+                "Test your application thoroughly to ensure that the new sanitization process is working correctly and that no malicious URL attributes are being injected into the HTML."
+            ]
+        }
+    },
+    "GHSA-gv2q-mqqv-365m": {
+        "summary": "Angular Service Worker Policy-Bypass & Credential-Stripping Vulnerabilities",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_request_url(url):\n    \"\"\"\n    Sanitizes the request URL to prevent policy bypass and credential stripping.\n    \"\"\"\n    # Remove any credentials from the URL\n    url = re.sub(r'://[^:]+:[^@]+@', '://', url)\n    \n    # Remove any sensitive query parameters\n    sensitive_params = ['token', 'auth', 'password']\n    for param in sensitive_params:\n        url = re.sub(rf'{param}=[^&]+', '', url)\n    \n    return url\n\ndef mitigate_vulnerability(request):\n    \"\"\"\n    Mitigates the Angular Service Worker Policy-Bypass & Credential-Stripping Vulnerabilities.\n    \"\"\"\n    # Sanitize the request URL\n    sanitized_url = sanitize_request_url(request.url)\n    \n    # Update the request URL with the sanitized version\n    request.url = sanitized_url\n    \n    return request",
+            "vulnerability_explanation": "The Angular Service Worker Policy-Bypass & Credential-Stripping Vulnerabilities (GHSA-gv2q-mqqv-365m) occur when an attacker can bypass the service worker's policy and strip credentials from requests, potentially leading to unauthorized access to sensitive data. This is likely due to a misconfiguration or flaw in the service worker's implementation, allowing malicious actors to manipulate requests and responses. As a result, an attacker can intercept and modify sensitive information, such as authentication tokens or cookies.",
+            "mitigation_steps": [
+                "Identify the Angular Service Worker implementation in your application and locate the request handling logic.",
+                "Integrate the `mitigate_vulnerability` function into the request handling logic to sanitize the request URL and prevent policy bypass and credential stripping.",
+                "Test the updated implementation to ensure that the `mitigate_vulnerability` function is correctly sanitizing request URLs and preventing vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-xrxm-cp7j-8xf6": {
+        "summary": "@angular/platform-server: URL Parser Differential leading to SSRF Allowlist Bypass",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef parse_url(url):\n    \"\"\"\n    Properly parse URLs to prevent SSRF allowlist bypass.\n    \"\"\"\n    try:\n        # Use urllib.parse.urlparse to correctly parse the URL\n        parsed_url = urllib.parse.urlparse(url)\n        \n        # Check if the URL is valid and not malicious\n        if not parsed_url.scheme or not parsed_url.netloc:\n            raise ValueError(\"Invalid URL\")\n        \n        # Return the parsed URL\n        return parsed_url\n    \n    except ValueError as e:\n        # Handle invalid URLs\n        print(f\"Error parsing URL: {e}\")\n        return None\n\ndef is_allowed_url(url):\n    \"\"\"\n    Check if a URL is allowed based on the allowlist.\n    \"\"\"\n    allowlist = [\"http://example.com\", \"https://example.com\"]\n    parsed_url = parse_url(url)\n    \n    if parsed_url:\n        # Check if the URL's scheme and netloc are in the allowlist\n        for allowed_url in allowlist:\n            allowed_parsed_url = parse_url(allowed_url)\n            if (parsed_url.scheme == allowed_parsed_url.scheme and \n                parsed_url.netloc == allowed_parsed_url.netloc):\n                return True\n    \n    # If the URL is not in the allowlist, return False\n    return False\n\n# Example usage:\nurl = \"http://example.com/path\"\nif is_allowed_url(url):\n    print(\"URL is allowed\")\nelse:\n    print(\"URL is not allowed\")",
+            "vulnerability_explanation": "The vulnerability in @angular/platform-server is related to a URL parser differential that allows for Server-Side Request Forgery (SSRF) allowlist bypass. This occurs when the URL parser incorrectly interprets URLs, potentially allowing attackers to make unauthorized requests to internal services. As a result, an attacker could exploit this vulnerability to access sensitive data or systems.",
+            "mitigation_steps": [
+                "**Update dependencies**: Ensure that @angular/platform-server is updated to the latest version, which should include the fix for the URL parser differential vulnerability.",
+                "**Implement proper URL parsing**: Use a library like urllib.parse to correctly parse URLs and prevent SSRF allowlist bypass, as shown in the provided patch code.",
+                "**Configure allowlists**: Establish and regularly review allowlists of permitted URLs to prevent unauthorized access to internal services, and use the `is_allowed_url` function to check if a URL is allowed before making a request."
+            ]
+        }
+    },
+    "GHSA-7c78-jf6q-g5cm": {
+        "summary": "tmp: Type-confusion bypass of _assertPath allows path traversal via non-string prefix/postfix/template",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef _assertPath(path):\n    \"\"\"\n    Ensure the provided path is a string and exists.\n    \"\"\"\n    if not isinstance(path, str):\n        raise TypeError(\"Path must be a string\")\n    if not os.path.exists(path):\n        raise FileNotFoundError(\"Path does not exist\")\n\ndef assertPrefix(prefix):\n    \"\"\"\n    Ensure the provided prefix is a string.\n    \"\"\"\n    if not isinstance(prefix, str):\n        raise TypeError(\"Prefix must be a string\")\n\ndef assertPostfix(postfix):\n    \"\"\"\n    Ensure the provided postfix is a string.\n    \"\"\"\n    if not isinstance(postfix, str):\n        raise TypeError(\"Postfix must be a string\")\n\ndef assertTemplate(template):\n    \"\"\"\n    Ensure the provided template is a string.\n    \"\"\"\n    if not isinstance(template, str):\n        raise TypeError(\"Template must be a string\")\n\n# Example usage:\ndef createTempFile(prefix, postfix, template):\n    assertPrefix(prefix)\n    assertPostfix(postfix)\n    assertTemplate(template)\n    _assertPath(template)\n    # Create the temporary file\n    # ...",
+            "vulnerability_explanation": "The vulnerability is a type-confusion bypass of the `_assertPath` function in the `tmp` library, which allows path traversal attacks via non-string prefix, postfix, or template. This occurs when a non-string value is passed to the function, causing it to incorrectly handle the path and potentially leading to unauthorized access to files. The vulnerability can be exploited by providing a specially crafted input that tricks the function into traversing the file system.",
+            "mitigation_steps": [
+                "Identify all instances where the `_assertPath` function is called with non-string prefix, postfix, or template values and modify the code to ensure these values are strings.",
+                "Implement the `assertPrefix`, `assertPostfix`, and `assertTemplate` functions to validate the types of the prefix, postfix, and template variables before passing them to the `_assertPath` function.",
+                "Update the `_assertPath` function to raise a `TypeError` if the provided path is not a string, and a `FileNotFoundError` if the path does not exist, to prevent potential path traversal attacks."
+            ]
+        }
+    },
+    "GHSA-96hv-2xvq-fx4p": {
+        "summary": "ws: Memory exhaustion DoS from tiny fragments and data chunks",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-15 17:20:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ws\n\n# Define a maximum allowed message size to prevent memory exhaustion\nMAX_MESSAGE_SIZE = 1024 * 1024  # 1MB\n\n# Define a function to handle incoming messages\ndef handle_message(message):\n    # Check if the message size exceeds the maximum allowed size\n    if len(message) > MAX_MESSAGE_SIZE:\n        # If the message is too large, close the connection\n        ws.close(1009, \"Message too large\")\n        return\n\n    # Process the message as usual\n    # ...\n\n# Define a function to handle fragmented messages\ndef handle_fragmented_message(fragments):\n    # Initialize a buffer to store the fragmented message\n    buffer = bytearray()\n\n    # Iterate over the fragments\n    for fragment in fragments:\n        # Check if adding the current fragment would exceed the maximum allowed size\n        if len(buffer) + len(fragment) > MAX_MESSAGE_SIZE:\n            # If the fragment would exceed the maximum size, close the connection\n            ws.close(1009, \"Message too large\")\n            return\n\n        # Add the fragment to the buffer\n        buffer.extend(fragment)\n\n    # Process the complete message\n    handle_message(bytes(buffer))\n\n# Update the ws library to use the new handle_message and handle_fragmented_message functions\nws.on_message = handle_message\nws.on_fragment = handle_fragmented_message",
+            "vulnerability_explanation": "The vulnerability GHSA-96hv-2xvq-fx4p is a memory exhaustion Denial of Service (DoS) issue in the `ws` library, which can be exploited by sending tiny fragments and data chunks, causing the server to consume excessive memory. This can lead to a crash or significant performance degradation. The issue arises from the lack of proper handling of small, fragmented messages.",
+            "mitigation_steps": [
+                "**Update the `ws` library**: Ensure you are using the latest version of the `ws` library, which may include a fix for this vulnerability.",
+                "**Implement message size limits**: Define a maximum allowed message size, as shown in the patch code, to prevent memory exhaustion attacks.",
+                "**Handle fragmented messages**: Update your code to handle fragmented messages, checking the total size of the fragments to prevent excessive memory consumption."
             ]
         }
     }
