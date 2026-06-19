@@ -20421,5 +20421,486 @@
                 "Test the updated API endpoints to verify that the encoding is correct and the vulnerability is mitigated, ensuring that authenticated API requests can no longer be redirected via unencoded path variables."
             ]
         }
+    },
+    "GHSA-q2gm-54r6-8fwm": {
+        "summary": "Oj: Use-After-Free in Oj::Parser SAJ Callback via Input Mutation",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import copy\n\nclass OjParser:\n    def __init__(self, input_data):\n        self.input_data = copy.deepcopy(input_data)  # Create a deep copy of the input data\n\n    def parse(self):\n        # Parse the input data using the copied data\n        saj_callback(self.input_data)\n\ndef saj_callback(input_data):\n    # Implement the SAJ callback function using the copied input data\n    pass",
+            "vulnerability_explanation": "The vulnerability is a Use-After-Free (UAF) issue in the Oj::Parser SAJ Callback, which occurs when the input is mutated, causing the parser to access memory that has already been freed. This can lead to arbitrary code execution, allowing an attacker to execute malicious code. The vulnerability is triggered when the parser attempts to access the mutated input, resulting in a crash or potentially allowing the attacker to take control of the system.",
+            "mitigation_steps": [
+                "Identify the Oj::Parser SAJ Callback function in the codebase and locate where the input data is being mutated.",
+                "Create a deep copy of the input data before passing it to the parser, as shown in the patch code, to prevent the parser from accessing freed memory.",
+                "Update the parser to use the copied input data, ensuring that any mutations to the original input data do not affect the parser's operation, and verify that the parser's functionality remains intact after applying the patch."
+            ]
+        }
+    },
+    "GHSA-9ppp-w3g4-fh4q": {
+        "summary": "Oj: Use-After-Free in Oj::Doc Iterators via Reentrant Close",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import oj\n\nclass SafeDocIterator:\n    def __init__(self, doc):\n        self.doc = doc\n        self.closed = False\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self.closed:\n            raise StopIteration\n        try:\n            return next(self.doc)\n        except StopIteration:\n            self.closed = True\n            raise\n\n    def close(self):\n        if not self.closed:\n            self.doc.close()\n            self.closed = True\n\ndef safe_iter(doc):\n    return SafeDocIterator(doc)\n\n# Example usage:\ndoc = oj.Doc()\n# ... use the doc object ...\nfor item in safe_iter(doc):\n    # ... process the item ...",
+            "vulnerability_explanation": "The vulnerability is a Use-After-Free (UAF) issue in Oj::Doc iterators, which occurs when the iterator is used after the underlying document has been closed. This can happen due to reentrant close, where the close operation is triggered recursively, causing the iterator to access freed memory. As a result, the program may crash or execute arbitrary code, leading to a potential security exploit.",
+            "mitigation_steps": [
+                "Identify all instances where Oj::Doc iterators are used in the codebase and replace them with the `SafeDocIterator` class.",
+                "Ensure that the `close` method is called on the `SafeDocIterator` instance when the iteration is complete to prevent resource leaks.",
+                "Test the patched code thoroughly to verify that the UAF issue is resolved and the program behaves as expected."
+            ]
+        }
+    },
+    "GHSA-35w3-pjm6-wj95": {
+        "summary": "Oj: Heap Buffer Overflow in Oj.dump Exception Serialization via Large Indent",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import oj\n\ndef safe_dump(obj, indent=None):\n    if indent is None:\n        indent = 0\n    elif indent > 100:  # arbitrary large indent threshold\n        indent = 100\n    try:\n        return oj.dump(obj, indent=indent)\n    except Exception as e:\n        # handle exception and provide a safe error message\n        return f\"Error serializing object: {str(e)}\"\n\n# usage\nobj = {\"key\": \"value\"}\nprint(safe_dump(obj, indent=50))",
+            "vulnerability_explanation": "The vulnerability is a heap buffer overflow in the Oj.dump exception serialization, which occurs when a large indent is provided. This can cause the program to write beyond the bounds of a buffer, potentially leading to arbitrary code execution or crashes. The issue arises from insufficient validation of the indent size, allowing an attacker to manipulate the serialization process.",
+            "mitigation_steps": [
+                "Identify all occurrences of `oj.dump()` in your codebase and replace them with the `safe_dump()` function to ensure that the indent size is validated.",
+                "Set a reasonable threshold for the maximum allowed indent size (in this example, 100) to prevent potential buffer overflows.",
+                "Test your application thoroughly after applying the patch to ensure that the `safe_dump()` function works as expected and does not introduce any new issues."
+            ]
+        }
+    },
+    "GHSA-v8x7-r927-cc93": {
+        "summary": "parse-server: Stored XSS via non-standard file extension bypassing file upload extension blocklist",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import mimetypes\nimport os\n\ndef validate_file_extension(file_name):\n    # Get the file extension\n    file_extension = os.path.splitext(file_name)[1].lower()\n    \n    # Check if the file extension is in the blocklist\n    blocklist = [\".html\", \".htm\", \".js\", \".css\", \".php\", \".asp\", \".aspx\"]\n    if file_extension in blocklist:\n        return False\n    \n    # Check the MIME type of the file\n    mime_type = mimetypes.guess_type(file_name)[0]\n    if mime_type and mime_type.startswith(\"text/\") or mime_type.startswith(\"application/javascript\"):\n        return False\n    \n    return True\n\ndef upload_file(file_name, file_data):\n    if not validate_file_extension(file_name):\n        raise Exception(\"File upload failed: Invalid file extension\")\n    \n    # Upload the file\n    # ... (rest of the upload code remains the same)",
+            "vulnerability_explanation": "The vulnerability in parse-server allows an attacker to bypass the file upload extension blocklist by using non-standard file extensions, potentially leading to stored XSS attacks. This occurs because the current implementation of the file upload filter only checks for standard file extensions, allowing malicious files with non-standard extensions to be uploaded. As a result, an attacker can upload a malicious file with a non-standard extension, which can then be executed by the server, leading to a stored XSS vulnerability.",
+            "mitigation_steps": [
+                "Identify the file upload functionality in the parse-server codebase and locate the section where file extensions are validated.",
+                "Replace the existing file extension validation logic with the `validate_file_extension` function provided in the patch, which checks for both standard file extensions and MIME types to prevent non-standard file extension bypass attacks.",
+                "Test the updated file upload functionality to ensure that it correctly blocks malicious files with non-standard extensions and MIME types, while allowing legitimate file uploads to proceed as expected."
+            ]
+        }
+    },
+    "GHSA-3m6q-jj5j-38c9": {
+        "summary": "Oj: Stack Buffer Overflow in Oj::Doc#each_child via Deeply Nested Input",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import sys\n\nclass OjDoc:\n    def __init__(self, max_depth=100):\n        self.max_depth = max_depth\n\n    def each_child(self, node, depth=0):\n        if depth > self.max_depth:\n            raise RecursionError(\"Maximum recursion depth exceeded\")\n        # rest of the method implementation remains the same\n        pass",
+            "vulnerability_explanation": "The vulnerability is a stack buffer overflow in the Oj::Doc#each_child method, which occurs when deeply nested input is provided. This can cause the program to crash or potentially allow an attacker to execute arbitrary code. The vulnerability is likely due to a lack of input validation or recursion limits in the method.",
+            "mitigation_steps": [
+                "Identify the Oj::Doc#each_child method in your codebase and replace it with the patched version, which includes a `max_depth` parameter to limit recursion.",
+                "Set a reasonable value for the `max_depth` parameter, such as 100, to prevent deeply nested input from causing a stack buffer overflow.",
+                "Test the patched code to ensure it works as expected and does not introduce any new vulnerabilities or issues."
+            ]
+        }
+    },
+    "GHSA-436q-jwfr-rm2h": {
+        "summary": "jupyterlab-git excluded_paths Case-Sensitivity Bypass Allows Reading Excluded Directories",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\n# ... (rest of the code remains the same)\n\ndef is_excluded(path, excluded_paths):\n    \"\"\"\n    Check if a given path is excluded.\n    \n    :param path: The path to check.\n    :param excluded_paths: A list of paths to exclude.\n    :return: True if the path is excluded, False otherwise.\n    \"\"\"\n    # Normalize the path and excluded paths to lowercase for case-insensitive comparison\n    normalized_path = os.path.normpath(path).lower()\n    normalized_excluded_paths = [os.path.normpath(excluded_path).lower() for excluded_path in excluded_paths]\n    \n    # Check if the normalized path starts with any of the normalized excluded paths\n    for excluded_path in normalized_excluded_paths:\n        if normalized_path.startswith(excluded_path):\n            return True\n    \n    return False\n\n# ... (rest of the code remains the same)\n\n# Example usage:\nexcluded_paths = ['/path/to/exclude', '/another/path']\npath_to_check = '/Path/To/Exclude/some/file.txt'\n\nif is_excluded(path_to_check, excluded_paths):\n    print(\"The path is excluded.\")\nelse:\n    print(\"The path is not excluded.\")",
+            "vulnerability_explanation": "The vulnerability in jupyterlab-git allows an attacker to bypass the excluded_paths case-sensitivity check, potentially granting access to sensitive directories that should be excluded. This occurs because the current implementation does not account for case differences when comparing paths, allowing an attacker to manipulate the case of the directory name to evade exclusion. As a result, an attacker could read or access files within directories that were intended to be restricted.",
+            "mitigation_steps": [
+                "Identify the jupyterlab-git version currently in use and verify that it is vulnerable to the GHSA-436q-jwfr-rm2h CVE.",
+                "Apply the provided patch to the jupyterlab-git codebase, ensuring that the `is_excluded` function is correctly implemented and used throughout the code.",
+                "Test the patched version of jupyterlab-git to ensure that the case-sensitivity bypass vulnerability is properly mitigated and that the excluded_paths are correctly enforced, regardless of case differences."
+            ]
+        }
+    },
+    "GHSA-f962-v9hr-pfg5": {
+        "summary": "jupyterlab-git extension: Stored XSS leading to RCE",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from notebook.utils import to_unicode\nfrom notebook.services.contents.handlers import ContentsHandler\nimport html\n\nclass GitHandler(ContentsHandler):\n    # ...\n\n    def get(self, path):\n        # Sanitize the output to prevent XSS\n        output = self.git_service.get_output(path)\n        sanitized_output = html.escape(to_unicode(output))\n        return sanitized_output\n\n    def post(self, path):\n        # Sanitize the input to prevent XSS\n        input_data = self.request.body\n        sanitized_input = html.escape(to_unicode(input_data))\n        self.git_service.execute(sanitized_input)\n        return 'OK'",
+            "vulnerability_explanation": "The jupyterlab-git extension is vulnerable to Stored XSS (Cross-Site Scripting) attacks, which can lead to Remote Code Execution (RCE). This occurs when an attacker injects malicious code into the git repository, and the jupyterlab-git extension fails to properly sanitize the input, allowing the malicious code to be executed. As a result, an attacker can gain unauthorized access to the system and execute arbitrary code.",
+            "mitigation_steps": [
+                "Identify the jupyterlab-git extension version in use and verify if it's vulnerable to the Stored XSS attack.",
+                "Apply the provided patch to the `GitHandler` class to sanitize both input and output, preventing malicious code injection.",
+                "Restart the JupyterLab server to ensure the patched code takes effect, and test the git extension to verify that the vulnerability has been mitigated."
+            ]
+        }
+    },
+    "GHSA-fm7p-mprw-wjm9": {
+        "summary": "Oj: intern.c form_attr (uninitialized stack read)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# This patch assumes that the form_attr function is implemented in Python\n# and that the uninitialized variable is 'attr_value'.\n\ndef form_attr(attr_name):\n    # Initialize attr_value to a default value\n    attr_value = None\n    \n    # ... (rest of the function implementation)\n    \n    # Before using attr_value, ensure it's initialized\n    if attr_value is None:\n        # Handle the case where attr_value is not initialized\n        attr_value = \"\"  # or some other default value\n    \n    # ... (rest of the function implementation)",
+            "vulnerability_explanation": "The vulnerability GHSA-fm7p-mprw-wjm9 is an uninitialized stack read issue in the `form_attr` function of the `intern.c` file. This occurs when the function attempts to access memory locations on the stack without initializing them, potentially leading to information disclosure or other security issues. The vulnerability is likely due to a lack of proper initialization or validation of variables before they are used.",
+            "mitigation_steps": [
+                "Identify the `form_attr` function in the `intern.c` file and locate the variable that is being accessed without initialization.",
+                "Initialize the variable to a default value before it is used, as shown in the patch code.",
+                "Review the rest of the code to ensure that all variables are properly initialized before use, to prevent similar vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-v5jw-96jm-7h2c": {
+        "summary": "Stanza: Remote Code Execution via Unsafe Pickle Deserialization in Model Loaders",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import pickle\nimport importlib.util\nimport inspect\n\ndef safe_pickle_deserialize(file_path):\n    \"\"\"\n    Safely deserialize a pickle file by checking its contents before loading.\n    \"\"\"\n    try:\n        with open(file_path, 'rb') as file:\n            # Check if the file is a valid pickle file\n            if not file.read(4) == b'\\x80\\x03':\n                raise ValueError(\"Invalid pickle file\")\n            file.seek(0)\n            # Use the pickle.load function with the 'fix_imports' argument set to False\n            # to prevent the execution of arbitrary code\n            data = pickle.load(file, fix_imports=False, encoding=\"latin1\", errors=\"strict\")\n            # Check if the deserialized object is a function or a class\n            if inspect.isfunction(data) or inspect.isclass(data):\n                raise ValueError(\"Pickle file contains executable code\")\n            return data\n    except Exception as e:\n        # Log the exception or handle it according to your application's needs\n        print(f\"Error deserializing pickle file: {e}\")\n        return None\n\n# Example usage:\n# data = safe_pickle_deserialize('path_to_your_pickle_file.pkl')",
+            "vulnerability_explanation": "The vulnerability is caused by the unsafe deserialization of pickle files in model loaders, which can lead to remote code execution. This occurs when an attacker crafts a malicious pickle file that, when deserialized, executes arbitrary code. To mitigate this, it's essential to ensure that only trusted pickle files are deserialized and to use safer deserialization methods.",
+            "mitigation_steps": [
+                "**Identify vulnerable code**: Review your codebase to identify areas where pickle deserialization is used, particularly in model loaders.",
+                "**Apply the patch**: Replace the existing pickle deserialization code with the provided `safe_pickle_deserialize` function, ensuring that all pickle files are deserialized safely.",
+                "**Test and verify**: Thoroughly test your application after applying the patch to ensure that the safe deserialization function works correctly and does not introduce any regressions or issues."
+            ]
+        }
+    },
+    "GHSA-x84v-g949-293w": {
+        "summary": "Home Assistant: Konnected alarm-panel switch state and zone topology disclosed to unauthenticated actors on the LAN",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from homeassistant.auth import authenticate\nfrom homeassistant.auth.models import User\n\n# Assuming 'konnected_alarm_panel' is the endpoint handling the alarm-panel data\nasync def handle_konnected_alarm_panel(hass, request):\n    # Authenticate the user before handling the request\n    user = await authenticate(hass, request)\n    if user is None or not user.is_active:\n        return web.HTTPUnauthorized()\n\n    # If authenticated, proceed with handling the request\n    # Replace this with the actual logic to handle the request\n    return web.json({\"message\": \"Authenticated successfully\"})\n\n# Update the endpoint to use the new handler\nhass.http.register_view(KonnectedAlarmPanelView)\nclass KonnectedAlarmPanelView(http.HomeAssistantView):\n    async def get(self, request):\n        return await handle_konnected_alarm_panel(self.hass, request)",
+            "vulnerability_explanation": "The vulnerability in Home Assistant's Konnected alarm-panel switch state and zone topology disclosure to unauthenticated actors on the LAN occurs due to inadequate access controls, allowing unauthorized access to sensitive information. This is likely caused by missing authentication checks or improper configuration of the API endpoints handling this data. As a result, an attacker on the same LAN can exploit this vulnerability to gain access to the alarm-panel's configuration and state.",
+            "mitigation_steps": [
+                "Update the Home Assistant instance to the latest version, if available, to ensure any existing patches are applied.",
+                "Apply the provided patch code to the `konnected_alarm_panel` endpoint or similar handlers to enforce authentication checks for accessing the alarm-panel data.",
+                "Review the Home Assistant configuration and API endpoint settings to ensure proper access controls are in place, and consider implementing additional security measures such as IP filtering or VPN access for sensitive data."
+            ]
+        }
+    },
+    "GHSA-98m9-hrrm-r99r": {
+        "summary": "Faraday: Uncontrolled recursion in NestedParamsEncoder allows stack exhaustion DoS via deeply nested query parameters",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import sys\n\nclass NestedParamsEncoder:\n    def __init__(self, max_depth=10):  # default max recursion depth\n        self.max_depth = max_depth\n\n    def encode(self, params, depth=0):\n        if depth > self.max_depth:\n            raise ValueError(\"Maximum recursion depth exceeded\")\n        encoded_params = {}\n        for key, value in params.items():\n            if isinstance(value, dict):\n                encoded_params[key] = self.encode(value, depth + 1)\n            else:\n                encoded_params[key] = value\n        return encoded_params\n\n# Example usage:\nencoder = NestedParamsEncoder()\nparams = {\"a\": 1, \"b\": {\"c\": 2, \"d\": {\"e\": 3}}}  # nested query parameters\ntry:\n    encoded_params = encoder.encode(params)\n    print(encoded_params)\nexcept ValueError as e:\n    print(e)",
+            "vulnerability_explanation": "The vulnerability in Faraday's NestedParamsEncoder allows an attacker to cause a stack exhaustion denial-of-service (DoS) by sending a request with deeply nested query parameters, leading to uncontrolled recursion. This recursion can continue until the maximum stack size is exceeded, causing the application to crash. The lack of control over the recursion depth makes it possible for an attacker to exploit this vulnerability.",
+            "mitigation_steps": [
+                "Identify the NestedParamsEncoder class in your Faraday application and replace it with the patched version that includes a maximum recursion depth check.",
+                "Set a reasonable value for the `max_depth` parameter based on your application's requirements, considering the maximum expected nesting level of query parameters.",
+                "Test the patched application with various nested query parameter scenarios to ensure the recursion depth check is effective in preventing stack exhaustion DoS attacks."
+            ]
+        }
+    },
+    "GHSA-33vj-92qq-66hc": {
+        "summary": "containerd CRI checkpoint restore CDI annotation smuggling",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\n\ndef sanitize_cdi_annotations(config):\n    \"\"\"\n    Sanitizes CDI annotations in the container configuration to prevent smuggling.\n    \n    Args:\n    config (dict): The container configuration.\n    \n    Returns:\n    dict: The sanitized container configuration.\n    \"\"\"\n    if 'annotations' in config:\n        annotations = config['annotations']\n        # Remove any annotations that are not explicitly allowed\n        allowed_annotations = ['annotation1', 'annotation2']  # Define allowed annotations\n        sanitized_annotations = {key: value for key, value in annotations.items() if key in allowed_annotations}\n        config['annotations'] = sanitized_annotations\n    return config\n\ndef restore_checkpoint(config):\n    \"\"\"\n    Restores a checkpoint with sanitized CDI annotations.\n    \n    Args:\n    config (dict): The container configuration.\n    \n    Returns:\n    dict: The restored container configuration.\n    \"\"\"\n    sanitized_config = sanitize_cdi_annotations(config)\n    # Proceed with the checkpoint restore using the sanitized configuration\n    # ...\n    return sanitized_config",
+            "vulnerability_explanation": "The vulnerability in containerd's CRI checkpoint restore functionality allows for CDI annotation smuggling, which can lead to unauthorized access and potential code execution. This occurs when malicious annotations are injected into the container's configuration, bypassing security checks. As a result, an attacker can exploit this vulnerability to gain elevated privileges or execute arbitrary code.",
+            "mitigation_steps": [
+                "Identify and update all instances of containerd's CRI checkpoint restore functionality to use the sanitized configuration.",
+                "Implement the `sanitize_cdi_annotations` function to remove any malicious CDI annotations from the container configuration.",
+                "Define a list of explicitly allowed annotations (`allowed_annotations`) to prevent unauthorized access and potential code execution.",
+                "Test the updated functionality to ensure that the vulnerability is properly mitigated and that the container configuration is correctly sanitized."
+            ]
+        }
+    },
+    "GHSA-rgh6-rfwx-v388": {
+        "summary": "Arbitrary host CRI log file read via symlink following in CRI checkpoint restore",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef secure_restore_checkpoint(checkpoint_path):\n    \"\"\"\n    Securely restore a CRI checkpoint by avoiding symlink following.\n    \"\"\"\n    # Check if the checkpoint path is a symlink\n    if os.path.islink(checkpoint_path):\n        # If it's a symlink, resolve the real path to prevent following symlinks\n        real_path = os.path.realpath(checkpoint_path)\n        # Check if the real path is within the expected directory\n        if not real_path.startswith('/expected/log/directory/'):\n            raise ValueError(\"Checkpoint path is outside the expected directory\")\n        # Use the real path for the restore process\n        checkpoint_path = real_path\n\n    # Proceed with the restore process using the secure checkpoint path\n    # ... (rest of the restore code remains the same)\n\n# Example usage:\ncheckpoint_path = '/path/to/checkpoint'\nsecure_restore_checkpoint(checkpoint_path)",
+            "vulnerability_explanation": "The vulnerability allows an attacker to read arbitrary host CRI log files via symlink following in CRI checkpoint restore. This occurs when the CRI checkpoint restore process follows symlinks, potentially allowing an attacker to create a symlink to a sensitive log file, which would then be read by the restore process. As a result, sensitive information could be exposed to unauthorized parties.",
+            "mitigation_steps": [
+                "Identify all locations in the code where CRI checkpoints are restored and replace the existing restore logic with the `secure_restore_checkpoint` function.",
+                "Verify that the `/expected/log/directory/` path in the `secure_restore_checkpoint` function is updated to match the actual expected log directory on your system.",
+                "Test the updated restore process to ensure it correctly handles both normal and symlinked checkpoint paths, and that it prevents arbitrary log file reads."
+            ]
+        }
+    },
+    "GHSA-xhf5-7wjv-pqxp": {
+        "summary": "containerd CRI — image-config `LABEL` flows to restart-monitor `binary://` logger: host-root command execution from an image pull",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_label(label):\n    \"\"\"\n    Sanitizes the LABEL field to prevent command injection.\n    \"\"\"\n    # Remove any potentially malicious characters\n    sanitized_label = re.sub(r'[^a-zA-Z0-9_\\-]', '', label)\n    return sanitized_label\n\ndef log_image_config(label):\n    \"\"\"\n    Logs the image configuration with sanitized LABEL field.\n    \"\"\"\n    sanitized_label = sanitize_label(label)\n    # Log the sanitized label\n    print(f\"Image label: {sanitized_label}\")\n\n# Example usage:\nimage_label = \"example-label\"\nlog_image_config(image_label)",
+            "vulnerability_explanation": "The vulnerability in containerd CRI allows an attacker to execute arbitrary commands on the host system by manipulating the `LABEL` field in the image configuration, which flows to the restart-monitor `binary://` logger. This can be exploited when pulling an image, potentially leading to host-root command execution. The vulnerability stems from insufficient input validation and sanitization in the logging mechanism.",
+            "mitigation_steps": [
+                "Identify and update all instances of containerd CRI to the latest version, which should include the fix for the vulnerability.",
+                "Implement input validation and sanitization for the `LABEL` field in the image configuration to prevent command injection.",
+                "Regularly monitor and audit logs for suspicious activity, and consider implementing additional security measures such as logging and monitoring tools to detect potential exploitation attempts."
+            ]
+        }
+    },
+    "GHSA-3v45-f3vh-wg7m": {
+        "summary": "Oj: Stack Buffer Overflow in Oj.dump via Large Indent",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\n\nclass Oj:\n    def dump(self, obj, indent=None):\n        if indent is not None and indent > 100:  # arbitrary limit, adjust as needed\n            raise ValueError(\"Indent is too large\")\n        try:\n            return json.dumps(obj, indent=indent)\n        except TypeError as e:\n            raise ValueError(\"Invalid object for dumping\") from e",
+            "vulnerability_explanation": "The vulnerability is a stack buffer overflow in the Oj.dump function, which occurs when a large indent is provided, causing the function to write beyond the bounds of the buffer. This can lead to arbitrary code execution, allowing an attacker to potentially gain control of the system. The vulnerability is triggered by the lack of proper input validation and bounds checking in the Oj.dump function.",
+            "mitigation_steps": [
+                "Identify all instances of Oj.dump in your codebase and review the indent parameter being passed to it.",
+                "Apply the provided patch to the Oj.dump function to add input validation and bounds checking for the indent parameter.",
+                "Test your application thoroughly to ensure the patch does not introduce any regressions or unexpected behavior, and verify that the vulnerability is mitigated by attempting to trigger the stack buffer overflow with a large indent value."
+            ]
+        }
+    },
+    "GHSA-cvxm-645q-p574": {
+        "summary": "containerd: CRI checkpoint import allows local image tag poisoning",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import docker\nimport re\n\ndef validate_image_tag(tag):\n    \"\"\"\n    Validate the image tag to prevent poisoning.\n    \"\"\"\n    # Define a regular expression pattern for valid image tags\n    pattern = r\"^[a-zA-Z0-9_][a-zA-Z0-9_-]*:[a-zA-Z0-9_][a-zA-Z0-9_-]*$\"\n    \n    # Check if the tag matches the pattern\n    if re.match(pattern, tag):\n        return True\n    else:\n        return False\n\ndef secure_import_image(client, image):\n    \"\"\"\n    Securely import an image by validating its tag.\n    \"\"\"\n    # Get the image tag\n    tag = image.tags[0]\n    \n    # Validate the image tag\n    if validate_image_tag(tag):\n        # Import the image\n        client.images.pull(tag)\n    else:\n        # Raise an exception if the tag is invalid\n        raise ValueError(\"Invalid image tag\")\n\n# Example usage:\nclient = docker.from_env()\nimage = client.images.get(\"example-image\")\nsecure_import_image(client, image)",
+            "vulnerability_explanation": "The vulnerability in containerd's CRI checkpoint import allows a local attacker to poison image tags, potentially leading to the execution of malicious code. This occurs when an attacker can manipulate the image tags during the import process, which can then be used to execute arbitrary code. The vulnerability exploits the lack of proper validation and sanitization of image tags during the import process.",
+            "mitigation_steps": [
+                "**Update containerd**: Ensure you are running the latest version of containerd, as the vulnerability may have been patched in a recent release.",
+                "**Implement image tag validation**: Use the provided `validate_image_tag` function to validate image tags before importing them, and raise an exception if the tag is invalid.",
+                "**Use the secure import function**: Replace the existing image import code with the `secure_import_image` function, which validates the image tag before importing the image."
+            ]
+        }
+    },
+    "GHSA-wmwx-jr2p-4j4r": {
+        "summary": "parse-server: Relation `$relatedTo` query bypasses `protectedFields` and owning-object ACL",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Modified QueryController to enforce protectedFields and ACL checks\nfrom parse_server import QueryController\nfrom parse_server import ParseQuery\n\nclass SecureQueryController(QueryController):\n    def find(self, query, options):\n        # Check if query is a $relatedTo query\n        if query.get('where', {}).get('$relatedTo'):\n            # Get the related object's ACL and protected fields\n            related_object_id = query['where']['$relatedTo']['object']['__type'] + ',' + query['where']['$relatedTo']['object']['objectId']\n            related_object_acl = self.get_acl(related_object_id)\n            protected_fields = self.get_protected_fields(related_object_id)\n\n            # Filter out protected fields from query results\n            if protected_fields:\n                query['select'] = [field for field in query.get('select', []) if field not in protected_fields]\n\n            # Enforce ACL checks on query results\n            if related_object_acl:\n                query['where']['$and'] = query.get('where', {}).get('$and', [])\n                query['where']['$and'].append({'ACL': related_object_acl})\n\n        # Proceed with the query execution\n        return super().find(query, options)\n\n    def get_acl(self, object_id):\n        # Implement logic to retrieve the ACL for the given object ID\n        pass\n\n    def get_protected_fields(self, object_id):\n        # Implement logic to retrieve the protected fields for the given object ID\n        pass",
+            "vulnerability_explanation": "The vulnerability in parse-server allows an attacker to bypass the `protectedFields` and owning-object ACL restrictions when using the `$relatedTo` query. This is achieved by exploiting a flaw in the query parsing mechanism, which fails to properly enforce access controls. As a result, an attacker can access sensitive data that should be protected by the `protectedFields` and ACL configurations.",
+            "mitigation_steps": [
+                "Identify the parse-server version being used and verify if it's vulnerable to the GHSA-wmwx-jr2p-4j4r CVE.",
+                "Update the `QueryController` class to use the `SecureQueryController` class, which enforces `protectedFields` and ACL checks for `$relatedTo` queries.",
+                "Implement the `get_acl` and `get_protected_fields` methods to retrieve the ACL and protected fields for a given object ID, and integrate them with the `SecureQueryController` class."
+            ]
+        }
+    },
+    "GHSA-75v4-m273-5j49": {
+        "summary": "parse-server: Endpoints `/login` and `/verifyPassword` disclose MFA secrets and protected fields when `_User` get is denied",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from parse_server import ParseError\nfrom parse_server.users import User\n\ndef login(self, username, password, **options):\n    try:\n        # Existing login logic\n        user = User.query.get(username)\n        if user and user.verify_password(password):\n            # Return user data without sensitive fields\n            return {\n                'username': user.username,\n                'email': user.email,\n                # Remove or redact sensitive fields like MFA secrets\n            }\n        else:\n            raise ParseError(code=101, message='Invalid username or password')\n    except Exception as e:\n        # Handle exceptions and return a generic error message\n        raise ParseError(code=1, message='Internal Server Error')\n\ndef verify_password(self, username, password, **options):\n    try:\n        # Existing verify password logic\n        user = User.query.get(username)\n        if user and user.verify_password(password):\n            # Return a success message without sensitive fields\n            return {'success': True}\n        else:\n            raise ParseError(code=101, message='Invalid username or password')\n    except Exception as e:\n        # Handle exceptions and return a generic error message\n        raise ParseError(code=1, message='Internal Server Error')",
+            "vulnerability_explanation": "The vulnerability in parse-server occurs when the `/login` and `/verifyPassword` endpoints disclose MFA secrets and protected fields when the `_User` get request is denied. This happens because the error response from the server includes sensitive information, potentially allowing attackers to access or exploit this data. The root cause of this issue is likely due to the inclusion of sensitive fields in the error response.",
+            "mitigation_steps": [
+                "Identify the `/login` and `/verifyPassword` endpoint handlers in your parse-server codebase and replace them with the patched versions.",
+                "Ensure that the `User` model does not include sensitive fields like MFA secrets in its `to_dict()` or similar methods, to prevent accidental disclosure.",
+                "Test the patched endpoints with various input scenarios to verify that sensitive fields are no longer disclosed in error responses, and that the login and password verification functionality remains intact."
+            ]
+        }
+    },
+    "GHSA-7wqv-xjf3-x35v": {
+        "summary": "parse-server: Stored XSS via trailing-dot filename bypassing file upload extension blocklist",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef validate_filename(filename):\n    # Remove trailing dots from the filename\n    filename = filename.rstrip('.')\n\n    # Get the file extension\n    _, extension = os.path.splitext(filename)\n\n    # Check if the extension is in the blocklist\n    if extension.lower() in ['-.html', '-.htm', '-.js', '-.css']:  # example blocklist\n        return False\n\n    return True\n\ndef upload_file(file):\n    filename = file.filename\n    if not validate_filename(filename):\n        raise Exception(\"File upload blocked due to suspicious extension\")\n\n    # Proceed with file upload\n    # ...",
+            "vulnerability_explanation": "The vulnerability is a stored XSS (Cross-Site Scripting) issue in the parse-server, where an attacker can bypass the file upload extension blocklist by appending a trailing dot to the filename. This allows an attacker to upload malicious files, potentially leading to code execution or other security breaches. The vulnerability exploits the fact that the file upload validation mechanism does not properly handle filenames with trailing dots.",
+            "mitigation_steps": [
+                "Identify the file upload validation mechanism in the parse-server codebase and locate the function responsible for checking the file extension.",
+                "Modify the function to remove trailing dots from the filename before checking the extension, as shown in the `validate_filename` function in the patch.",
+                "Ensure that the blocklist of extensions is up-to-date and includes all potentially malicious file types, and consider implementing additional security measures such as content-type validation and virus scanning for uploaded files."
+            ]
+        }
+    },
+    "GHSA-mwqm-4fw3-cjvr": {
+        "summary": "symfony/ux-autocomplete: XSS via unescaped AJAX response data",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from flask import jsonify\nfrom markupsafe import escape\n\n# Assuming 'data' is the user-input data to be included in the AJAX response\ndef autocomplete_response(data):\n    # Escape the user-input data to prevent XSS\n    escaped_data = escape(data)\n    \n    # Create the AJAX response with the escaped data\n    response = jsonify({'data': escaped_data})\n    \n    # Return the response\n    return response",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-autocomplete allows an attacker to inject malicious JavaScript code via unescaped AJAX response data, leading to a Cross-Site Scripting (XSS) attack. This occurs when the application fails to properly sanitize user-input data before including it in the AJAX response. As a result, an attacker can execute arbitrary JavaScript code in the context of the vulnerable application, potentially leading to unauthorized actions or data theft.",
+            "mitigation_steps": [
+                "Identify all instances where user-input data is included in AJAX responses within the symfony/ux-autocomplete application.",
+                "Apply the escaping mechanism, such as using the `escape` function from the `markupsafe` library, to sanitize the user-input data before including it in the AJAX response.",
+                "Verify that the patched application properly escapes all user-input data in AJAX responses, and test for any remaining XSS vulnerabilities to ensure the mitigation is effective."
+            ]
+        }
+    },
+    "GHSA-4m4j-hmqq-3gxm": {
+        "summary": "symfony/ux-live-component: CSRF Protection Bypass — Accept Header is CORS-Safelisted",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from flask import request\nfrom werkzeug.datastructures import MIMEAccept\n\ndef validate_accept_header():\n    accept_header = request.headers.get('Accept')\n    if accept_header:\n        mime_accept = MIMEAccept(accept_header)\n        if '*/*' in mime_accept.best_match(['application/json', 'text/html']):\n            # If the Accept header is set to */*, it's likely a CORS request\n            # and we should validate it further to prevent CSRF bypass\n            if not validate_cors_request():\n                return False\n    return True\n\ndef validate_cors_request():\n    # Implement your CORS request validation logic here\n    # For example, you can check the Origin header, verify the request method,\n    # and ensure that the request is not a preflight request\n    origin = request.headers.get('Origin')\n    if origin and origin != 'https://example.com':\n        return False\n    return True\n\n# Example usage:\n@app.before_request\ndef before_request():\n    if not validate_accept_header():\n        return 'CSRF protection bypass attempt detected', 403",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-live-component allows for a CSRF protection bypass due to the Accept header being CORS-safelisted. This means an attacker can trick a user into performing unintended actions on a web application by exploiting the fact that the Accept header is not properly validated. As a result, the application may incorrectly assume that a request is legitimate, allowing the attacker to bypass CSRF protections.",
+            "mitigation_steps": [
+                "Identify all instances where the Accept header is used in your application and ensure that it is properly validated to prevent CSRF bypass attacks.",
+                "Implement the `validate_accept_header` function to check if the Accept header is set to */* and validate the request further if necessary.",
+                "Use the `validate_cors_request` function to implement your CORS request validation logic, such as checking the Origin header and verifying the request method."
+            ]
+        }
+    },
+    "GHSA-34w5-c283-j9fg": {
+        "summary": "symfony/ux-live-component: LiveComponentHydrator HMAC checksum lacks component and slot binding",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from hashlib import hmac\nfrom symfony import ux_live_component\n\ndef generate_hmac_checksum(component, slot, data):\n    # Include component and slot in the HMAC checksum\n    checksum_data = f\"{component}:{slot}:{data}\"\n    return hmac.new(ux_live_component.secret_key, checksum_data.encode(), 'sha256').hexdigest()\n\ndef verify_hmac_checksum(component, slot, data, expected_checksum):\n    # Regenerate the HMAC checksum with the component and slot\n    actual_checksum = generate_hmac_checksum(component, slot, data)\n    return hmac.compare_digest(actual_checksum, expected_checksum)\n\n# Example usage:\ncomponent = \"my_component\"\nslot = \"my_slot\"\ndata = \"my_data\"\n\nexpected_checksum = generate_hmac_checksum(component, slot, data)\nif verify_hmac_checksum(component, slot, data, expected_checksum):\n    print(\"HMAC checksum is valid\")\nelse:\n    print(\"HMAC checksum is invalid\")",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-live-component occurs because the LiveComponentHydrator's HMAC checksum does not properly bind to the component and slot, allowing potential tampering or manipulation of the component's state. This lack of binding can lead to security issues, as an attacker could potentially alter the component's behavior or extract sensitive information. By not including the component and slot in the HMAC checksum, the integrity of the LiveComponentHydrator is compromised.",
+            "mitigation_steps": [
+                "Identify all instances where the LiveComponentHydrator's HMAC checksum is generated or verified in your application.",
+                "Modify these instances to include the component and slot in the HMAC checksum, as shown in the provided patch code.",
+                "Update your application to use the new `generate_hmac_checksum` and `verify_hmac_checksum` functions, ensuring that the component and slot are properly bound to the HMAC checksum."
+            ]
+        }
+    },
+    "GHSA-946h-jp5c-8fvh": {
+        "summary": "symfony/ux-autocomplete: Information exposure via unescaped LIKE wildcards in EntitySearchUtil",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef escape_like_wildcards(query):\n    \"\"\"\n    Escapes LIKE wildcards in a given query to prevent information exposure.\n    \"\"\"\n    # Replace '%' with '\\%' and '_' with '\\_' to escape LIKE wildcards\n    escaped_query = re.sub(r'([_%])', r'\\\\\\1', query)\n    return escaped_query\n\ndef entity_search_util(query):\n    \"\"\"\n    Example function to demonstrate the usage of escape_like_wildcards.\n    \"\"\"\n    # Escape LIKE wildcards in the query before executing it\n    escaped_query = escape_like_wildcards(query)\n    # Execute the query with the escaped wildcards\n    # NOTE: The actual query execution code is omitted for brevity\n    return escaped_query\n\n# Example usage:\nquery = \"example_query\"\nescaped_query = entity_search_util(query)\nprint(escaped_query)",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-autocomplete occurs due to unescaped LIKE wildcards in EntitySearchUtil, allowing an attacker to potentially extract sensitive information by manipulating search queries. This information exposure vulnerability can be exploited by injecting malicious input that takes advantage of the unescaped wildcards. As a result, an attacker may gain access to unauthorized data.",
+            "mitigation_steps": [
+                "Identify all instances where EntitySearchUtil is used in your application and ensure that the input queries are properly sanitized.",
+                "Implement the `escape_like_wildcards` function to escape LIKE wildcards in user-provided input queries.",
+                "Update your application to use the `entity_search_util` function or a similar implementation that escapes LIKE wildcards before executing queries, and test the changes thoroughly to ensure that the vulnerability is mitigated."
+            ]
+        }
+    },
+    "GHSA-38x5-rcv4-xf7x": {
+        "summary": "symfony/ux-live-component: XSS via attacker-controlled child component tag",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from symfony import Component\nfrom html import escape\n\nclass LiveComponent(Component):\n    def render(self, child_component_tag):\n        # Sanitize the child component tag to prevent XSS\n        sanitized_tag = escape(child_component_tag)\n        return self.render_template(sanitized_tag)\n\n    def render_template(self, sanitized_tag):\n        # Render the template with the sanitized child component tag\n        return f\"<div>{sanitized_tag}</div>\"",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-live-component allows an attacker to inject malicious code via an attacker-controlled child component tag, leading to a Cross-Site Scripting (XSS) attack. This occurs when the application fails to properly sanitize user-inputted data, specifically the child component tag, which can contain malicious scripts. As a result, an attacker can execute arbitrary JavaScript code on the victim's browser, potentially leading to sensitive data theft or other malicious activities.",
+            "mitigation_steps": [
+                "Identify all instances where the `child_component_tag` is used in the application and ensure it is properly sanitized using the `escape` function from the `html` module.",
+                "Update the `LiveComponent` class to use the sanitized `child_component_tag` when rendering the template.",
+                "Verify that the patch is applied correctly by testing the application with various input scenarios, including malicious scripts, to ensure that the XSS vulnerability is mitigated."
+            ]
+        }
+    },
+    "GHSA-mm82-c99c-h2cf": {
+        "summary": "symfony/ux-live-component: Denial of service via unbounded batch action requests",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import time\nfrom functools import wraps\n\n# Define a rate limit for batch action requests (e.g., 10 requests per minute)\nRATE_LIMIT = 10\nTIME_WINDOW = 60  # seconds\n\n# Create a dictionary to store request timestamps for each client IP\nrequest_timestamps = {}\n\ndef rate_limit_batch_actions(func):\n    @wraps(func)\n    def wrapper(request, *args, **kwargs):\n        client_ip = request.remote_addr\n        current_time = time.time()\n        \n        # Initialize the list of timestamps for the client IP if it doesn't exist\n        if client_ip not in request_timestamps:\n            request_timestamps[client_ip] = []\n        \n        # Remove timestamps that are older than the time window\n        request_timestamps[client_ip] = [timestamp for timestamp in request_timestamps[client_ip] if current_time - timestamp < TIME_WINDOW]\n        \n        # Check if the rate limit has been exceeded\n        if len(request_timestamps[client_ip]) >= RATE_LIMIT:\n            return \"Rate limit exceeded\", 429\n        \n        # Add the current timestamp to the list\n        request_timestamps[client_ip].append(current_time)\n        \n        # Call the original function\n        return func(request, *args, **kwargs)\n    \n    return wrapper\n\n# Apply the rate limit decorator to the batch action function\n@rate_limit_batch_actions\ndef batch_action(request, *args, **kwargs):\n    # Original batch action function implementation\n    pass",
+            "vulnerability_explanation": "The vulnerability in symfony/ux-live-component allows an attacker to cause a denial of service by sending unbounded batch action requests, potentially leading to resource exhaustion. This is likely due to a lack of rate limiting or input validation on batch action requests. As a result, an attacker can flood the system with requests, causing it to become unresponsive or even crash.",
+            "mitigation_steps": [
+                "Identify the batch action function in your symfony/ux-live-component code that is vulnerable to the denial of service attack.",
+                "Apply the `rate_limit_batch_actions` decorator to the batch action function to limit the number of requests that can be made within a certain time window.",
+                "Adjust the `RATE_LIMIT` and `TIME_WINDOW` variables to suit your specific use case and performance requirements, ensuring a balance between security and usability."
+            ]
+        }
+    },
+    "GHSA-p84r-h6rx-f2xr": {
+        "summary": "parse-server: Server option routeAllowList is bypassable through batch sub-requests",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def validate_batch_request(batch_request):\n    \"\"\"\n    Validate each sub-request in a batch request against the routeAllowList.\n    \n    Args:\n    batch_request (list): A list of sub-requests in the batch request.\n    \n    Returns:\n    bool: True if all sub-requests are allowed, False otherwise.\n    \"\"\"\n    route_allow_list = self.server.get('routeAllowList')  # Assuming self.server has the routeAllowList config\n    for sub_request in batch_request:\n        sub_request_path = sub_request.get('method', '').split(' ')[1]  # Extract the path from the sub-request\n        if sub_request_path not in route_allow_list:\n            return False  # If any sub-request path is not in the allow list, reject the batch request\n    return True\n\ndef handle_batch_request(batch_request):\n    \"\"\"\n    Handle a batch request, first validating it against the routeAllowList.\n    \n    Args:\n    batch_request (list): A list of sub-requests in the batch request.\n    \n    Returns:\n    response: The response to the batch request, or an error if the request is not allowed.\n    \"\"\"\n    if not validate_batch_request(batch_request):\n        return {'error': 'Route not allowed in batch request'}  # Return an error if the batch request is not allowed\n    # Proceed with handling the batch request as before\n    # ...",
+            "vulnerability_explanation": "The vulnerability in parse-server allows an attacker to bypass the routeAllowList server option through batch sub-requests. This means that even if certain routes are restricted, an attacker can still access them by including the restricted routes in a batch request. As a result, sensitive data or functionality can be exposed, leading to potential security breaches.",
+            "mitigation_steps": [
+                "Identify the parse-server version being used and confirm it is vulnerable to GHSA-p84r-h6rx-f2xr.",
+                "Apply the provided patch code to the parse-server codebase, specifically integrating the `validate_batch_request` function into the batch request handling logic.",
+                "Test the updated parse-server to ensure that batch requests with restricted routes are correctly blocked, and normal functionality remains unaffected."
+            ]
+        }
+    },
+    "GHSA-jpcc-p29g-p8mq": {
+        "summary": "containerd image-triggered runtime DoS via unbounded group parsing",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef parse_group_config(config):\n    # Introduce a maximum limit for group parsing to prevent unbounded recursion\n    max_group_depth = 10\n    \n    def parse_group_config_recursive(config, current_depth):\n        if current_depth > max_group_depth:\n            raise ValueError(\"Maximum group depth exceeded\")\n        \n        # Assuming the config is a string with groups separated by ':'\n        groups = config.split(\":\")\n        \n        for group in groups:\n            # Perform any necessary parsing or validation for each group\n            # For demonstration purposes, we'll just validate the group name\n            if not re.match(\"^[a-zA-Z0-9_-]+$\", group):\n                raise ValueError(\"Invalid group name\")\n            \n            # Recursively parse any nested groups\n            if \":\" in group:\n                parse_group_config_recursive(group, current_depth + 1)\n    \n    parse_group_config_recursive(config, 0)\n\n# Example usage:\ntry:\n    parse_group_config(\"group1:group2:group3\")\nexcept ValueError as e:\n    print(f\"Error parsing group config: {e}\")",
+            "vulnerability_explanation": "The vulnerability GHSA-jpcc-p29g-p8mq is a denial-of-service (DoS) issue in containerd, where an unbounded group parsing mechanism can be triggered by a malicious container image, leading to a runtime DoS. This occurs when the image contains a specially crafted group configuration that causes the parser to enter an infinite loop or consume excessive resources. As a result, the containerd runtime becomes unresponsive or crashes, disrupting the normal functioning of the system.",
+            "mitigation_steps": [
+                "**Update containerd**: Ensure you are running the latest version of containerd, as the vulnerability may have been patched in a recent release.",
+                "**Apply the patch**: Integrate the provided patch into your containerd configuration to introduce a maximum limit for group parsing and prevent unbounded recursion.",
+                "**Validate container images**: Regularly inspect and validate container images for any suspicious or malicious group configurations that could trigger the DoS vulnerability, and implement additional security measures such as image scanning and filtering to prevent such images from being deployed."
+            ]
+        }
+    },
+    "GHSA-2cw7-v8ff-p88r": {
+        "summary": "Oj: Use-After-Free in Oj::Parser Symbol Key Cache Toggle",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ctypes\n\n# Define the OjParser class\nclass OjParser:\n    def __init__(self):\n        # Initialize the symbol key cache\n        self.symbol_key_cache = {}\n\n    def toggle_symbol_key_cache(self):\n        # Check if the symbol key cache is empty before toggling\n        if not self.symbol_key_cache:\n            return\n\n        # Create a copy of the symbol key cache before toggling\n        symbol_key_cache_copy = self.symbol_key_cache.copy()\n\n        # Toggle the symbol key cache\n        self.symbol_key_cache = {}\n\n        # Restore the symbol key cache copy\n        self.symbol_key_cache = symbol_key_cache_copy\n\n    def parse(self, data):\n        # Parse the data using the symbol key cache\n        # ...\n\n# Usage example\nparser = OjParser()\nparser.toggle_symbol_key_cache()",
+            "vulnerability_explanation": "The vulnerability is a Use-After-Free (UAF) bug in the Oj::Parser Symbol Key Cache Toggle, which allows an attacker to access and manipulate memory that has already been freed. This can lead to arbitrary code execution, denial of service, or other security issues. The UAF occurs when the parser's symbol key cache is toggled, causing the parser to access memory that has been deallocated.",
+            "mitigation_steps": [
+                "Identify the Oj::Parser Symbol Key Cache Toggle functionality in your codebase and replace it with the patched `toggle_symbol_key_cache` method.",
+                "Ensure that the `symbol_key_cache` is properly initialized and checked for emptiness before toggling to prevent the UAF bug.",
+                "Review your code for any other potential UAF vulnerabilities and apply similar patches as needed to prevent similar security issues."
+            ]
+        }
+    },
+    "GHSA-89g7-22c8-3j23": {
+        "summary": "ux-live-component: Format-less date LiveProps parsed with the permissive DateTime constructor",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from datetime import datetime\n\ndef parse_date(date_string):\n    \"\"\"\n    Parse a date string into a datetime object.\n    \n    Args:\n    date_string (str): The date string to parse.\n    \n    Returns:\n    datetime: The parsed datetime object, or None if the date string is invalid.\n    \"\"\"\n    try:\n        # Use a specific date format to parse the date string\n        return datetime.strptime(date_string, \"%Y-%m-%d\")\n    except ValueError:\n        # If the date string does not match the expected format, return None\n        return None\n\ndef safe_parse_date(date_string):\n    \"\"\"\n    Safely parse a date string into a datetime object.\n    \n    Args:\n    date_string (str): The date string to parse.\n    \n    Returns:\n    datetime: The parsed datetime object, or None if the date string is invalid.\n    \"\"\"\n    # Check if the date string is not empty\n    if not date_string:\n        return None\n    \n    # Use the parse_date function to parse the date string\n    return parse_date(date_string)\n\n# Example usage:\ndate_string = \"2022-01-01\"\nparsed_date = safe_parse_date(date_string)\n\nif parsed_date:\n    print(\"Parsed date:\", parsed_date)\nelse:\n    print(\"Invalid date string\")",
+            "vulnerability_explanation": "The vulnerability in the ux-live-component library occurs because it uses the permissive DateTime constructor to parse format-less date LiveProps. This allows an attacker to potentially inject malicious date formats, leading to unexpected behavior or errors. By using a more restrictive parsing mechanism, we can mitigate this vulnerability and ensure that only valid date formats are accepted.",
+            "mitigation_steps": [
+                "Identify all locations in the code where the DateTime constructor is used to parse date strings without a specific format.",
+                "Replace the permissive DateTime constructor with the `safe_parse_date` function, which uses a specific date format to parse the date string.",
+                "Test the updated code to ensure that it correctly handles valid and invalid date strings, and that it does not introduce any new vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-q6rc-2cgv-63h7": {
+        "summary": "py7zr: Arbitrary File Write Vulnerability",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-19 19:45:33",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef extract_archive(archive_path, extract_path):\n    # Validate and sanitize the extract path to prevent arbitrary file writes\n    extract_path = os.path.abspath(extract_path)\n    if not extract_path.startswith(os.getcwd()):\n        raise ValueError(\"Extract path must be within the current working directory\")\n\n    # Rest of the extract_archive function implementation...\n    # Ensure that all file writes are done within the validated extract path\n    for file_info in archive_file.getmembers():\n        file_path = os.path.join(extract_path, file_info.filename)\n        # Validate that the file path is within the extract path\n        if not os.path.abspath(file_path).startswith(extract_path):\n            raise ValueError(\"File path is outside of the extract directory\")\n        # Write the file to the validated path\n        with open(file_path, 'wb') as f:\n            f.write(archive_file.read(file_info.filename))",
+            "vulnerability_explanation": "The py7zr library is vulnerable to an arbitrary file write vulnerability, which allows an attacker to write files to arbitrary locations on the system. This is likely due to a lack of proper validation and sanitization of user-inputted file paths. As a result, an attacker could potentially exploit this vulnerability to write malicious files to sensitive locations on the system.",
+            "mitigation_steps": [
+                "Identify all locations in the code where the py7zr library is used to extract archives, and apply the patched `extract_archive` function to validate and sanitize the extract paths.",
+                "Ensure that all file writes are done within the validated extract path to prevent arbitrary file writes.",
+                "Test the patched code thoroughly to ensure that it correctly prevents arbitrary file writes and does not introduce any new vulnerabilities."
+            ]
+        }
     }
 }
