@@ -2,17 +2,19 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-22 16:50:12",
+        "date_added": "2026-06-22 20:42:44",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "# Import required libraries\nimport socket\nimport hashlib\n\n# Define a function to validate incoming connections\ndef validate_connection(ip_address, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Try to connect to the remote server\n    try:\n        sock.connect((ip_address, port))\n        \n        # If the connection is successful, calculate the hash of the incoming data\n        data = sock.recv(1024)\n        hash_object = hashlib.sha256(data)\n        hash_hex = hash_object.hexdigest()\n        \n        # Check if the hash matches a known malicious hash\n        if hash_hex == \"known_malicious_hash\":\n            # If the hash matches, close the connection and raise an alert\n            sock.close()\n            raise Exception(\"Malicious connection detected\")\n        else:\n            # If the hash does not match, close the connection and return\n            sock.close()\n            return\n    except socket.error:\n        # If the connection fails, return\n        return\n\n# Define a function to mitigate the vulnerability\ndef mitigate_vulnerability():\n    # Get the list of allowed IP addresses and ports\n    allowed_ips = [\"allowed_ip_1\", \"allowed_ip_2\"]\n    allowed_ports = [22, 80]\n    \n    # Iterate over the allowed IP addresses and ports\n    for ip_address in allowed_ips:\n        for port in allowed_ports:\n            # Validate the incoming connection\n            validate_connection(ip_address, port)\n\n# Call the function to mitigate the vulnerability\nmitigate_vulnerability()",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. Further analysis of the NullRAT code on the provided GitHub repository is needed to determine the specific vulnerability mechanism.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_request(request):\n    # Check if the request contains a valid authentication token\n    token = request.headers.get('Authorization')\n    if token is None:\n        return False\n    \n    # Verify the token using a secret key\n    secret_key = os.environ.get('SECRET_KEY')\n    expected_token = hmac.new(secret_key.encode(), request.path.encode(), hashlib.sha256).hexdigest()\n    return hmac.compare_digest(token, expected_token)\n\ndef mitigate_nullrat_vulnerability(request):\n    # Check if the request is authenticated\n    if not authenticate_request(request):\n        return \"Unauthorized\", 401\n    \n    # Validate user input to prevent command injection\n    user_input = request.args.get('command')\n    if user_input is not None:\n        # Use a whitelist approach to validate user input\n        allowed_commands = ['ls', 'cd', 'mkdir']\n        if user_input not in allowed_commands:\n            return \"Invalid command\", 400\n    \n    # ... rest of the code ...",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. This RAT can be used to execute arbitrary commands, steal sensitive information, and perform other malicious activities. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a vulnerability in a specific software or system that allows the NullRAT to gain unauthorized access.",
             "mitigation_steps": [
-                "Identify the systems and software that are vulnerable to the NullRAT and prioritize their mitigation based on the level of risk and potential impact.",
-                "Implement a network intrusion detection system (NIDS) to monitor for suspicious network activity and alert on potential NullRAT connections.",
-                "Apply the provided Python code patch to validate incoming connections and mitigate the vulnerability, and ensure to replace the \"known_malicious_hash\" with the actual hash of the malicious NullRAT code."
+                "Identify the vulnerable software or system and update it to the latest version, if possible.",
+                "Implement a robust authentication and authorization mechanism to prevent unauthorized access, such as the one shown in the patch code.",
+                "Validate and sanitize all user input to prevent command injection and other types of attacks, using a whitelist approach whenever possible.",
+                "Monitor system logs and network traffic for suspicious activity and implement intrusion detection and prevention systems to detect and block NullRAT attacks.",
+                "Consider implementing a Web Application Firewall (WAF) to detect and prevent common web attacks, including those related to NullRAT."
             ]
         }
     },
@@ -23341,6 +23343,54 @@
                 "**Identify Vulnerable Code**: Review your codebase to identify areas that may be vulnerable to common web application attacks, focusing on user input handling, database interactions, and authentication mechanisms.",
                 "**Implement Input Validation and Sanitization**: Use libraries and frameworks that provide robust input validation and sanitization capabilities to ensure that user input is properly checked and cleaned before being processed by your application.",
                 "**Utilize Security Frameworks and Libraries**: Leverage security-focused frameworks and libraries that can help detect and prevent common web application vulnerabilities, such as OWASP ESAPI for Python, to strengthen your application's security posture."
+            ]
+        }
+    },
+    "GHSA-fq9h-c788-fx73": {
+        "summary": "OpenAM has pre-auth Reflected XSS in OAuth2 / OIDC response_mode=form_post via state parameter (FormPostResponse.ftl)",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-22 20:42:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\n# Assuming 'state' is the user-controlled input\ndef sanitize_state(state):\n    \"\"\"\n    Sanitizes the state parameter to prevent XSS attacks.\n    \"\"\"\n    # URL decode the state parameter\n    state = urllib.parse.unquote(state)\n    \n    # Remove any HTML tags or JavaScript code\n    import html\n    state = html.escape(state)\n    \n    return state\n\n# Example usage in the FormPostResponse.ftl template\nstate = sanitize_state(request.params.state)\nprint(f\"<input type='hidden' name='state' value='{state}'>\")",
+            "vulnerability_explanation": "The vulnerability is a pre-authentication Reflected Cross-Site Scripting (XSS) issue in OpenAM's OAuth2/OIDC implementation, specifically in the `FormPostResponse.ftl` template. This occurs when an attacker manipulates the `state` parameter in the `response_mode=form_post` flow, allowing them to inject malicious JavaScript code that is reflected back to the user's browser. This can lead to unauthorized access, session hijacking, or other malicious activities.",
+            "mitigation_steps": [
+                "**Identify Vulnerable Code**: Locate the `FormPostResponse.ftl` template in your OpenAM implementation and identify where the `state` parameter is being used without proper sanitization.",
+                "**Apply Sanitization**: Implement the `sanitize_state` function from the patch code above to sanitize the `state` parameter, removing any potential JavaScript code or HTML tags.",
+                "**Test and Verify**: Thoroughly test the updated code to ensure that the `state` parameter is properly sanitized and that the Reflected XSS vulnerability is mitigated, using tools like Burp Suite or ZAP to simulate attacks and verify the fix."
+            ]
+        }
+    },
+    "GHSA-c556-q2mh-477v": {
+        "summary": "OpenAM Authenticated Server-Side Request Forgery (SSRF) via `/sessionservice`",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-22 20:42:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\nfrom openam import sessionservice\n\ndef validate_url(url):\n    \"\"\"Validate the given URL to prevent SSRF attacks\"\"\"\n    try:\n        parsed_url = urllib.parse.urlparse(url)\n        # Check if the URL is internal or external\n        if parsed_url.netloc != \"localhost\" and parsed_url.netloc != \"127.0.0.1\":\n            # If the URL is external, check if it's allowed\n            allowed_domains = [\"example.com\", \"example.org\"]  # Add allowed domains here\n            if parsed_url.netloc not in allowed_domains:\n                raise ValueError(\"External URL is not allowed\")\n    except ValueError as e:\n        # Log the error and return an error message\n        print(f\"Error: {e}\")\n        return \"Invalid URL\"\n\ndef patched_sessionservice(url):\n    \"\"\"Patched sessionservice function to validate URLs\"\"\"\n    validated_url = validate_url(url)\n    if validated_url == \"Invalid URL\":\n        return \"Error: Invalid URL\"\n    else:\n        # Proceed with the original sessionservice function\n        return sessionservice(url)",
+            "vulnerability_explanation": "The vulnerability is an Authenticated Server-Side Request Forgery (SSRF) in OpenAM via the `/sessionservice` endpoint, which allows an attacker to make unauthorized requests to internal services. This occurs because the `/sessionservice` endpoint does not properly validate the URLs it is given, allowing an attacker to manipulate the request and access internal services. As a result, an attacker can exploit this vulnerability to access sensitive data or perform unauthorized actions.",
+            "mitigation_steps": [
+                "Identify the `/sessionservice` endpoint in your OpenAM installation and locate the corresponding code that handles the requests.",
+                "Replace the original `sessionservice` function with the `patched_sessionservice` function provided in the patch, which includes the `validate_url` function to validate the given URLs.",
+                "Configure the `allowed_domains` list in the `validate_url` function to include the domains that are allowed to be accessed through the `/sessionservice` endpoint, and ensure that all other domains are blocked to prevent SSRF attacks."
+            ]
+        }
+    },
+    "GHSA-w56x-9778-rppx": {
+        "summary": "xwiki-pro-macros has remote code execution from page title and content via excerpt-include macro",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-22 20:42:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\nfrom xwiki_pro_macros import excerpt_include_macro\n\ndef sanitize_input(input_string):\n    \"\"\"\n    Sanitizes the input string by removing any malicious code.\n    \"\"\"\n    # Remove any script tags\n    input_string = re.sub(r'<script>.*?</script>', '', input_string, flags=re.DOTALL)\n    # Remove any HTML tags that can be used for code execution\n    input_string = re.sub(r'<(iframe|object|embed|applet)>', '', input_string)\n    return input_string\n\ndef patched_excerpt_include_macro(macro_context, title, content):\n    \"\"\"\n    Patches the excerpt-include macro to sanitize input and prevent code execution.\n    \"\"\"\n    # Sanitize the title and content\n    sanitized_title = sanitize_input(title)\n    sanitized_content = sanitize_input(content)\n    # Call the original macro with sanitized input\n    return excerpt_include_macro(macro_context, sanitized_title, sanitized_content)",
+            "vulnerability_explanation": "The xwiki-pro-macros vulnerability allows for remote code execution through the excerpt-include macro, which can be exploited by injecting malicious code into page titles and content. This occurs due to insufficient input validation and sanitization, enabling attackers to execute arbitrary code on the server. The lack of proper security measures in the macro's implementation makes it vulnerable to such attacks.",
+            "mitigation_steps": [
+                "Identify all instances of the excerpt-include macro in your XWiki application and replace them with the patched macro function (`patched_excerpt_include_macro`).",
+                "Ensure that the `sanitize_input` function is properly integrated into the patched macro to remove any malicious code from the input strings.",
+                "Test the patched macro thoroughly to verify that it prevents remote code execution while still functioning as expected for legitimate use cases."
             ]
         }
     }
