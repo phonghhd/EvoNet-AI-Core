@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-06-30 17:04:36",
+        "date_added": "2026-06-30 19:50:46",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        return False\n    \n    # Receive data from the remote server\n    data = sock.recv(1024)\n    \n    # Calculate the hash of the received data\n    data_hash = hashlib.sha256(data).hexdigest()\n    \n    # Check if the hash matches a known malicious hash\n    if data_hash == \"known_malicious_hash\":\n        return False\n    \n    # Close the socket\n    sock.close()\n    \n    return True\n\ndef mitigate_nullrat(ip, port):\n    if not validate_connection(ip, port):\n        # Block the IP address or take other mitigation measures\n        print(f\"Blocking IP address {ip} due to potential NullRAT activity\")\n        # Add code to block the IP address or take other mitigation measures",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability can be exploited using the NullRAT tool, which is available on GitHub.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef validate_request(request):\n    # Assuming a secret key is stored in an environment variable\n    secret_key = os.environ.get('SECRET_KEY')\n    if not secret_key:\n        raise ValueError(\"SECRET_KEY environment variable is not set\")\n\n    # Calculate the expected HMAC signature\n    expected_signature = hmac.new(secret_key.encode(), request.encode(), hashlib.sha256).hexdigest()\n\n    # Get the provided HMAC signature from the request\n    provided_signature = request.headers.get('X-HMAC-Signature')\n\n    # Compare the expected and provided signatures\n    if not hmac.compare_digest(expected_signature, provided_signature):\n        raise ValueError(\"Invalid HMAC signature\")\n\n    # If the signatures match, the request is valid\n    return True\n\ndef mitigate_nullrat_vulnerability(request):\n    try:\n        validate_request(request)\n    except ValueError as e:\n        # Log the error and return an error response\n        print(f\"Error: {e}\")\n        return {\"error\": \"Invalid request\"}",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a vulnerability in a specific software or system that allows the NullRAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "Identify potential entry points for the NullRAT tool, such as open ports or vulnerable software, and take steps to secure them.",
-                "Implement a network monitoring system to detect and block suspicious traffic, including traffic that matches the known malicious hash.",
-                "Use the provided `mitigate_nullrat` function as a starting point to develop a custom mitigation solution that blocks IP addresses or takes other measures to prevent NullRAT activity, and integrate it into your existing security infrastructure."
+                "Identify the software or system that is vulnerable to NullRAT and ensure it is up-to-date with the latest security patches.",
+                "Implement a Web Application Firewall (WAF) to detect and prevent malicious traffic, including NullRAT exploits.",
+                "Use the provided `mitigate_nullrat_vulnerability` function to validate incoming requests and prevent unauthorized access to the system, by integrating it into the application's request handling logic."
             ]
         }
     },
@@ -26771,6 +26771,38 @@
                 "Identify the vulnerable code: Review the codebase to identify the sections that may be affected by the unknown vulnerability.",
                 "Implement input validation: Add checks to validate user input, such as the `mitigate_vulnerability` function provided in the patch, to prevent potential exploitation.",
                 "Monitor and log suspicious activity: Use logging mechanisms to detect and track suspicious activity, allowing for swift response and mitigation in case of an attack."
+            ]
+        }
+    },
+    "GHSA-c739-f6xw-6pv2": {
+        "summary": "Keycloak Protection API allows authenticated clients to access and modify resources owned by other Resource Servers",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-30 19:50:46",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary libraries\nfrom keycloak import KeycloakAdmin\n\n# Define a function to validate client permissions\ndef validate_client_permissions(keycloak_admin, client_id, resource_id):\n    \"\"\"\n    Validate if a client has permission to access a resource.\n    \n    Args:\n    keycloak_admin (KeycloakAdmin): Keycloak administration instance\n    client_id (str): ID of the client\n    resource_id (str): ID of the resource\n    \n    Returns:\n    bool: True if the client has permission, False otherwise\n    \"\"\"\n    # Get the client's roles and permissions\n    client_roles = keycloak_admin.get_client_roles(client_id)\n    resource_permissions = keycloak_admin.get_resource_permissions(resource_id)\n    \n    # Check if the client has the required roles or permissions\n    for role in client_roles:\n        if role in resource_permissions:\n            return True\n    \n    return False\n\n# Define a function to protect resources\ndef protect_resources(keycloak_admin, client_id, resource_id, action):\n    \"\"\"\n    Protect resources from unauthorized access.\n    \n    Args:\n    keycloak_admin (KeycloakAdmin): Keycloak administration instance\n    client_id (str): ID of the client\n    resource_id (str): ID of the resource\n    action (str): Action to be performed (e.g., 'read', 'write')\n    \n    Returns:\n    bool: True if the action is allowed, False otherwise\n    \"\"\"\n    # Validate client permissions\n    if not validate_client_permissions(keycloak_admin, client_id, resource_id):\n        return False\n    \n    # Perform the action if the client has permission\n    if action == 'read':\n        # Allow read access\n        return True\n    elif action == 'write':\n        # Allow write access\n        return True\n    else:\n        # Deny unknown actions\n        return False",
+            "vulnerability_explanation": "The Keycloak Protection API vulnerability allows authenticated clients to access and modify resources owned by other Resource Servers, potentially leading to unauthorized data modification or exposure. This occurs due to insufficient authorization checks, enabling malicious clients to exploit this weakness. As a result, sensitive resources may be compromised, highlighting the need for proper access control mechanisms.",
+            "mitigation_steps": [
+                "**Update Keycloak Protection API**: Integrate the `validate_client_permissions` and `protect_resources` functions into the Keycloak Protection API to enforce proper authorization checks for client requests.",
+                "**Configure Resource Permissions**: Ensure that resource permissions are correctly configured in Keycloak, specifying the required roles or permissions for each resource.",
+                "**Test and Validate**: Thoroughly test the updated Keycloak Protection API and validate that clients can only access and modify resources they are authorized to, preventing unauthorized data exposure or modification."
+            ]
+        }
+    },
+    "GHSA-933f-rg6j-f46p": {
+        "summary": "Keycloak Account Resources user lookup contains broken access control",
+        "cvss_score": "unscored",
+        "date_added": "2026-06-30 19:50:46",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary modules\nfrom keycloak import KeycloakAdmin\n\n# Define a function to mitigate the vulnerability\ndef mitigate_vulnerability(keycloak_admin: KeycloakAdmin, user_id: str, realm_name: str):\n    \"\"\"\n    Mitigate the broken access control vulnerability in Keycloak Account Resources user lookup.\n\n    Args:\n    - keycloak_admin (KeycloakAdmin): The Keycloak administration client.\n    - user_id (str): The ID of the user to lookup.\n    - realm_name (str): The name of the realm where the user resides.\n\n    Returns:\n    - The user resource if the current user has the necessary permissions, otherwise None.\n    \"\"\"\n    # Get the current user's ID\n    current_user_id = keycloak_admin.auth_admin().get_user_id()\n\n    # Check if the current user has the necessary permissions to access the user resource\n    if keycloak_admin.auth_admin().has_resource_permission(realm_name, \"account\", \"view-profile\", current_user_id):\n        # If the current user has permissions, retrieve the user resource\n        return keycloak_admin.auth_admin().get_user(user_id, realm_name)\n    else:\n        # If the current user does not have permissions, return None\n        return None\n\n# Example usage:\nkeycloak_admin = KeycloakAdmin(server_url=\"https://your-keycloak-server.com\",\n                                username=\"your-admin-username\",\n                                password=\"your-admin-password\",\n                                realm_name=\"your-realm-name\")\n\nuser_id = \"the-user-id-to-lookup\"\nrealm_name = \"your-realm-name\"\n\nuser_resource = mitigate_vulnerability(keycloak_admin, user_id, realm_name)\n\nif user_resource:\n    print(\"User resource retrieved successfully:\")\n    print(user_resource)\nelse:\n    print(\"Access denied: The current user does not have the necessary permissions to access the user resource.\")",
+            "vulnerability_explanation": "The Keycloak Account Resources user lookup contains a broken access control vulnerability, which allows unauthorized access to sensitive user information. This vulnerability occurs when the access control mechanisms in place are not properly enforced, permitting malicious actors to retrieve user data without the necessary permissions. As a result, sensitive user information may be exposed, posing a significant security risk.",
+            "mitigation_steps": [
+                "**Update Keycloak dependencies**: Ensure you are using the latest version of Keycloak and its dependencies to minimize the risk of known vulnerabilities.",
+                "**Implement the mitigation function**: Integrate the `mitigate_vulnerability` function into your Keycloak authentication and authorization workflow to enforce proper access control for user resources.",
+                "**Configure realm settings**: Review and update your Keycloak realm settings to ensure that the necessary permissions are in place to restrict access to sensitive user information, and that the `mitigate_vulnerability` function is used to enforce these permissions."
             ]
         }
     }
