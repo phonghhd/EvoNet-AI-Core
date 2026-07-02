@@ -2,19 +2,8 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-02 16:47:25",
-        "stage": "3_Ready_for_Fine_Tuning",
-        "poc_url": "https://github.com/NullCode1337/NullRAT",
-        "patch_analysis": {
-            "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(connection):\n    # Generate a secret key\n    secret_key = os.urandom(32)\n    \n    # Create a hash object\n    hash_object = hashlib.sha256()\n    \n    # Update the hash object with the secret key\n    hash_object.update(secret_key)\n    \n    # Get the digest of the hash object\n    digest = hash_object.digest()\n    \n    # Create an HMAC object\n    hmac_object = hmac.new(digest, connection.encode(), hashlib.sha256)\n    \n    # Return the HMAC digest\n    return hmac_object.digest()\n\ndef verify_connection(connection, expected_hmac):\n    # Calculate the HMAC digest of the connection\n    calculated_hmac = authenticate_connection(connection)\n    \n    # Compare the calculated HMAC digest with the expected HMAC digest\n    if calculated_hmac == expected_hmac:\n        return True\n    else:\n        return False\n\n# Example usage:\nconnection = \"example_connection\"\nexpected_hmac = authenticate_connection(connection)\n\nif verify_connection(connection, expected_hmac):\n    print(\"Connection is authenticated\")\nelse:\n    print(\"Connection is not authenticated\")",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that the RAT exploits. Without more information, it's challenging to provide a precise explanation, but the PoC URL suggests that the vulnerability can be exploited using the NullRAT tool.",
-            "mitigation_steps": [
-                "**Identify Vulnerable Systems**: Identify systems that may be vulnerable to the NullRAT exploit by reviewing system configurations and software versions.",
-                "**Implement Authentication**: Implement robust authentication mechanisms, such as the one provided in the patch, to verify the integrity of connections and prevent unauthorized access.",
-                "**Keep Software Up-to-Date**: Ensure that all software is up-to-date with the latest security patches to prevent exploitation of known vulnerabilities, and consider implementing a web application firewall (WAF) to detect and prevent malicious traffic."
-            ]
-        }
+        "date_added": "2026-07-02 19:19:31",
+        "stage": "1_CVE_Harvested"
     },
     "MAL-2026-3211": {
         "summary": "Malicious code in pycryptcore (PyPI)",
@@ -27999,6 +27988,22 @@
                 "**Identify Vulnerable Code**: Review your codebase to identify areas where user input is processed without proper validation or sanitization.",
                 "**Implement Input Validation**: Use functions like `sanitize_input` to remove malicious characters and validate the format of user input before it is processed.",
                 "**Use Secure Path Joining**: When constructing file paths or URLs from user input, use `os.path.join` or equivalent functions to securely join paths and prevent path traversal attacks."
+            ]
+        }
+    },
+    "GHSA-qq2c-2q8j-jh27": {
+        "summary": "Craft CMS: Authorship spoofing in `entries/save-entry` via pre-check/post-mutation authorization gap",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 19:19:31",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Apply authorization check after mutation to prevent authorship spoofing\nfrom craftcms import services\n\ndef save_entry(entry_data):\n    # Pre-check authorization\n    if not services.Authorization().is_authorized('save-entry'):\n        raise Exception('Unauthorized to save entry')\n\n    # Save entry\n    entry = services.Entries().save_entry(entry_data)\n\n    # Post-mutation authorization check to verify authorship\n    if entry.author_id != services.Authorization().get_current_user_id():\n        raise Exception('Authorship spoofing detected')\n\n    return entry",
+            "vulnerability_explanation": "The vulnerability in Craft CMS allows for authorship spoofing in the `entries/save-entry` endpoint due to a pre-check/post-mutation authorization gap. This means that an attacker can potentially save an entry under a different author's name by exploiting the timing gap between the pre-check and post-mutation authorization checks. As a result, the actual author of the entry may not be the intended one, leading to potential security and integrity issues.",
+            "mitigation_steps": [
+                "Identify all instances of the `entries/save-entry` endpoint in your Craft CMS application and apply the patched `save_entry` function to ensure that both pre-check and post-mutation authorization checks are performed.",
+                "Verify that the `services.Authorization()` class is correctly implemented to check for user authorization and retrieve the current user's ID.",
+                "Test the patched endpoint with different user roles and scenarios to ensure that the authorship spoofing vulnerability is effectively mitigated and that the application behaves as expected."
             ]
         }
     }
