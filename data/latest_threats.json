@@ -2,8 +2,19 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-02 19:19:31",
-        "stage": "1_CVE_Harvested"
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "poc_url": "https://github.com/NullCode1337/NullRAT",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(connection):\n    # Generate a secret key\n    secret_key = os.urandom(32)\n    \n    # Generate a random challenge\n    challenge = os.urandom(32)\n    \n    # Send the challenge to the client\n    connection.send(challenge)\n    \n    # Receive the response from the client\n    response = connection.recv(32)\n    \n    # Calculate the expected response\n    expected_response = hmac.new(secret_key, challenge, hashlib.sha256).digest()\n    \n    # Check if the response is valid\n    if response == expected_response:\n        return True\n    else:\n        return False\n\ndef mitigate_nullrat_vulnerability(connection):\n    if authenticate_connection(connection):\n        # Allow the connection\n        print(\"Connection authenticated successfully\")\n    else:\n        # Reject the connection\n        print(\"Connection authentication failed\")\n        connection.close()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT malware.",
+            "mitigation_steps": [
+                "Identify potential entry points for the NullRAT malware, such as vulnerable software or open network ports, and patch or close them to prevent exploitation.",
+                "Implement a robust authentication mechanism, such as the one provided in the patch, to verify the identity of incoming connections and prevent unauthorized access.",
+                "Monitor system logs and network traffic for suspicious activity and update security software and operating systems regularly to ensure you have the latest security patches and protections against known vulnerabilities."
+            ]
+        }
     },
     "MAL-2026-3211": {
         "summary": "Malicious code in pycryptcore (PyPI)",
@@ -28004,6 +28015,246 @@
                 "Identify all instances of the `entries/save-entry` endpoint in your Craft CMS application and apply the patched `save_entry` function to ensure that both pre-check and post-mutation authorization checks are performed.",
                 "Verify that the `services.Authorization()` class is correctly implemented to check for user authorization and retrieve the current user's ID.",
                 "Test the patched endpoint with different user roles and scenarios to ensure that the authorship spoofing vulnerability is effectively mitigated and that the application behaves as expected."
+            ]
+        }
+    },
+    "GHSA-q8r6-xj3f-wrrm": {
+        "summary": "SimpleSAMLphp SP accepts a response from an unexpected IdP when unsigned `Response/InResponseTo` is combined with a signed assertion lacking `SubjectConfirmationData/InResponseTo`",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import xml.etree.ElementTree as ET\n\ndef validate_response(response):\n    # Check if Response/InResponseTo is unsigned\n    in_response_to = response.find('.//{urn:oasis:names:tc:SAML:2.0:protocol}InResponseTo')\n    if in_response_to is not None and in_response_to.attrib.get('Signature') is None:\n        # Check if the assertion lacks SubjectConfirmationData/InResponseTo\n        assertions = response.findall('.//{urn:oasis:names:tc:SAML:2.0:assertion}Assertion')\n        for assertion in assertions:\n            subject_confirmation_data = assertion.find('.//{urn:oasis:names:tc:SAML:2.0:assertion}SubjectConfirmationData')\n            if subject_confirmation_data is not None and subject_confirmation_data.attrib.get('InResponseTo') is None:\n                # If both conditions are met, reject the response\n                return False\n    return True\n\ndef process_saml_response(response):\n    # Parse the SAML response\n    root = ET.fromstring(response)\n    \n    # Validate the response\n    if not validate_response(root):\n        raise Exception(\"Invalid SAML response\")\n    \n    # Proceed with the rest of the processing\n    # ...",
+            "vulnerability_explanation": "The vulnerability in SimpleSAMLphp SP occurs when it accepts a response from an unexpected Identity Provider (IdP) under specific conditions. This happens when the `Response/InResponseTo` element is unsigned and is combined with a signed assertion that lacks the `SubjectConfirmationData/InResponseTo` element, allowing an attacker to potentially bypass authentication. This vulnerability exploits the lack of proper validation of the response and assertion elements.",
+            "mitigation_steps": [
+                "**Update SimpleSAMLphp SP**: Ensure you are running the latest version of SimpleSAMLphp SP, as newer versions may include patches for known vulnerabilities.",
+                "**Implement Response Validation**: Integrate the provided `validate_response` function into your SAML response processing workflow to check for the specific conditions that lead to this vulnerability.",
+                "**Monitor and Test**: Regularly monitor your system for any signs of exploitation and thoroughly test the updated code to ensure it correctly handles various SAML response scenarios without introducing any regressions."
+            ]
+        }
+    },
+    "GHSA-mm6c-5j6x-hq8m": {
+        "summary": "Algernon vulnerable to server-side script source disclosure on Windows via NTFS filename",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef sanitize_filename(filename):\n    \"\"\"\n    Sanitizes a filename to prevent server-side script source disclosure.\n    \n    Args:\n        filename (str): The filename to sanitize.\n    \n    Returns:\n        str: The sanitized filename.\n    \"\"\"\n    # Remove any directory traversal characters\n    filename = filename.replace(\"..\", \"\").replace(\"\\\\\", \"\").replace(\"/\", \"\")\n    \n    # Remove any special characters that could be used to manipulate the filename\n    filename = \"\".join(char for char in filename if char.isalnum() or char in \"-_.\")\n    \n    return filename\n\ndef serve_script(script_name):\n    \"\"\"\n    Serves a script, ensuring the filename is properly sanitized.\n    \n    Args:\n        script_name (str): The name of the script to serve.\n    \"\"\"\n    sanitized_name = sanitize_filename(script_name)\n    script_path = os.path.join(\"scripts\", sanitized_name)\n    \n    # Check if the script exists and serve it\n    if os.path.exists(script_path):\n        # Serve the script\n        with open(script_path, \"r\") as script_file:\n            return script_file.read()\n    else:\n        # Return a 404 error if the script does not exist\n        return \"Script not found\", 404",
+            "vulnerability_explanation": "The Algernon vulnerability allows an attacker to disclose server-side script sources on Windows systems via NTFS filename manipulation. This occurs because the application fails to properly sanitize user-inputted filenames, allowing an attacker to craft a malicious filename that exposes sensitive script source code. By exploiting this vulnerability, an attacker can gain access to sensitive information, potentially leading to further attacks or system compromise.",
+            "mitigation_steps": [
+                "Identify all locations in the Algernon application where user-inputted filenames are used to access server-side scripts.",
+                "Replace the existing filename handling code with the provided `sanitize_filename` function to ensure all filenames are properly sanitized.",
+                "Update the script serving logic to use the `serve_script` function, which sanitizes the filename and checks for the script's existence before serving it."
+            ]
+        }
+    },
+    "GHSA-5pmv-rx8r-wmv5": {
+        "summary": "jxl-grid on 32-bit platforms has an out-of-bounds writes due to integer overflow",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ctypes\n\n# Define a function to perform bounds checking\ndef check_bounds(value, max_value):\n    if value > max_value:\n        raise OverflowError(\"Integer overflow detected\")\n    return value\n\n# Define a function to safely calculate the grid size\ndef calculate_grid_size(rows, cols):\n    max_size = 2**31 - 1  # Maximum value for 32-bit signed integer\n    grid_size = rows * cols\n    checked_size = check_bounds(grid_size, max_size)\n    return checked_size\n\n# Example usage:\nrows = 1000\ncols = 1000\ntry:\n    grid_size = calculate_grid_size(rows, cols)\n    # Allocate memory for the grid\n    grid = ctypes.create_string_buffer(grid_size)\nexcept OverflowError as e:\n    print(f\"Error: {e}\")",
+            "vulnerability_explanation": "The jxl-grid library on 32-bit platforms is vulnerable to out-of-bounds writes due to an integer overflow. This occurs when a large value is assigned to a variable, causing it to exceed the maximum limit of the data type, resulting in a wrap-around that leads to unauthorized memory access. As a result, an attacker could potentially exploit this vulnerability to execute arbitrary code or crash the program.",
+            "mitigation_steps": [
+                "Identify all instances where large values are assigned to variables in the jxl-grid library, particularly in functions that allocate memory or perform calculations.",
+                "Implement bounds checking using a function like `check_bounds` to detect and prevent integer overflows.",
+                "Replace vulnerable calculations with safer alternatives, such as using the `calculate_grid_size` function to ensure that grid sizes are within valid limits."
+            ]
+        }
+    },
+    "GHSA-66m8-c62j-h6v5": {
+        "summary": "jxl-oxide: `FrameBuffer::new` creates out-of-bounds slices on overflow",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def create_frame_buffer(width, height, channels):\n    \"\"\"\n    Creates a new frame buffer with the given dimensions and number of channels.\n    \n    Args:\n    width (int): The width of the frame buffer.\n    height (int): The height of the frame buffer.\n    channels (int): The number of color channels in the frame buffer.\n    \n    Returns:\n    bytearray: A bytearray representing the frame buffer.\n    \"\"\"\n    # Calculate the total size of the frame buffer\n    total_size = width * height * channels\n    \n    # Check for potential integer overflow\n    if total_size > 2**31 - 1:  # assuming 32-bit integer\n        raise ValueError(\"Frame buffer size exceeds maximum allowed value\")\n    \n    # Create the frame buffer\n    frame_buffer = bytearray(total_size)\n    \n    return frame_buffer",
+            "vulnerability_explanation": "The vulnerability in jxl-oxide occurs when the `FrameBuffer::new` function creates out-of-bounds slices on overflow, potentially leading to memory access errors or crashes. This happens when the calculated size of the frame buffer exceeds the maximum allowed value, causing an integer overflow. As a result, the function may return a slice that extends beyond the bounds of the allocated memory.",
+            "mitigation_steps": [
+                "Identify all instances of `FrameBuffer::new` in the codebase and replace them with the patched `create_frame_buffer` function.",
+                "Verify that the `width`, `height`, and `channels` parameters passed to `create_frame_buffer` are valid and within the expected ranges to prevent potential overflows.",
+                "Test the patched code thoroughly to ensure that it handles edge cases correctly and does not introduce any new vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-2v8p-fqpx-2q3w": {
+        "summary": "jxl-oxide: integer subtraction overflow panic in cluster_from_table via crafted JXL input (DoS)",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def cluster_from_table(table):\n    \"\"\"\n    Calculate cluster from table, preventing integer subtraction overflow.\n    \n    Args:\n    table (list): Input table data.\n    \n    Returns:\n    int: Calculated cluster value.\n    \"\"\"\n    # Check if table is empty to avoid index errors\n    if not table:\n        return 0\n    \n    # Initialize cluster value with a safe default\n    cluster = 0\n    \n    # Iterate over table data, ensuring safe subtraction\n    for i in range(1, len(table)):\n        # Check for potential underflow before subtraction\n        if table[i] < table[i - 1]:\n            # Handle underflow by setting cluster to minimum value\n            cluster = min(cluster, table[i] - table[i - 1])\n        else:\n            # Perform safe subtraction\n            cluster = table[i] - table[i - 1]\n    \n    # Return calculated cluster value, ensuring it's within valid range\n    return max(0, cluster)",
+            "vulnerability_explanation": "The vulnerability occurs due to an integer subtraction overflow panic in the `cluster_from_table` function when processing crafted JXL input, leading to a denial-of-service (DoS) attack. This happens when the subtraction operation results in a value that exceeds the minimum limit of the integer type, causing an underflow. As a result, the program panics and crashes, making it vulnerable to malicious input.",
+            "mitigation_steps": [
+                "Identify the `cluster_from_table` function in the jxl-oxide codebase and replace it with the patched version provided above.",
+                "Verify that the patched function correctly handles crafted JXL input and prevents integer subtraction overflow panics.",
+                "Test the updated code with various input scenarios to ensure the vulnerability is fully mitigated and no new issues are introduced."
+            ]
+        }
+    },
+    "GHSA-j5mc-p8qg-39j7": {
+        "summary": "Kimai Favorite Timesheet Add and Remove Endpoints Allows Cross-User Bookmark Manipulation",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary modules\nfrom flask import request, jsonify\nfrom kimai import db\nfrom kimai.models import User, Timesheet, FavoriteTimesheet\n\n# Define a function to validate user ownership of a timesheet\ndef validate_user_ownership(timesheet_id, user_id):\n    timesheet = Timesheet.query.get(timesheet_id)\n    if timesheet.user_id != user_id:\n        return False\n    return True\n\n# Define a function to add a favorite timesheet\ndef add_favorite_timesheet(timesheet_id, user_id):\n    if validate_user_ownership(timesheet_id, user_id):\n        favorite_timesheet = FavoriteTimesheet.query.filter_by(timesheet_id=timesheet_id, user_id=user_id).first()\n        if favorite_timesheet is None:\n            favorite_timesheet = FavoriteTimesheet(timesheet_id=timesheet_id, user_id=user_id)\n            db.session.add(favorite_timesheet)\n            db.session.commit()\n            return jsonify({\"message\": \"Timesheet added to favorites\"}), 200\n        else:\n            return jsonify({\"message\": \"Timesheet already in favorites\"}), 400\n    else:\n        return jsonify({\"message\": \"Unauthorized access\"}), 401\n\n# Define a function to remove a favorite timesheet\ndef remove_favorite_timesheet(timesheet_id, user_id):\n    if validate_user_ownership(timesheet_id, user_id):\n        favorite_timesheet = FavoriteTimesheet.query.filter_by(timesheet_id=timesheet_id, user_id=user_id).first()\n        if favorite_timesheet is not None:\n            db.session.delete(favorite_timesheet)\n            db.session.commit()\n            return jsonify({\"message\": \"Timesheet removed from favorites\"}), 200\n        else:\n            return jsonify({\"message\": \"Timesheet not in favorites\"}), 400\n    else:\n        return jsonify({\"message\": \"Unauthorized access\"}), 401\n\n# Update the existing endpoints to use the new functions\n@app.route('/api/favorite-timesheets/add', methods=['POST'])\ndef add_favorite_timesheet_endpoint():\n    timesheet_id = request.json['timesheet_id']\n    user_id = request.json['user_id']\n    return add_favorite_timesheet(timesheet_id, user_id)\n\n@app.route('/api/favorite-timesheets/remove', methods=['POST'])\ndef remove_favorite_timesheet_endpoint():\n    timesheet_id = request.json['timesheet_id']\n    user_id = request.json['user_id']\n    return remove_favorite_timesheet(timesheet_id, user_id)",
+            "vulnerability_explanation": "The vulnerability in Kimai's Favorite Timesheet Add and Remove Endpoints allows an attacker to manipulate bookmarks across different users, potentially leading to unauthorized access or modification of sensitive data. This is possible due to inadequate access controls and validation in the endpoints, enabling an attacker to add or remove bookmarks from other users' accounts. As a result, an attacker could exploit this vulnerability to gain access to confidential information or disrupt the normal functioning of the system.",
+            "mitigation_steps": [
+                "Update the Kimai application code to include the new `validate_user_ownership`, `add_favorite_timesheet`, and `remove_favorite_timesheet` functions.",
+                "Modify the existing endpoints for adding and removing favorite timesheets to use the new functions, ensuring that user ownership is validated before performing any actions.",
+                "Test the updated endpoints to ensure that they correctly prevent cross-user bookmark manipulation and return appropriate error messages for unauthorized access attempts."
+            ]
+        }
+    },
+    "GHSA-794g-x443-36f7": {
+        "summary": "Keycloak: Unauthorized access via improper validation of encrypted SAML assertions",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import xmlsig\nfrom xmlsig import XMLSignature\nfrom cryptography.hazmat.primitives import serialization\nfrom cryptography.hazmat.primitives.asymmetric import padding\nfrom cryptography.hazmat.primitives import hashes\n\ndef verify_saml_assertion(saml_assertion, expected_issuer, certificate):\n    \"\"\"\n    Verify the SAML assertion by checking its signature and issuer.\n    \n    :param saml_assertion: The SAML assertion to verify.\n    :param expected_issuer: The expected issuer of the SAML assertion.\n    :param certificate: The certificate used for verification.\n    :return: True if the SAML assertion is valid, False otherwise.\n    \"\"\"\n    # Load the certificate\n    cert = certificate.public_key()\n    \n    # Parse the SAML assertion\n    xml = xmlsig.parse_string(saml_assertion)\n    \n    # Find the signature element\n    sig = xml.find(\".//{http://www.w3.org/2000/09/xmldsig#}Signature\")\n    \n    # Verify the signature\n    try:\n        XMLSignature(xml, sig).verify(cert)\n    except xmlsig.InvalidSignature:\n        return False\n    \n    # Check the issuer\n    issuer = xml.find(\".//{urn:oasis:names:tc:SAML:2.0:assertion}Issuer\")\n    if issuer.text != expected_issuer:\n        return False\n    \n    return True",
+            "vulnerability_explanation": "The vulnerability in Keycloak occurs due to improper validation of encrypted SAML assertions, allowing unauthorized access. This happens when the system fails to correctly verify the encryption and integrity of SAML assertions, potentially leading to authentication bypass or other security issues. As a result, an attacker could exploit this weakness by crafting malicious SAML assertions that appear valid to the system.",
+            "mitigation_steps": [
+                "**Update Keycloak Configuration**: Ensure that Keycloak is configured to use the correct certificate for verifying SAML assertions. This involves updating the Keycloak settings to reference the correct certificate file or configuring the certificate in the Keycloak admin console.",
+                "**Implement SAML Assertion Verification**: Integrate the provided `verify_saml_assertion` function into your authentication workflow to verify the signature and issuer of incoming SAML assertions. This function takes the SAML assertion, expected issuer, and certificate as input and returns a boolean indicating whether the assertion is valid.",
+                "**Monitor and Test**: After applying the patch, thoroughly test your authentication system to ensure that SAML assertions are being correctly verified and that unauthorized access is prevented. Monitor system logs for any errors or security incidents related to SAML authentication."
+            ]
+        }
+    },
+    "GHSA-wmxr-6j5f-838p": {
+        "summary": "Duplicate Advisory: Keycloak: Unauthorized access via improper validation of encrypted SAML assertions",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import xmlsig\nfrom xml.etree import ElementTree as ET\nfrom cryptography.hazmat.primitives import serialization\nfrom cryptography.hazmat.primitives.asymmetric import padding\nfrom cryptography.hazmat.primitives import hashes\n\ndef validate_saml_assertion(encrypted_assertion, keycloak_public_key):\n    # Decrypt the assertion using the provided public key\n    encrypted_assertion_bytes = bytes.fromhex(encrypted_assertion)\n    decrypted_assertion = keycloak_public_key.decrypt(\n        encrypted_assertion_bytes,\n        padding.OAEP(\n            mgf=padding.MGF1(algorithm=hashes.SHA256()),\n            algorithm=hashes.SHA256(),\n            label=None\n        )\n    )\n\n    # Parse the decrypted assertion\n    root = ET.fromstring(decrypted_assertion)\n\n    # Validate the SAML assertion signature\n    signature = root.find('.//{http://www.w3.org/2000/09/xmldsig#}Signature')\n    if signature is None:\n        return False\n\n    # Verify the signature using the public key\n    verified = xmlsig.verify(root, keycloak_public_key)\n    if not verified:\n        return False\n\n    return True\n\n# Example usage:\nkeycloak_public_key = serialization.load_pem_public_key(\n    b'-----BEGIN PUBLIC KEY-----\\n'\n    b'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy8Dbv8prpJ/0kKhlGeJY\\n'\n    b'ozo2t60EG8L0561g13R29LvMR5hyvGZlGJpmn65+A4xHXInJYiPuKzrKfDNSH6h\\n'\n    b'V6cm4jUvHdJfdpRqLkZ7RrGPm8hQY2wa6v8Oc+YUThb8SczqQKqJN1yLc9OtTAA\\n'\n    b'zjH1eYt8Tn8SjOxQ5XnXJN6fZd9YcXZxmzrI7ge1xQxAs2WACt2ueZ/3zfeymYy\\n'\n    b'jCn8YRc9F6Y8l9Hx5xRcp7jV2U7Yj3VH4AqZlk8AQwH5ZnJm2ZYZRq9kV3FpWQ\\n'\n    b'cIcPIW7x+7RGRhNBz0Xw5i8YXa4fS2iHJNw5pwyf4XQ7QK/iQIDAQAB\\n'\n    b'-----END PUBLIC KEY-----'\n)\n\nencrypted_assertion = 'your_encrypted_assertion_here'\nis_valid = validate_saml_assertion(encrypted_assertion, keycloak_public_key)\nif is_valid:\n    print(\"The SAML assertion is valid.\")\nelse:\n    print(\"The SAML assertion is not valid.\")",
+            "vulnerability_explanation": "The vulnerability in Keycloak occurs due to improper validation of encrypted SAML assertions, allowing unauthorized access. This happens because the validation process does not correctly verify the authenticity and integrity of the encrypted assertions, potentially leading to malicious access. As a result, an attacker could exploit this vulnerability by crafting a malicious SAML assertion that bypasses the authentication mechanism.",
+            "mitigation_steps": [
+                "**Update Keycloak Configuration**: Ensure that the Keycloak server is configured to properly validate encrypted SAML assertions. This may involve updating the server's configuration files or using a different library for SAML assertion validation.",
+                "**Implement Custom Validation**: Implement a custom validation mechanism, such as the provided Python code patch, to verify the authenticity and integrity of encrypted SAML assertions. This can be done by decrypting the assertion, parsing the XML, and verifying the signature using the public key.",
+                "**Monitor and Test**: Continuously monitor the Keycloak server for any potential security issues and test the custom validation mechanism to ensure it is working correctly. This may involve using tools such as XMLSec or other SAML testing libraries to simulate various scenarios and verify the server's response."
+            ]
+        }
+    },
+    "GHSA-2p9h-ccw7-33gf": {
+        "summary": "cleo is vulnerable to Regular Expression Denial of Service (ReDoS)",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\nfrom typing import Pattern\n\n# Define a function to compile regular expressions with a timeout\ndef compile_regex(pattern: str, timeout: int = 1) -> Pattern:\n    \"\"\"\n    Compile a regular expression with a timeout to prevent ReDoS attacks.\n\n    Args:\n    pattern (str): The regular expression pattern to compile.\n    timeout (int): The timeout in seconds. Defaults to 1.\n\n    Returns:\n    Pattern: The compiled regular expression pattern.\n    \"\"\"\n    try:\n        # Attempt to compile the regular expression within the given timeout\n        return re.compile(pattern, timeout=timeout)\n    except re.error as e:\n        # If compilation fails, raise an exception with a meaningful error message\n        raise ValueError(f\"Failed to compile regular expression: {e}\")\n\n# Example usage:\nif __name__ == \"__main__\":\n    # Define a potentially vulnerable regular expression pattern\n    vulnerable_pattern = r\"(a|a*)*\"\n\n    # Compile the regular expression with a timeout to prevent ReDoS\n    try:\n        compiled_pattern = compile_regex(vulnerable_pattern)\n        print(\"Regular expression compiled successfully.\")\n    except ValueError as e:\n        print(f\"Error compiling regular expression: {e}\")",
+            "vulnerability_explanation": "The Regular Expression Denial of Service (ReDoS) vulnerability in cleo occurs when an attacker crafts a malicious input that causes the regular expression engine to take an excessive amount of time to process, leading to a denial-of-service. This happens because the regular expression engine tries to explore all possible matches, resulting in catastrophic backtracking. By providing a specially designed input, an attacker can cause the application to become unresponsive or even crash.",
+            "mitigation_steps": [
+                "**Identify vulnerable regular expressions**: Review your codebase to identify regular expressions that may be vulnerable to ReDoS attacks, such as those with nested repetition or alternation.",
+                "**Implement a timeout**: Modify your regular expression compilation code to include a timeout, as shown in the provided patch, to prevent excessive processing time.",
+                "**Test and validate**: Thoroughly test your patched code with various inputs, including malicious ones, to ensure that the ReDoS vulnerability is adequately mitigated and that the regular expressions still function as intended."
+            ]
+        }
+    },
+    "GHSA-rxw2-pc8j-vxwm": {
+        "summary": "fast-mcp-telegram: Bearer token path traversal bypasses reserved Telegram session protection",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport urllib.parse\n\ndef sanitize_bearer_token(token):\n    \"\"\"\n    Sanitizes the bearer token to prevent path traversal attacks.\n    \"\"\"\n    # URL decode the token to prevent encoded slashes\n    token = urllib.parse.unquote(token)\n    \n    # Split the token into its components\n    components = token.split(os.sep)\n    \n    # Remove any components that are empty or contain only dots\n    sanitized_components = [c for c in components if c and c != '.' and c != '..']\n    \n    # Join the sanitized components back into a token\n    sanitized_token = os.sep.join(sanitized_components)\n    \n    return sanitized_token\n\ndef validate_bearer_token(token):\n    \"\"\"\n    Validates the bearer token to ensure it does not contain any malicious characters.\n    \"\"\"\n    # Define a set of allowed characters\n    allowed_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-')\n    \n    # Check if all characters in the token are allowed\n    if not set(token).issubset(allowed_chars):\n        raise ValueError(\"Bearer token contains invalid characters\")\n    \n    return token\n\ndef get_telegram_session(bearer_token):\n    \"\"\"\n    Retrieves the Telegram session using the provided bearer token.\n    \"\"\"\n    # Sanitize and validate the bearer token\n    sanitized_token = sanitize_bearer_token(bearer_token)\n    validated_token = validate_bearer_token(sanitized_token)\n    \n    # Use the validated token to retrieve the Telegram session\n    # ... (rest of the function remains the same)",
+            "vulnerability_explanation": "The fast-mcp-telegram vulnerability allows an attacker to bypass reserved Telegram session protection by exploiting a path traversal issue in the bearer token. This can lead to unauthorized access to sensitive information. The vulnerability is caused by inadequate input validation and sanitization of the bearer token, allowing an attacker to manipulate the token and gain access to protected resources.",
+            "mitigation_steps": [
+                "Identify all locations in the code where the bearer token is used to access Telegram sessions and replace the existing token handling logic with the `sanitize_bearer_token` and `validate_bearer_token` functions.",
+                "Update the `get_telegram_session` function to use the sanitized and validated bearer token, as shown in the patch code.",
+                "Test the updated code to ensure that the path traversal vulnerability is mitigated and that the bearer token is properly sanitized and validated."
+            ]
+        }
+    },
+    "GHSA-4j9m-h44m-2hv8": {
+        "summary": "Steeltoe: OAEP setting silently selects PKCS#1 v1.5 padding",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hashlib\nfrom cryptography.hazmat.primitives import padding\nfrom cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes\nfrom cryptography.hazmat.backends import default_backend\n\ndef secure_encrypt(plaintext, key, iv):\n    # Create a new AES cipher object with a secure mode (e.g., GCM)\n    cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())\n    encryptor = cipher.encryptor()\n\n    # Use OAEP padding explicitly\n    padder = padding.OAEP(\n        mgf=padding.MGF1(algorithm=hashlib.sha256()),\n        algorithm=hashlib.sha256(),\n        label=None\n    )\n    padded_data = padder.update(plaintext) + padder.finalize()\n\n    # Encrypt the padded plaintext\n    ciphertext = encryptor.update(padded_data) + encryptor.finalize()\n\n    return ciphertext\n\ndef secure_decrypt(ciphertext, key, iv):\n    # Create a new AES cipher object with a secure mode (e.g., GCM)\n    cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())\n    decryptor = cipher.decryptor()\n\n    # Decrypt the ciphertext\n    padded_plaintext = decryptor.update(ciphertext) + decryptor.finalize()\n\n    # Use OAEP padding explicitly for decryption\n    unpadder = padding.OAEP(\n        mgf=padding.MGF1(algorithm=hashlib.sha256()),\n        algorithm=hashlib.sha256(),\n        label=None\n    )\n    plaintext = unpadder.update(padded_plaintext) + unpadder.finalize()\n\n    return plaintext",
+            "vulnerability_explanation": "The Steeltoe vulnerability silently selects PKCS#1 v1.5 padding when OAEP (Optimal Asymmetric Encryption Padding) is set, which can lead to insecure encryption and potential decryption oracle attacks. This is because PKCS#1 v1.5 padding is considered insecure and has been replaced by OAEP in modern cryptographic standards. As a result, the encryption may be vulnerable to attacks, even if OAEP is intended to be used.",
+            "mitigation_steps": [
+                "Identify all instances of encryption and decryption in the codebase that use Steeltoe's encryption library.",
+                "Replace the existing encryption and decryption functions with the `secure_encrypt` and `secure_decrypt` functions provided in the patch, ensuring to pass the required parameters (plaintext, key, and iv).",
+                "Verify that the new encryption and decryption functions are correctly implemented and functioning as expected, using test cases to validate the security and correctness of the patched code."
+            ]
+        }
+    },
+    "GHSA-rxrh-4j9h-xgg9": {
+        "summary": "Steeltoe: TLS private keys written to /tmp with default permissions, never deleted",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport tempfile\n\n# Create a temporary directory with restricted permissions\ntmp_dir = tempfile.mkdtemp(prefix='steeltoe-', dir='/tmp')\nos.chmod(tmp_dir, 0o700)  # Set permissions to rwx for owner only\n\n# Write TLS private key to the temporary directory\nwith open(os.path.join(tmp_dir, 'private_key.pem'), 'w') as f:\n    f.write('TLS private key content')\n\n# Ensure the private key file has restricted permissions\nprivate_key_path = os.path.join(tmp_dir, 'private_key.pem')\nos.chmod(private_key_path, 0o600)  # Set permissions to rw for owner only\n\n# Use the private key as needed...\n\n# Clean up the temporary directory and its contents when done\nimport shutil\nshutil.rmtree(tmp_dir)",
+            "vulnerability_explanation": "The Steeltoe vulnerability occurs when TLS private keys are written to the /tmp directory with default permissions, making them accessible to other users on the system. This is a significant security risk as an attacker could potentially read or exploit these private keys. The vulnerability is further exacerbated by the fact that these keys are never deleted, allowing an attacker to access them indefinitely.",
+            "mitigation_steps": [
+                "Identify all locations in the code where TLS private keys are written to the /tmp directory and replace them with the patched code that uses a temporary directory with restricted permissions.",
+                "Ensure that the private key files are written with restricted permissions (e.g., 0o600) to prevent unauthorized access.",
+                "Implement a cleanup mechanism to delete the temporary directory and its contents when the private key is no longer needed, as demonstrated in the patched code using `shutil.rmtree(tmp_dir)`."
+            ]
+        }
+    },
+    "GHSA-7fqc-p256-7pwj": {
+        "summary": "Steeltoe's static JWKS cache shared across schemes and never invalidated",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import jwt\nfrom datetime import datetime, timedelta\n\nclass JWKSCache:\n    def __init__(self, ttl=300):  # 5 minutes default TTL\n        self.cache = {}\n        self.ttl = ttl\n\n    def get_jwks(self, scheme):\n        if scheme in self.cache:\n            jwks, expires_at = self.cache[scheme]\n            if datetime.now() < expires_at:\n                return jwks\n            else:\n                del self.cache[scheme]\n        # Fetch new JWKS and cache it with TTL\n        jwks = fetch_jwks_from_scheme(scheme)\n        expires_at = datetime.now() + timedelta(seconds=self.ttl)\n        self.cache[scheme] = (jwks, expires_at)\n        return jwks\n\ndef fetch_jwks_from_scheme(scheme):\n    # Implement logic to fetch JWKS from the given scheme\n    # For demonstration purposes, assume this function is already implemented\n    pass",
+            "vulnerability_explanation": "The vulnerability in Steeltoe's static JWKS cache allows an attacker to potentially access sensitive information, as the cache is shared across schemes and never invalidated. This means that once a JSON Web Key Set (JWKS) is cached, it remains in memory indefinitely, even if the underlying keys or schemes change. As a result, an attacker could exploit this by obtaining access to a previously valid but now revoked key.",
+            "mitigation_steps": [
+                "Identify all instances where the static JWKS cache is used in the Steeltoe application and replace it with the `JWKSCache` class provided in the patch.",
+                "Implement the `fetch_jwks_from_scheme` function to fetch the JWKS from the given scheme, ensuring it handles errors and exceptions properly.",
+                "Configure the TTL (time to live) for the `JWKSCache` class according to the application's security requirements, balancing between performance and security considerations."
+            ]
+        }
+    },
+    "GHSA-227r-jm2g-7cp4": {
+        "summary": "Steeltoe's sensitive actuators (heapdump/env) only require Restricted permission",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary modules\nfrom steeltoe.security import Permission\n\n# Define a new permission level for sensitive actuators\nSENSITIVE_ACTUATOR_PERMISSION = Permission.ADMINISTER\n\n# Update the permission requirements for heapdump and env actuators\ndef update_actuator_permissions(actuator):\n    if actuator == 'heapdump' or actuator == 'env':\n        return SENSITIVE_ACTUATOR_PERMISSION\n    else:\n        return Permission.RESTRICTED\n\n# Example usage:\nactuator_permissions = {\n    'heapdump': update_actuator_permissions('heapdump'),\n    'env': update_actuator_permissions('env')\n}",
+            "vulnerability_explanation": "The vulnerability in Steeltoe's sensitive actuators (heapdump/env) occurs because they only require Restricted permission, which is insufficient to protect sensitive information. This allows unauthorized access to sensitive data, potentially leading to information disclosure or other security breaches. To mitigate this, the permission requirements for these actuators need to be elevated to ensure that only authorized users can access them.",
+            "mitigation_steps": [
+                "Identify the sensitive actuators (heapdump/env) in your Steeltoe application and their current permission settings.",
+                "Update the permission requirements for these actuators to a higher level, such as ADMINISTER, using the `update_actuator_permissions` function provided in the patch.",
+                "Verify that the updated permission settings are correctly applied and that only authorized users can access the sensitive actuators, by testing the application with different user roles and permissions."
+            ]
+        }
+    },
+    "GHSA-q62h-354g-5r85": {
+        "summary": "Steeltoe's env sanitizer misses connection strings — leaks embedded DB passwords",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-02 22:04:13",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\nimport os\n\ndef sanitize_env_variables():\n    \"\"\"\n    Sanitizes environment variables to remove sensitive information.\n    \"\"\"\n    # Define a regular expression pattern to match connection strings\n    pattern = r\"(?:postgres|mysql|oracle|sqlserver)://[^:]+:[^@]+@\"\n    \n    # Iterate over environment variables\n    for key, value in os.environ.items():\n        # Check if the value matches the connection string pattern\n        if re.search(pattern, value):\n            # Mask the password in the connection string\n            sanitized_value = re.sub(r\"(?:postgres|mysql|oracle|sqlserver)://[^:]+:([^@]+)@\",\n                                     lambda match: f\"{match.group(0).split('://')[0]}://***:***@\",\n                                     value)\n            # Update the environment variable with the sanitized value\n            os.environ[key] = sanitized_value\n\n# Call the function to sanitize environment variables\nsanitize_env_variables()",
+            "vulnerability_explanation": "The Steeltoe env sanitizer vulnerability occurs when connection strings are not properly sanitized, allowing embedded database passwords to be leaked. This happens because the sanitizer fails to remove or mask sensitive information from environment variables, making it accessible to unauthorized parties. As a result, an attacker could exploit this vulnerability to gain access to sensitive database credentials.",
+            "mitigation_steps": [
+                "Identify all environment variables that may contain connection strings with embedded database passwords.",
+                "Apply the provided `sanitize_env_variables` function to sanitize these environment variables, ensuring that sensitive information is removed or masked.",
+                "Integrate the `sanitize_env_variables` function into your application's startup routine to ensure that environment variables are sanitized at the beginning of each execution, preventing potential leaks of sensitive database credentials."
             ]
         }
     }
