@@ -2,19 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-11 13:11:14",
+        "date_added": "2026-07-11 15:52:38",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Expected secret key\n    secret_key = b\"your_secret_key_here\"\n\n    # Receive the client's message\n    client_message = client_socket.recv(1024)\n\n    # Calculate the expected HMAC\n    expected_hmac = hmac.new(secret_key, client_message, hashlib.sha256).digest()\n\n    # Receive the client's HMAC\n    client_hmac = client_socket.recv(32)\n\n    # Check if the HMACs match\n    if expected_hmac == client_hmac:\n        return True\n    else:\n        return False\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Client is authenticated, proceed with the connection\n        print(\"Client authenticated successfully\")\n    else:\n        # Client is not authenticated, close the connection\n        print(\"Client authentication failed\")\n        client_socket.close()\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a specific address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(5)\n\nprint(\"Server is listening for incoming connections...\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n\n    # Handle the client connection\n    handle_client(client_socket)",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information provided, but it is likely related to a security flaw in a specific software or system that allows the NullRAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT tool, which is hosted on a publicly available GitHub repository.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_connection(sock):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str(sock.getpeername()).encode()).digest()\n    \n    # Send the challenge to the client\n    sock.sendall(challenge)\n    \n    # Receive the response from the client\n    response = sock.recv(1024)\n    \n    # Verify the response\n    expected_response = hmac.new(b'secret_key', challenge, hashlib.sha256).digest()\n    if response != expected_response:\n        print(\"Authentication failed\")\n        return False\n    else:\n        print(\"Authentication successful\")\n        return True\n\ndef handle_connection(sock):\n    if authenticate_connection(sock):\n        # Handle the connection\n        while True:\n            request = sock.recv(1024)\n            if not request:\n                break\n            # Process the request\n            sock.sendall(b\"Request received\")\n    else:\n        # Close the connection\n        sock.close()\n\n# Create a socket\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nsock.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nsock.listen(1)\n\nwhile True:\n    # Accept an incoming connection\n    connection, address = sock.accept()\n    handle_connection(connection)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability can be exploited using the NullRAT tool, which is available on GitHub.",
             "mitigation_steps": [
-                "Identify the vulnerable software or system: Determine which software or system is being exploited by the NullRAT tool.",
-                "Implement authentication and authorization: Add authentication and authorization mechanisms to the vulnerable software or system to prevent unauthorized access.",
-                "Keep software up-to-date: Ensure that all software and systems are up-to-date with the latest security patches to prevent exploitation of known vulnerabilities.",
-                "Monitor for suspicious activity: Regularly monitor system logs and network traffic for suspicious activity that may indicate a NullRAT infection.",
-                "Use a Web Application Firewall (WAF): Consider using a WAF to detect and prevent NullRAT attacks."
+                "**Update dependencies and software**: Ensure all dependencies and software are up-to-date, as newer versions may include patches for known vulnerabilities.",
+                "**Implement authentication and authorization**: Implement robust authentication and authorization mechanisms to prevent unauthorized access to the system, such as the example code patch provided.",
+                "**Monitor system activity**: Regularly monitor system activity for suspicious behavior, and implement intrusion detection and prevention systems to detect and prevent potential attacks."
             ]
         }
     },
@@ -32574,6 +32572,38 @@
                 "**Identify Vulnerable Code**: Review your application's codebase to identify areas that may be vulnerable to common web application vulnerabilities such as SQL injection or XSS. Look for instances where user input is directly used in queries or rendered in HTML responses without proper sanitization.",
                 "**Implement Input Sanitization**: Modify your code to sanitize all user-supplied input. For SQL queries, use parameterized queries instead of concatenating user input into your SQL strings. For HTML output, use libraries or functions that escape special characters to prevent XSS.",
                 "**Test and Validate**: After applying patches, thoroughly test your application to ensure that the mitigation measures are effective and do not introduce new bugs or vulnerabilities. This includes testing both the happy path and edge cases, especially those related to user input handling."
+            ]
+        }
+    },
+    "OSV-2025-266": {
+        "summary": "Heap-buffer-overflow in lj_buf_ruleb128",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-11 15:52:38",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def lj_buf_ruleb128(buffer, size):\n    \"\"\"\n    Modified function to prevent heap-buffer-overflow.\n    \n    :param buffer: The input buffer.\n    :param size: The size of the buffer.\n    :return: The result of the operation.\n    \"\"\"\n    # Check if the buffer size is valid to prevent overflow\n    if size > len(buffer):\n        raise ValueError(\"Buffer size exceeds allocated size\")\n    \n    # Perform the operation with bounds checking\n    result = []\n    for i in range(size):\n        if i < len(buffer):\n            # Process the buffer within bounds\n            result.append(process_buffer(buffer[i]))\n        else:\n            # Handle out-of-bounds access\n            break\n    return result\n\ndef process_buffer(element):\n    # Example processing function\n    return element * 2",
+            "vulnerability_explanation": "The vulnerability OSV-2025-266 is a heap-buffer-overflow issue in the `lj_buf_ruleb128` function, which can be exploited to potentially execute arbitrary code or cause a denial-of-service. This occurs when the function attempts to access memory beyond the bounds of a heap-allocated buffer. The exact mechanism may involve incorrect calculations or missing bounds checks, leading to the overflow.",
+            "mitigation_steps": [
+                "Identify all instances of the `lj_buf_ruleb128` function in the codebase and replace them with the patched version, ensuring to include bounds checking and valid size verification.",
+                "Review the code for any similar buffer operations that may be vulnerable to heap-buffer-overflow and apply similar patches as needed.",
+                "Conduct thorough testing of the patched code to ensure that the vulnerability is fully mitigated and no new issues are introduced, including testing for potential edge cases and boundary conditions."
+            ]
+        }
+    },
+    "OSV-2022-1018": {
+        "summary": "Index-out-of-bounds in LibRaw::kodak_radc_load_raw",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-11 15:52:38",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "def kodak_radc_load_raw(data, offset, length):\n    \"\"\"\n    Loads raw data from a Kodak RADC image.\n    \n    :param data: The image data.\n    :param offset: The offset into the data.\n    :param length: The length of the data to read.\n    :return: The loaded raw data.\n    \"\"\"\n    # Check if the offset and length are within bounds\n    if offset < 0 or offset >= len(data) or length < 0 or offset + length > len(data):\n        raise ValueError(\"Offset or length out of bounds\")\n    \n    # Perform the load operation, ensuring bounds are respected\n    return data[offset:offset+length]\n\n# Example usage:\ndata = b\"example_image_data\"\noffset = 10\nlength = 20\ntry:\n    loaded_data = kodak_radc_load_raw(data, offset, length)\n    # Process the loaded data\nexcept ValueError as e:\n    print(f\"Error loading data: {e}\")",
+            "vulnerability_explanation": "The vulnerability OSV-2022-1018 is an index-out-of-bounds issue in the LibRaw::kodak_radc_load_raw function, which can lead to unauthorized access and potentially allow attackers to execute arbitrary code. This occurs when the function attempts to access an array or buffer with an index that exceeds its defined bounds, likely due to insufficient input validation or incorrect buffer sizing. As a result, this vulnerability can cause the program to crash or potentially lead to code execution, depending on the specifics of the implementation and the data being processed.",
+            "mitigation_steps": [
+                "Identify all instances of the LibRaw::kodak_radc_load_raw function in your codebase and replace them with the patched version that includes bounds checking.",
+                "Verify that all input parameters (offset and length) are validated before calling the patched function to prevent potential index-out-of-bounds errors.",
+                "Test the patched function thoroughly with various inputs, including edge cases (e.g., offset and length at the boundaries of the data), to ensure it behaves correctly and does not introduce new vulnerabilities."
             ]
         }
     }
