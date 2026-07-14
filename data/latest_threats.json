@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-14 19:14:38",
+        "date_added": "2026-07-14 21:54:44",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef secure_connection-establishment(connection_data):\n    # Generate a secret key for HMAC\n    secret_key = os.urandom(32)\n    \n    # Calculate HMAC for the connection data\n    connection_hmac = hmac.new(secret_key, connection_data.encode(), hashlib.sha256).hexdigest()\n    \n    # Verify the HMAC on the receiving end\n    def verify_connection(data, expected_hmac):\n        calculated_hmac = hmac.new(secret_key, data.encode(), hashlib.sha256).hexdigest()\n        return calculated_hmac == expected_hmac\n    \n    return verify_connection\n\n# Example usage\nif __name__ == \"__main__\":\n    connection_data = \"example_connection_data\"\n    verify_function = secure_connection-establishment(connection_data)\n    is_valid = verify_function(connection_data, \"expected_hmac_value\")\n    print(f\"Is connection valid? {is_valid}\")",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is hosted on the provided GitHub repository. This RAT can potentially allow unauthorized access and control of a system, leading to various malicious activities. The exact mechanism of the vulnerability is unknown due to the lack of a description, but it likely involves exploiting weaknesses in system security or user interactions to establish unauthorized access.",
+            "diff_code": "import hashlib\nimport os\nimport socket\n\ndef generate_checksum(file_path):\n    \"\"\"\n    Generate a checksum for a given file.\n    \"\"\"\n    md5_hash = hashlib.md5()\n    with open(file_path, \"rb\") as f:\n        # Read the file in chunks to avoid loading large files into memory\n        for byte_block in iter(lambda: f.read(4096), b\"\"):\n            md5_hash.update(byte_block)\n    return md5_hash.hexdigest()\n\ndef check_file_integrity(file_path, expected_checksum):\n    \"\"\"\n    Check the integrity of a file by comparing its checksum with an expected value.\n    \"\"\"\n    actual_checksum = generate_checksum(file_path)\n    return actual_checksum == expected_checksum\n\ndef restrict_network_access():\n    \"\"\"\n    Restrict network access to prevent the RAT from communicating with its command and control server.\n    \"\"\"\n    # Get the list of active network connections\n    netstat_output = os.popen(\"netstat -an\").read()\n    # Parse the output to identify suspicious connections\n    for line in netstat_output.splitlines():\n        if \"ESTABLISHED\" in line:\n            # Extract the foreign address from the line\n            foreign_addr = line.split()[-1]\n            # Block the suspicious connection\n            os.system(f\"iptables -A INPUT -s {foreign_addr} -j DROP\")\n\n# Example usage:\nfile_path = \"/path/to/sensitive/file\"\nexpected_checksum = \"expected_checksum_value\"\nif not check_file_integrity(file_path, expected_checksum):\n    print(\"File integrity compromised!\")\n    restrict_network_access()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. To mitigate this vulnerability, it is essential to implement robust security measures to prevent the RAT from exploiting any potential weaknesses.",
             "mitigation_steps": [
-                "**Identify Vulnerable Systems**: Determine which systems are potentially vulnerable to NullRAT by reviewing network logs and system access records for suspicious activity.",
-                "**Implement Security Patches**: Apply security patches to vulnerable systems, focusing on securing remote access points and ensuring all software is up-to-date.",
-                "**Enhance Monitoring and Detection**: Increase monitoring of network traffic and system activity to quickly detect and respond to potential NullRAT infections, using tools like intrusion detection systems and antivirus software."
+                "Identify and remove any suspicious files or programs related to NullRAT from the system.",
+                "Implement a robust firewall configuration to restrict network access and prevent the RAT from communicating with its command and control server.",
+                "Regularly monitor system logs and network traffic to detect and respond to any potential security incidents, and consider implementing a intrusion detection system (IDS) to automate the process."
             ]
         }
     },
@@ -34063,6 +34063,40 @@
                 "**Identify Vulnerable Components**: Review the application's codebase to identify components that may be affected by the unspecified vulnerability, focusing on areas related to user input, authentication, and authorization.",
                 "**Implement Input Validation**: Enhance the application with robust input validation mechanisms, such as regular expressions, to filter out potentially malicious input that could exploit the vulnerability.",
                 "**Strengthen Authentication and Authorization**: Review and strengthen authentication and authorization logic within the application, ensuring that only authorized users can perform sensitive actions, and that all user inputs are properly sanitized and validated."
+            ]
+        }
+    },
+    "GHSA-45jq-c8xm-jfw9": {
+        "summary": "Keystone: GraphQL API Endpoint Lacks Query Depth Limits",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-14 21:54:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "from graphql import GraphQLError\nfrom keystone import graphene\n\n# Define a custom GraphQL query class with depth limit\nclass Query(graphene.ObjectType):\n    # ... existing query fields ...\n\n    def resolve(self, info, **kwargs):\n        # Check query depth limit\n        max_depth = 10  # adjust this value according to your needs\n        if info.context.depth > max_depth:\n            raise GraphQLError(\"Query depth limit exceeded\")\n        return super().resolve(info, **kwargs)\n\n# Create a custom GraphQL schema with the query class\nschema = graphene.Schema(query=Query)\n\n# Use the custom schema in your Keystone application\napp = KeystoneApp(schema=schema)",
+            "vulnerability_explanation": "The Keystone GraphQL API endpoint lacks query depth limits, allowing an attacker to craft a deeply nested query that can lead to a denial-of-service (DoS) attack by consuming excessive resources. This vulnerability can be exploited by sending a malicious query with a high level of nesting, causing the server to recursively process the query and eventually run out of resources. As a result, the server may become unresponsive or even crash.",
+            "mitigation_steps": [
+                "Identify the Keystone GraphQL API endpoint in your application and locate the query resolver function.",
+                "Modify the query resolver function to include a depth limit check, as shown in the patch code above.",
+                "Adjust the `max_depth` value according to your specific use case and performance requirements, and ensure that it is reasonable for your application's queries.",
+                "Update your Keystone application to use the custom GraphQL schema with the modified query class.",
+                "Test your application to ensure that the query depth limit is enforced correctly and does not break existing functionality."
+            ]
+        }
+    },
+    "GHSA-hgjx-r89m-m7v4": {
+        "summary": "FacturaScripts: Path traversal in UploadedFile::move() via getClientOriginalName() — arbitrary file write outside MyFiles/ leading to   RCE",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-14 21:54:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\nclass UploadedFile:\n    # ...\n\n    def move(self, destination):\n        # Get the client's original file name\n        original_name = self.getClientOriginalName()\n\n        # Validate and sanitize the file name to prevent path traversal\n        filename = os.path.basename(original_name)\n        destination_path = os.path.join(destination, filename)\n\n        # Ensure the destination path is within the intended directory\n        if not destination_path.startswith(os.path.join(destination, '')):\n            raise ValueError(\"Invalid destination path\")\n\n        # Move the file to the validated destination path\n        # ...",
+            "vulnerability_explanation": "The vulnerability in FacturaScripts occurs due to a path traversal issue in the `UploadedFile::move()` method, which uses the `getClientOriginalName()` function to determine the file name. This allows an attacker to manipulate the file path and write files outside the intended `MyFiles/` directory, potentially leading to remote code execution (RCE). By exploiting this vulnerability, an attacker can upload malicious files to arbitrary locations on the server.",
+            "mitigation_steps": [
+                "Identify all instances of the `UploadedFile::move()` method in the FacturaScripts codebase and apply the patched code to validate and sanitize the file name.",
+                "Ensure that the `destination` parameter passed to the `move()` method is a trusted and validated path to prevent path traversal attacks.",
+                "Review the entire codebase for similar path traversal vulnerabilities and apply the same validation and sanitization techniques to prevent similar attacks."
             ]
         }
     }
