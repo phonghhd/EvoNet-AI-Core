@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-18 07:43:50",
+        "date_added": "2026-07-18 10:16:02",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef authenticate_connection(sock):\n    # Receive authentication data from client\n    auth_data = sock.recv(1024)\n    \n    # Check if authentication data is valid\n    if not auth_data:\n        return False\n    \n    # Calculate hash of received authentication data\n    auth_hash = hashlib.sha256(auth_data).hexdigest()\n    \n    # Compare calculated hash with expected hash\n    expected_hash = \"expected_auth_hash\"  # Replace with expected authentication hash\n    if auth_hash != expected_hash:\n        return False\n    \n    return True\n\ndef handle_connection(sock):\n    if authenticate_connection(sock):\n        # Handle authenticated connection\n        print(\"Authenticated connection established\")\n    else:\n        # Handle unauthenticated connection\n        print(\"Unauthenticated connection attempt detected\")\n        sock.close()\n\n# Create socket and listen for incoming connections\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nsock.bind((\"localhost\", 8080))\nsock.listen(1)\n\nwhile True:\n    # Accept incoming connection\n    conn, addr = sock.accept()\n    handle_connection(conn)",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability can be exploited using the NullRAT tool.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef secure_authenticate(username, password):\n    # Generate a random salt value\n    salt = os.urandom(16)\n    \n    # Hash the password using the salt value\n    hashed_password = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)\n    \n    # Store the salt value and hashed password\n    stored_salt = salt\n    stored_hashed_password = hashed_password\n    \n    # Verify the password by re-hashing and comparing\n    def verify_password(input_password):\n        input_hashed_password = hashlib.pbkdf2_hmac('sha256', input_password.encode('utf-8'), stored_salt, 100000)\n        return hmac.compare_digest(stored_hashed_password, input_hashed_password)\n    \n    return verify_password\n\ndef main():\n    username = \"user123\"\n    password = \"password123\"\n    verify_password = secure_authenticate(username, password)\n    \n    input_password = \"password123\"\n    if verify_password(input_password):\n        print(\"Authentication successful\")\n    else:\n        print(\"Authentication failed\")\n\nif __name__ == \"__main__\":\n    main()",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information provided, but it likely involves exploiting weaknesses in system security or user authentication. To mitigate this vulnerability, it's essential to implement robust security measures, such as input validation, secure authentication, and regular system updates.",
             "mitigation_steps": [
-                "Identify and remove any instances of NullRAT from the system, as it is a malicious tool that can be used to exploit the vulnerability.",
-                "Implement proper authentication and authorization mechanisms to prevent unauthorized access to the system, such as the example code patch provided above.",
-                "Regularly update and patch software to ensure that any known vulnerabilities are addressed, and consider implementing a web application firewall (WAF) to detect and prevent malicious traffic."
+                "**Implement secure authentication mechanisms**: Use robust password hashing algorithms like PBKDF2 or Argon2, and store the salt values separately to prevent rainbow table attacks.",
+                "**Keep systems and software up-to-date**: Regularly update operating systems, applications, and libraries to ensure you have the latest security patches and fixes.",
+                "**Use intrusion detection and prevention systems**: Deploy IDPS solutions to monitor network traffic and detect potential security threats, including RATs like NullRAT."
             ]
         }
     },
@@ -34856,6 +34856,22 @@
                 "Identify the specific component or function affected by CVE-2026-62217 and assess how user input is handled within that context.",
                 "Implement input validation using regular expressions or other suitable methods to ensure that only expected and safe input is processed by the system.",
                 "Test the patched code thoroughly to ensure that the input validation is effective and does not introduce any new vulnerabilities or bugs, and deploy the patch to production environments."
+            ]
+        }
+    },
+    "MAL-2026-10778": {
+        "summary": "Malicious code in relativity-pdfjs-dist (npm)",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-18 10:16:02",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import subprocess\nimport json\n\ndef update_package(package_name):\n    \"\"\"\n    Updates a given npm package to the latest version.\n    \"\"\"\n    try:\n        # Update package to the latest version\n        subprocess.run([\"npm\", \"update\", package_name], check=True)\n        \n        # Verify the update by checking the package version\n        package_version = subprocess.check_output([\"npm\", \"ls\", package_name, \"--json\"]).decode('utf-8')\n        package_version = json.loads(package_version)[package_name]\n        print(f\"Updated {package_name} to version {package_version}\")\n    except subprocess.CalledProcessError as e:\n        print(f\"Failed to update {package_name}: {e}\")\n\n# Example usage\nupdate_package(\"relativity-pdfjs-dist\")",
+            "vulnerability_explanation": "The MAL-2026-10778 vulnerability in relativity-pdfjs-dist (npm) involves malicious code that can potentially be executed, leading to security breaches. The exact mechanism is unknown due to the lack of a Proof of Concept (PoC) and CWE IDs, but it likely involves exploiting vulnerabilities in the PDF.js library used for rendering PDFs in web applications. This could allow attackers to inject malicious code, potentially leading to data theft, cross-site scripting (XSS), or other security issues.",
+            "mitigation_steps": [
+                "Identify all projects and applications that use the relativity-pdfjs-dist package and assess their vulnerability to the MAL-2026-10778 issue.",
+                "Update the relativity-pdfjs-dist package to the latest version using the provided Python script or by running `npm update relativity-pdfjs-dist` directly in your project's directory.",
+                "Monitor your applications for any signs of malicious activity and consider implementing additional security measures such as input validation, secure coding practices, and regular security audits to prevent similar vulnerabilities in the future."
             ]
         }
     }
