@@ -2,19 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-21 13:41:15",
+        "date_added": "2026-07-21 16:20:47",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(sock):\n    # Get the client's IP address\n    client_ip = sock.getpeername()[0]\n    \n    # Calculate a hash of the client's IP address\n    ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()\n    \n    # Check if the hash is in a whitelist of allowed IP addresses\n    if ip_hash not in allowed_ip_hashes:\n        # If not, close the connection\n        sock.close()\n        return False\n    else:\n        # If the hash is in the whitelist, allow the connection\n        return True\n\n# Example usage:\nallowed_ip_hashes = [\"hash1\", \"hash2\", \"hash3\"]  # Replace with actual hashes\n\nsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nsock.bind((\"localhost\", 8080))\nsock.listen(1)\n\nwhile True:\n    conn, addr = sock.accept()\n    if validate_connection(conn):\n        # Handle the connection\n        pass\n    else:\n        # Connection was closed due to invalid IP address\n        pass",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is demonstrated through a proof-of-concept exploit on GitHub.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(\"random_challenge\")).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the client's response\n    response = client_socket.recv(1024).decode()\n\n    # Verify the client's response\n    expected_response = hmac.new(str.encode(\"secret_key\"), challenge.encode(), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        return False\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Client is authenticated, allow access\n        print(\"Client authenticated successfully\")\n    else:\n        # Client is not authenticated, deny access\n        print(\"Client authentication failed\")\n        client_socket.close()\n\n# Create a socket object\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n\n# Bind the socket to a address and port\nserver_socket.bind((\"localhost\", 8080))\n\n# Listen for incoming connections\nserver_socket.listen(5)\n\nprint(\"Server listening on port 8080\")\n\nwhile True:\n    # Accept an incoming connection\n    client_socket, address = server_socket.accept()\n    handle_client(client_socket)",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "Identify the vulnerable system or software component and assess the potential impact of the vulnerability.",
-                "Implement a whitelist of allowed IP addresses or use a more robust authentication mechanism to prevent unauthorized access.",
-                "Monitor system logs and network traffic for suspicious activity and update security configurations to prevent similar vulnerabilities in the future.",
-                "Consider using intrusion detection and prevention systems to detect and block malicious traffic.",
-                "Keep software and systems up-to-date with the latest security patches and updates to prevent exploitation of known vulnerabilities."
+                "**Implement Authentication**: Implement a secure authentication mechanism, such as a challenge-response authentication protocol, to verify the identity of clients connecting to the system.",
+                "**Use Secure Communication Protocols**: Use secure communication protocols, such as TLS or SSL, to encrypt data transmitted between the client and server, and prevent eavesdropping and tampering.",
+                "**Keep Software Up-to-Date**: Keep all software and systems up-to-date with the latest security patches and updates to prevent exploitation of known vulnerabilities, and consider implementing a web application firewall (WAF) to detect and prevent common web attacks."
             ]
         }
     },
@@ -35793,6 +35791,38 @@
                 "**Identify Vulnerable Components**: Review your codebase to identify components that could be affected by the vulnerability, focusing on areas that handle user input, access controls, and data processing.",
                 "**Apply Input Validation and Sanitization**: Implement robust validation and sanitization for all user inputs to prevent malicious data from entering your system. Use libraries or built-in functions that can help in filtering out unwanted characters or patterns.",
                 "**Enforce Access Controls**: Ensure that access controls are in place and properly enforced. This includes validating user roles, permissions, and authentication status before allowing access to sensitive data or functionality. Regularly review and update these controls as your application evolves."
+            ]
+        }
+    },
+    "GHSA-jr27-m4p2-rc6r": {
+        "summary": "Denial of Service in pyasn1 via Unbounded Recursion",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-21 16:20:47",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Apply a maximum recursion depth limit to prevent unbounded recursion\nimport sys\nsys.setrecursionlimit(1000)  # Adjust the limit as needed for your application\n\n# Alternatively, if you are using a specific function that is prone to recursion,\n# consider rewriting it using iteration or increasing the recursion limit only for that function\ndef safe_recursive_function(max_depth, current_depth=0):\n    if current_depth > max_depth:\n        raise RecursionError(\"Maximum recursion depth exceeded\")\n    # Function implementation here\n    pass",
+            "vulnerability_explanation": "The vulnerability GHSA-jr27-m4p2-rc6r is a Denial of Service (DoS) issue in the pyasn1 library, caused by unbounded recursion. This occurs when the library encounters a specially crafted input that leads to infinite recursive function calls, ultimately resulting in a crash or significant performance degradation. The lack of bounds on recursion allows an attacker to exploit this vulnerability, potentially causing the application to become unresponsive or terminate.",
+            "mitigation_steps": [
+                "Identify the version of pyasn1 used in your project and check if it's vulnerable to GHSA-jr27-m4p2-rc6r. If so, consider upgrading to a patched version if available.",
+                "Apply the recursion limit patch as shown above to prevent unbounded recursion. Adjust the recursion limit according to your application's needs.",
+                "Review your code for any recursive functions that could potentially lead to unbounded recursion and refactor them to use iterative approaches or add recursion depth limits as demonstrated in the `safe_recursive_function` example."
+            ]
+        }
+    },
+    "GHSA-63vm-454h-vhhq": {
+        "summary": "pyasn1 has a DoS vulnerability in decoder",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-21 16:20:47",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Apply a timeout to the decoder to prevent infinite loops\nimport pyasn1\nfrom pyasn1.error import PyAsn1Error\n\nclass TimeoutDecoder(pyasn1.decoder.Decoder):\n    def __init__(self, timeout=5):  # 5-second default timeout\n        self.timeout = timeout\n\n    def decode(self, asn1_data):\n        import signal\n        def timeout_handler(signum, frame):\n            raise PyAsn1Error(\"Decoding timed out\")\n        signal.signal(signal.SIGALRM, timeout_handler)\n        signal.alarm(self.timeout)\n        try:\n            result = pyasn1.decoder.decode(asn1_data)\n        finally:\n            signal.alarm(0)\n        return result\n\n# Replace the original decoder with the timeout decoder\npyasn1.decoder.decode = TimeoutDecoder().decode",
+            "vulnerability_explanation": "The pyasn1 library has a Denial of Service (DoS) vulnerability in its decoder, which can be exploited to cause the program to hang or crash, potentially leading to a disruption of service. This vulnerability is likely due to a lack of input validation or improper handling of malformed ASN.1 data. As a result, an attacker could craft a malicious ASN.1 message that causes the decoder to enter an infinite loop or crash.",
+            "mitigation_steps": [
+                "Identify all instances where the pyasn1 decoder is used in your codebase and replace it with the patched `TimeoutDecoder` class.",
+                "Set a reasonable timeout value based on your application's requirements, taking into account the trade-off between security and performance.",
+                "Test your application thoroughly to ensure that the patched decoder does not introduce any unintended behavior or errors."
             ]
         }
     }
