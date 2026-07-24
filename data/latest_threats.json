@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-24 13:36:39",
+        "date_added": "2026-07-24 16:31:48",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Try to connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        # If the connection fails, return False\n        return False\n    \n    # If the connection is successful, return True\n    return True\n\ndef hash_password(password):\n    # Use SHA-256 to hash the password\n    return hashlib.sha256(password.encode()).hexdigest()\n\ndef authenticate_user(username, password):\n    # Assume a dictionary of valid users and their hashed passwords\n    valid_users = {\n        \"user1\": hash_password(\"password1\"),\n        \"user2\": hash_password(\"password2\")\n    }\n    \n    # Check if the username and password are valid\n    if username in valid_users and valid_users[username] == hash_password(password):\n        return True\n    else:\n        return False\n\n# Example usage:\nip = \"127.0.0.1\"\nport = 8080\nusername = \"user1\"\npassword = \"password1\"\n\nif validate_connection(ip, port) and authenticate_user(username, password):\n    print(\"Connection and authentication successful\")\nelse:\n    print(\"Connection or authentication failed\")",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access and control of a victim's system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
+            "diff_code": "import socket\nimport hashlib\n\ndef authenticate_connection(sock):\n    # Simple authentication mechanism to mitigate unauthorized access\n    auth_key = hashlib.sha256(\"secret_key\".encode()).hexdigest()\n    sock.sendall(auth_key.encode())\n    response = sock.recv(1024).decode()\n    if response != auth_key:\n        sock.close()\n        return False\n    return True\n\ndef secure_server_socket(port):\n    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server_socket.bind((\"\", port))\n    server_socket.listen(5)\n    print(f\"Server listening on port {port}\")\n    while True:\n        client_socket, address = server_socket.accept()\n        if authenticate_connection(client_socket):\n            # Handle authenticated connection\n            print(f\"Authenticated connection from {address}\")\n            # Implement secure data exchange or command execution here\n        else:\n            print(f\"Unauthorized access attempt from {address}\")",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is hosted on the provided GitHub repository. This RAT can potentially allow unauthorized access and control of a system, suggesting a vulnerability in the system's security mechanisms that permit such unauthorized access. The exact mechanism may involve exploiting weaknesses in network protocols, authentication, or system configurations.",
             "mitigation_steps": [
-                "**Identify and remove NullRAT**: Use antivirus software and other security tools to detect and remove any instances of NullRAT from the system.",
-                "**Implement secure authentication and authorization**: Use strong passwords, multi-factor authentication, and role-based access control to prevent unauthorized access to the system.",
-                "**Keep software up-to-date**: Regularly update and patch all software, including operating systems, applications, and security tools, to prevent exploitation of known vulnerabilities."
+                "**Identify Vulnerable Services**: Review all network services and applications for potential vulnerabilities that could be exploited by NullRAT or similar malware.",
+                "**Implement Authentication**: Integrate robust authentication mechanisms, such as the one shown in the patch, to ensure that only authorized connections are accepted.",
+                "**Keep Software Updated**: Regularly update all software, including operating systems, applications, and security tools, to the latest versions to patch known vulnerabilities that could be exploited by RATs."
             ]
         }
     },
@@ -37068,6 +37068,190 @@
                 "**Identify Vulnerable Code**: Review the application codebase to identify areas that might be affected by the vulnerability, focusing on user input handling, data storage, and authentication mechanisms.",
                 "**Apply Patch**: Implement the provided patch or a similar validation mechanism to ensure that user input is properly sanitized and validated before being processed by the application.",
                 "**Test Thoroughly**: Conduct comprehensive testing, including penetration testing and fuzz testing, to ensure that the patch effectively mitigates the vulnerability without introducing new issues or affecting the application's functionality."
+            ]
+        }
+    },
+    "GHSA-4jwf-m4wg-8p66": {
+        "summary": "Microsoft Kiota: Path/URL injection into generated Copilot plugin manifest via x-ai-* extensions",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\nimport re\n\ndef sanitize_x_ai_extensions(x_ai_extensions):\n    \"\"\"\n    Sanitizes x-ai-* extensions to prevent path/URL injection.\n    \"\"\"\n    sanitized_extensions = {}\n    for key, value in x_ai_extensions.items():\n        # Remove any malicious characters from the value\n        sanitized_value = re.sub(r'[^a-zA-Z0-9\\-_/.]', '', value)\n        # URL encode the value to prevent URL injection\n        sanitized_value = urllib.parse.quote(sanitized_value, safe='')\n        sanitized_extensions[key] = sanitized_value\n    return sanitized_extensions\n\ndef generate_copilot_plugin_manifest(x_ai_extensions):\n    \"\"\"\n    Generates a Copilot plugin manifest while sanitizing x-ai-* extensions.\n    \"\"\"\n    sanitized_extensions = sanitize_x_ai_extensions(x_ai_extensions)\n    # Generate the manifest using the sanitized extensions\n    manifest = {\n        'name': 'Copilot Plugin',\n        'description': 'A plugin for Copilot',\n        'extensions': sanitized_extensions\n    }\n    return manifest",
+            "vulnerability_explanation": "The vulnerability in Microsoft Kiota allows for path/URL injection into generated Copilot plugin manifests through x-ai-* extensions. This occurs when user-controlled input is not properly sanitized, enabling an attacker to manipulate the manifest and potentially execute malicious code. By injecting malicious paths or URLs, an attacker can compromise the security of the system.",
+            "mitigation_steps": [
+                "Identify all locations where x-ai-* extensions are used to generate Copilot plugin manifests and replace the existing code with the provided `generate_copilot_plugin_manifest` function.",
+                "Ensure that the `sanitize_x_ai_extensions` function is used to sanitize all x-ai-* extensions before they are used to generate the manifest.",
+                "Verify that the `urllib.parse.quote` function is used with the `safe=''` parameter to URL encode the sanitized values and prevent URL injection.",
+                "Test the updated code to ensure that it correctly sanitizes x-ai-* extensions and generates secure Copilot plugin manifests."
+            ]
+        }
+    },
+    "GHSA-866w-xmhq-wj7x": {
+        "summary": "SvelteKit: Prototype pollution in file input deletion path in remote-function forms",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\n\ndef sanitize_input(data):\n    \"\"\"\n    Sanitize user input to prevent prototype pollution.\n    \"\"\"\n    # Create a new dictionary to store sanitized data\n    sanitized_data = {}\n    \n    # Iterate over each key-value pair in the input data\n    for key, value in data.items():\n        # Check if the key is a valid string and not a prototype property\n        if isinstance(key, str) and key not in ['__proto__', 'constructor', 'prototype']:\n            # Recursively sanitize nested objects\n            if isinstance(value, dict):\n                sanitized_data[key] = sanitize_input(value)\n            else:\n                sanitized_data[key] = value\n                \n    return sanitized_data\n\ndef delete_file_input(data):\n    \"\"\"\n    Delete file input while preventing prototype pollution.\n    \"\"\"\n    # Sanitize user input\n    sanitized_data = sanitize_input(data)\n    \n    # Proceed with file input deletion using sanitized data\n    # ... (rest of the deletion logic remains the same)\n    \n    return True",
+            "vulnerability_explanation": "The vulnerability in SvelteKit is caused by a prototype pollution issue in the file input deletion path of remote-function forms. This occurs when user-input data is not properly sanitized, allowing an attacker to modify the prototype of an object, potentially leading to arbitrary code execution or data corruption. The lack of proper input validation and sanitization enables this vulnerability.",
+            "mitigation_steps": [
+                "Identify all instances of user-input data being used in remote-function forms, particularly in file input deletion paths.",
+                "Apply the `sanitize_input` function to all user-input data to prevent prototype pollution.",
+                "Replace the existing file input deletion logic with the `delete_file_input` function, which uses sanitized data to prevent the vulnerability.",
+                "Verify that the `sanitize_input` function is correctly implemented and applied to all relevant code paths to ensure comprehensive mitigation of the vulnerability."
+            ]
+        }
+    },
+    "GHSA-wqjv-9729-c5q2": {
+        "summary": "SvelteKit: Big remote form function payloads can cause Node process to crash",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\n\ndef validate_payload_size(payload):\n    max_size = 1024 * 1024  # 1MB\n    payload_size = len(json.dumps(payload))\n    if payload_size > max_size:\n        raise ValueError(\"Payload size exceeds the maximum allowed size\")\n\ndef process_form_function_payload(payload):\n    try:\n        validate_payload_size(payload)\n        # Process the payload as usual\n    except ValueError as e:\n        # Handle the error, e.g., return an error response\n        print(f\"Error: {e}\")",
+            "vulnerability_explanation": "The vulnerability in SvelteKit occurs when a large remote form function payload is sent, causing the Node process to crash. This is likely due to the lack of input validation and payload size limits, allowing an attacker to send a maliciously large payload that overwhelms the system. As a result, the Node process becomes unresponsive and crashes, leading to a denial-of-service (DoS) condition.",
+            "mitigation_steps": [
+                "Identify the endpoint(s) in your SvelteKit application that accept form function payloads and add input validation to check the payload size.",
+                "Implement a size limit for the payload (e.g., 1MB) and raise an error if the payload exceeds this limit.",
+                "Update your error handling to catch and handle the `ValueError` exception raised when the payload size exceeds the maximum allowed size, and return an error response to the client."
+            ]
+        }
+    },
+    "GHSA-wfp6-f47h-hxc3": {
+        "summary": "AWS CLI: Overly permissive File Permissions",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\nimport stat\n\n# Define a function to create a file with restricted permissions\ndef create_file_restricted(path, content):\n    # Create the file with restricted permissions (0600)\n    with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR), 'w') as f:\n        f.write(content)\n\n# Define a function to save AWS CLI credentials securely\ndef save_credentials_securely(credentials, path):\n    # Create the credentials file with restricted permissions\n    create_file_restricted(path, credentials)\n\n# Example usage:\ncredentials = \"[default]\\naws_access_key_id = XXX\\naws_secret_access_key = YYY\"\npath = \"~/.aws/credentials\"\nsave_credentials_securely(credentials, path)",
+            "vulnerability_explanation": "The AWS CLI has a vulnerability where it creates files with overly permissive permissions, potentially allowing unauthorized access to sensitive data. This occurs because the AWS CLI uses a default umask that does not restrict file permissions sufficiently. As a result, files created by the AWS CLI may be readable or writable by other users, posing a security risk.",
+            "mitigation_steps": [
+                "Identify all locations where the AWS CLI creates files, such as credential files, configuration files, or log files.",
+                "Modify the AWS CLI code to use the `create_file_restricted` function when creating these files, ensuring that they are created with restricted permissions (e.g., 0600).",
+                "Update the AWS CLI to use the `save_credentials_securely` function when saving credentials, ensuring that credential files are created with restricted permissions and are not accessible to unauthorized users."
+            ]
+        }
+    },
+    "GHSA-p893-rvq9-2xf9": {
+        "summary": "ONNX: Heap-Buffer-Overflow READ in Gemm Version Converter Adapter via Undersized Input Shape",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import onnx\nfrom onnx.helper import make_tensor_value_info\n\ndef fix_undersized_input_shape(graph):\n    # Iterate over all nodes in the graph\n    for node in graph.node:\n        # Check if the node is a Gemm node\n        if node.op_type == 'Gemm':\n            # Get the input shape of the node\n            input_shape = node.input[0].type.tensor_type.shape\n            # Check if the input shape is undersized\n            if len(input_shape.dim) < 2:\n                # Fix the input shape by adding default dimensions\n                node.input[0].type.tensor_type.shape.dim.extend([onnx.TensorShapeProto.Dimension(dim_value=1) for _ in range(2 - len(input_shape.dim))])\n            # Iterate over all inputs of the node\n            for input in node.input:\n                # Get the input tensor\n                input_tensor = graph.initializer[input]\n                # Check if the input tensor has a shape\n                if input_tensor.has_shape:\n                    # Get the shape of the input tensor\n                    tensor_shape = input_tensor.dims\n                    # Check if the shape is undersized\n                    if len(tensor_shape) < 2:\n                        # Fix the shape by adding default dimensions\n                        input_tensor.dims.extend([1 for _ in range(2 - len(tensor_shape))])\n\n# Load the ONNX model\nmodel = onnx.load('model.onnx')\n# Fix the undersized input shape\nfix_undersized_input_shape(model.graph)\n# Save the fixed model\nonnx.save(model, 'fixed_model.onnx')",
+            "vulnerability_explanation": "The vulnerability is a heap buffer overflow read in the Gemm Version Converter Adapter of the ONNX library, which occurs when an undersized input shape is provided. This can lead to unauthorized access to sensitive data, potentially causing the program to crash or allowing an attacker to execute arbitrary code. The vulnerability is triggered when the input shape is smaller than expected, causing the adapter to read beyond the bounds of the allocated buffer.",
+            "mitigation_steps": [
+                "Identify the ONNX models that use the Gemm Version Converter Adapter and may be vulnerable to the heap buffer overflow read.",
+                "Apply the provided patch to the ONNX library to fix the undersized input shape issue in the Gemm Version Converter Adapter.",
+                "Re-save the fixed ONNX models using the patched ONNX library to ensure that the vulnerability is mitigated.",
+                "Verify that the patched models do not exhibit any issues related to the heap buffer overflow read vulnerability.",
+                "Consider updating the ONNX library to the latest version, if available, to ensure that any other known vulnerabilities are also addressed."
+            ]
+        }
+    },
+    "GHSA-hhrp-gw25-jr43": {
+        "summary": "Ray: Arbitrary code execution via ray.data.read_webdataset default decoder: pickle.loads(value) and torch.load(weights_only=False)",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import json\nfrom ray.data import Dataset\nfrom ray.data.datasource import WebDataset\n\ndef secure_decoder(value):\n    try:\n        # Attempt to safely decode using JSON\n        return json.loads(value)\n    except json.JSONDecodeError:\n        # If JSON decoding fails, raise an exception to prevent pickle.loads\n        raise ValueError(\"Failed to decode value using secure decoder\")\n\n# Create a new WebDataset with the secure decoder\ndef read_webdataset(uri, decoder=secure_decoder):\n    dataset = WebDataset(uri, decoder=decoder)\n    return Dataset(dataset)",
+            "vulnerability_explanation": "The vulnerability in Ray's `ray.data.read_webdataset` function allows for arbitrary code execution due to the use of `pickle.loads(value)` and `torch.load(weights_only=False)`, which can deserialize and execute malicious Python code. This occurs because the default decoder used by `read_webdataset` is not secure against malicious inputs. An attacker could craft a malicious dataset that, when loaded, executes arbitrary code on the system running the Ray application.",
+            "mitigation_steps": [
+                "Identify all instances of `ray.data.read_webdataset` in your codebase and replace them with the new `read_webdataset` function that uses the `secure_decoder`.",
+                "Ensure that the `secure_decoder` function is used consistently across all data loading operations to prevent the use of `pickle.loads` or `torch.load` with `weights_only=False`.",
+                "Test your application thoroughly after applying the patch to ensure that data loading operations work as expected and that no regressions have been introduced."
+            ]
+        }
+    },
+    "GHSA-jqwh-526h-c92j": {
+        "summary": "Microsoft Kiota: Code Generation Literal Injection in Kiota PHP Generator",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_input(user_input):\n    \"\"\"\n    Sanitizes user input to prevent code injection.\n    \n    Args:\n    user_input (str): The user input to be sanitized.\n    \n    Returns:\n    str: The sanitized user input.\n    \"\"\"\n    # Remove any PHP code syntax\n    user_input = re.sub(r'<\\?php.*?\\?>', '', user_input, flags=re.DOTALL)\n    # Remove any PHP tags\n    user_input = re.sub(r'<\\?|?\\>', '', user_input)\n    # Remove any backticks or dollar signs\n    user_input = re.sub(r'`|\\$', '', user_input)\n    return user_input\n\ndef generate_php_code(user_input):\n    \"\"\"\n    Generates PHP code using the sanitized user input.\n    \n    Args:\n    user_input (str): The sanitized user input.\n    \n    Returns:\n    str: The generated PHP code.\n    \"\"\"\n    sanitized_input = sanitize_input(user_input)\n    # Generate PHP code using the sanitized input\n    php_code = f'echo \"{sanitized_input}\";'\n    return php_code",
+            "vulnerability_explanation": "The Microsoft Kiota PHP Generator is vulnerable to code generation literal injection, which allows an attacker to inject malicious code into the generated PHP files. This occurs when user-input data is not properly sanitized and is used to generate PHP code, allowing an attacker to inject arbitrary PHP code. As a result, an attacker can execute malicious PHP code, potentially leading to security breaches and data compromise.",
+            "mitigation_steps": [
+                "Identify all areas in the Kiota PHP Generator where user-input data is used to generate PHP code.",
+                "Implement the `sanitize_input` function to sanitize all user-input data before using it to generate PHP code.",
+                "Update the PHP code generation logic to use the `generate_php_code` function, which sanitizes the user input before generating the PHP code.",
+                "Verify that the sanitized input is properly escaped to prevent any potential code injection vulnerabilities.",
+                "Test the updated code to ensure that it generates secure PHP code and prevents code injection attacks."
+            ]
+        }
+    },
+    "GHSA-7f3j-j7jj-r3vr": {
+        "summary": "Microsoft Kiota: Code Generation Literal Injection in Kiota Python Generator",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import ast\n\ndef sanitize_input(user_input):\n    \"\"\"\n    Sanitizes user-controlled input to prevent code injection.\n    \"\"\"\n    try:\n        # Attempt to parse the input as a Python literal\n        ast.literal_eval(user_input)\n        return user_input\n    except (ValueError, SyntaxError):\n        # If the input is not a valid Python literal, escape it\n        return repr(user_input)\n\ndef generate_python_code(user_input):\n    \"\"\"\n    Generates Python code using the sanitized user input.\n    \"\"\"\n    sanitized_input = sanitize_input(user_input)\n    # Use the sanitized input to generate the Python code\n    python_code = f\"print({sanitized_input})\"\n    return python_code\n\n# Example usage:\nuser_input = input(\"Enter a Python literal: \")\ngenerated_code = generate_python_code(user_input)\nprint(generated_code)",
+            "vulnerability_explanation": "The Microsoft Kiota Python Generator is vulnerable to code generation literal injection, which allows an attacker to inject malicious code into the generated Python files. This occurs when user-controlled input is not properly sanitized and is used to generate Python code, potentially leading to arbitrary code execution. The vulnerability can be exploited by manipulating the input to the Kiota generator, resulting in malicious code being injected into the generated files.",
+            "mitigation_steps": [
+                "Identify all instances where user-controlled input is used to generate Python code in the Kiota Python Generator.",
+                "Apply the `sanitize_input` function to the user-controlled input before using it to generate Python code.",
+                "Verify that the generated Python code is properly escaped and does not contain any malicious code by using tools such as `ast.literal_eval` or `repr`.",
+                "Update the Kiota Python Generator to use the `generate_python_code` function, which sanitizes the user input before generating the Python code.",
+                "Test the updated Kiota Python Generator to ensure that it properly mitigates the code generation literal injection vulnerability."
+            ]
+        }
+    },
+    "GHSA-xg2h-5xr2-29jw": {
+        "summary": "Microsoft Kiota: Code Generation Literal Injection in Kiota Ruby Generator",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef sanitize_input(user_input):\n    \"\"\"\n    Sanitizes user input to prevent code injection.\n    \n    Args:\n    user_input (str): The user input to be sanitized.\n    \n    Returns:\n    str: The sanitized user input.\n    \"\"\"\n    # Remove any non-alphanumeric characters\n    sanitized_input = re.sub(r'[^a-zA-Z0-9_]', '', user_input)\n    \n    return sanitized_input\n\ndef generate_code(user_input):\n    \"\"\"\n    Generates Ruby code using the sanitized user input.\n    \n    Args:\n    user_input (str): The user input to be used for code generation.\n    \n    Returns:\n    str: The generated Ruby code.\n    \"\"\"\n    sanitized_input = sanitize_input(user_input)\n    # Use the sanitized input to generate the Ruby code\n    ruby_code = f\"puts '{sanitized_input}'\"\n    \n    return ruby_code",
+            "vulnerability_explanation": "The vulnerability in Microsoft Kiota's Ruby generator is caused by a code generation literal injection issue, which allows an attacker to inject malicious code into the generated Ruby code. This occurs when user-input data is not properly sanitized before being used to generate code, allowing an attacker to inject arbitrary code. As a result, an attacker can potentially execute malicious code, leading to security breaches.",
+            "mitigation_steps": [
+                "Identify all instances where user-input data is used to generate Ruby code in the Kiota Ruby generator.",
+                "Replace the existing code generation logic with the `generate_code` function, which uses the `sanitize_input` function to sanitize user input before generating the Ruby code.",
+                "Verify that the `sanitize_input` function is correctly removing any non-alphanumeric characters from the user input to prevent code injection attacks."
+            ]
+        }
+    },
+    "GHSA-qq9h-g4jm-xgf3": {
+        "summary": "Better Auth: Account takeover via pre-account hijacking on magic-link and email-OTP sign-in",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import secrets\nimport string\nimport time\n\n# Generate a cryptographically secure token for magic-link sign-in\ndef generate_magic_link_token():\n    return secrets.token_urlsafe(32)\n\n# Generate a time-based one-time password (TOTP) for email-OTP sign-in\ndef generate_totp():\n    # Using a time-based TOTP with a short validity period (e.g., 1 minute)\n    totp = secrets.token_urlsafe(8)\n    # Store the TOTP and its generation time\n    return totp, int(time.time())\n\n# Validate the magic-link token or TOTP on sign-in\ndef validate_token(token, token_type):\n    if token_type == \"magic_link\":\n        # Check if the token is valid and not expired (e.g., 15-minute validity)\n        # This example assumes a stored token with its generation time\n        stored_token, generation_time = retrieve_stored_magic_link_token()\n        if token == stored_token and int(time.time()) - generation_time < 900:\n            return True\n    elif token_type == \"email_otp\":\n        # Check if the TOTP is valid and not expired (e.g., 1-minute validity)\n        stored_totp, generation_time = retrieve_stored_totp()\n        if token == stored_totp and int(time.time()) - generation_time < 60:\n            return True\n    return False\n\n# Example usage:\nmagic_link_token = generate_magic_link_token()\ntotp, _ = generate_totp()\n\n# Store the generated tokens securely for later validation\nstore_magic_link_token(magic_link_token)\nstore_totp(totp)\n\n# On sign-in, validate the provided token\nis_valid = validate_token(provided_token, token_type)\nif is_valid:\n    # Proceed with sign-in\n    pass",
+            "vulnerability_explanation": "The vulnerability allows for account takeover via pre-account hijacking on magic-link and email-OTP sign-in, exploiting a weakness in the authentication mechanism. This occurs when an attacker can intercept or predict the magic link or OTP sent to the user, allowing them to gain unauthorized access to the account before the legitimate user can. The exact mechanism is not publicly disclosed, but it likely involves a timing or prediction attack.",
+            "mitigation_steps": [
+                "**Implement cryptographically secure token generation**: Use a secure random number generator like `secrets` in Python to generate unpredictable tokens for magic-link and email-OTP sign-in.",
+                "**Enforce token validity periods**: Set short validity periods for both magic-link tokens (e.g., 15 minutes) and TOTPs (e.g., 1 minute) to limit the window of opportunity for attackers.",
+                "**Store and validate tokens securely**: Store generated tokens securely, along with their generation time, and validate them on sign-in by checking both the token value and its validity period to prevent pre-account hijacking attacks."
+            ]
+        }
+    },
+    "GHSA-h3rm-78g3-j7cp": {
+        "summary": "@better-auth/stripe: cross-organization billing tampering in organization subscription actions",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-24 16:31:48",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Import necessary libraries\nfrom flask import request, jsonify\nfrom flask_login import current_user\nfrom better_auth.stripe import Stripe\n\n# Assuming this function handles subscription actions\ndef handle_subscription_action(action, org_id, subscription_id):\n    # Check if the user is authorized for the organization\n    if not is_user_authorized_for_org(current_user, org_id):\n        return jsonify({\"error\": \"Unauthorized\"}), 401\n    \n    # Proceed with the subscription action\n    stripe = Stripe()\n    if action == \"update\":\n        # Update subscription\n        stripe.update_subscription(org_id, subscription_id, request.json)\n    elif action == \"cancel\":\n        # Cancel subscription\n        stripe.cancel_subscription(org_id, subscription_id)\n    else:\n        return jsonify({\"error\": \"Invalid action\"}), 400\n    \n    return jsonify({\"message\": \"Subscription action successful\"}), 200\n\n# Function to check user authorization for an organization\ndef is_user_authorized_for_org(user, org_id):\n    # Assuming user.orgs is a list of organization IDs the user is authorized for\n    return org_id in user.orgs",
+            "vulnerability_explanation": "The vulnerability in @better-auth/stripe allows for cross-organization billing tampering in organization subscription actions. This means an attacker could potentially manipulate billing information for organizations they are not authorized to access, leading to unauthorized changes in subscription plans or billing details. The root cause of this issue likely stems from inadequate authorization checks in the subscription action handling code.",
+            "mitigation_steps": [
+                "**Identify Vulnerable Code**: Review your codebase to identify areas where organization subscription actions are handled without proper authorization checks.",
+                "**Apply Authorization Checks**: Implement checks to ensure that only authorized users can perform subscription actions for an organization. This can be achieved by verifying the user's organization membership or role before proceeding with the action.",
+                "**Test and Validate**: Thoroughly test the patched code to ensure that authorization checks are correctly enforced and that the vulnerability is mitigated. Validate the fix by attempting to reproduce the vulnerability and verifying that it is no longer exploitable."
             ]
         }
     }
