@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-29 16:18:26",
+        "date_added": "2026-07-29 19:09:52",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(remote_ip, remote_port, expected_hash):\n    \"\"\"\n    Authenticate an incoming connection by verifying the HMAC hash.\n    \n    Args:\n    - remote_ip (str): The IP address of the remote connection.\n    - remote_port (int): The port number of the remote connection.\n    - expected_hash (str): The expected HMAC hash.\n    \n    Returns:\n    - bool: True if the connection is authenticated, False otherwise.\n    \"\"\"\n    # Generate a secret key for HMAC (this should be kept secret)\n    secret_key = os.environ.get('SECRET_KEY')\n    \n    # Create a new HMAC object using the secret key and the remote IP and port\n    hmac_object = hmac.new(secret_key.encode(), (remote_ip + str(remote_port)).encode(), hashlib.sha256)\n    \n    # Get the digest of the HMAC object\n    digest = hmac_object.hexdigest()\n    \n    # Compare the digest with the expected hash\n    return hmac.compare_digest(digest, expected_hash)\n\n# Example usage:\nif __name__ == \"__main__\":\n    remote_ip = \"192.168.1.100\"\n    remote_port = 8080\n    expected_hash = \"expected_hmac_hash\"\n    \n    if authenticate_connection(remote_ip, remote_port, expected_hash):\n        print(\"Connection authenticated successfully.\")\n    else:\n        print(\"Connection authentication failed.\")",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT malware.",
+            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        return False\n    \n    # Receive data from the remote server\n    data = sock.recv(1024)\n    \n    # Calculate the hash of the received data\n    data_hash = hashlib.sha256(data).hexdigest()\n    \n    # Check if the hash matches a known malicious hash\n    if data_hash == \"known_malicious_hash\":\n        return False\n    \n    # Close the socket\n    sock.close()\n    \n    return True\n\ndef mitigate_nullrat(ip, port):\n    if not validate_connection(ip, port):\n        # Block the IP address\n        print(f\"Blocking IP address {ip} due to suspected NullRAT activity\")\n        # Add code to block the IP address here\n    else:\n        print(f\"Connection to {ip}:{port} appears to be legitimate\")",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "**Identify and remove the NullRAT malware**: Use antivirus software to scan the system and remove any instances of the NullRAT malware.",
-                "**Implement secure authentication mechanisms**: Use secure authentication mechanisms such as HMAC or digital signatures to verify the authenticity of incoming connections.",
-                "**Keep software up-to-date**: Ensure that all software and systems are up-to-date with the latest security patches to prevent exploitation of known vulnerabilities."
+                "Identify the systems and networks that are potentially vulnerable to NullRAT and ensure that all security patches are up-to-date.",
+                "Implement a network intrusion detection system (NIDS) to monitor for suspicious activity and block known malicious IP addresses.",
+                "Use the provided `mitigate_nullrat` function as a starting point to develop a custom solution to detect and block NullRAT activity, and integrate it into your existing security infrastructure."
             ]
         }
     },
@@ -38673,6 +38673,22 @@
                 "Identify all instances of `boost::read_graphviz_detail::parser::parse_subgraph` in your codebase and replace them with the patched `patched_parse_subgraph` function.",
                 "Adjust the `max_depth` variable in the patched function according to your specific requirements to balance between preventing stack overflows and allowing legitimate deeply nested subgraphs.",
                 "Thoroughly test your application with various input graphs to ensure the patched function does not introduce any regressions or unexpected behavior."
+            ]
+        }
+    },
+    "GHSA-pfc9-2cqg-9wq6": {
+        "summary": "Reactor Netty HTTP Client Leaks Credentials On Protocol Downgrade Redirect",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-29 19:09:52",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import reactor.netty.http.client.HttpClient\nfrom reactor.util.Logger import logger\n\ndef patch_http_client():\n    # Create a custom HttpClient that overrides the redirect behavior\n    class CustomHttpClient(HttpClient):\n        def _handle_redirect(self, response, request):\n            # Check if the redirect is from HTTPS to HTTP\n            if response.status().code() == 301 or response.status().code() == 302:\n                if request.uri().getScheme() == 'https' and response.headers().get('Location').split(':')[0] == 'http':\n                    # Do not include credentials in the redirected request\n                    request = request.mutable().header('Authorization', None)\n            return super()._handle_redirect(response, request)\n\n    # Replace the default HttpClient with the custom one\n    reactor.netty.http.client.HttpClient = CustomHttpClient\n\n# Apply the patch\npatch_http_client()",
+            "vulnerability_explanation": "The Reactor Netty HTTP Client is vulnerable to a credential leak when a protocol downgrade redirect occurs. This happens because the client does not properly handle redirects from HTTPS to HTTP, resulting in the exposure of sensitive credentials. When a redirect from HTTPS to HTTP is encountered, the client should not include credentials in the redirected request to prevent them from being sent in plaintext.",
+            "mitigation_steps": [
+                "Identify all instances of the Reactor Netty HTTP Client in your application and replace them with the patched version.",
+                "Verify that the patched client is properly handling redirects from HTTPS to HTTP by testing the application with a protocol downgrade redirect scenario.",
+                "Consider implementing additional security measures, such as using HTTPS-only communication and validating the identity of the server during the TLS handshake, to further protect against credential leaks and other security threats."
             ]
         }
     }
