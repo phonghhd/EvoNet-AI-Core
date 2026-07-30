@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-07-30 19:20:22",
+        "date_added": "2026-07-30 22:02:54",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport socket\n\ndef authenticate_client(client_socket):\n    # Generate a random challenge\n    challenge = hashlib.sha256(str.encode(str(socket.gethostname()))).hexdigest()\n    client_socket.sendall(challenge.encode())\n\n    # Receive the client's response\n    response = client_socket.recv(1024).decode()\n\n    # Verify the client's response\n    expected_response = hmac.new(str.encode(\"secret_key\"), str.encode(challenge), hashlib.sha256).hexdigest()\n    if response != expected_response:\n        return False\n    return True\n\ndef handle_client(client_socket):\n    if authenticate_client(client_socket):\n        # Client is authenticated, proceed with the connection\n        print(\"Client authenticated successfully\")\n    else:\n        # Client is not authenticated, close the connection\n        print(\"Client authentication failed\")\n        client_socket.close()",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it likely involves exploiting a weakness in the system's security to gain unauthorized access. The PoC URL suggests that the vulnerability is related to the NullRAT GitHub repository, which may contain exploit code or other malicious tools.",
+            "diff_code": "import hashlib\nimport os\nimport socket\n\ndef mitigate_nullrat():\n    # Disable any suspicious services or processes\n    # For demonstration purposes, let's assume we're stopping a hypothetical 'nullrat' service\n    os.system(\"net stop nullrat\")\n\n    # Implement a basic firewall rule to block NullRAT's known C2 servers\n    # This example uses Windows Defender Firewall, adjust according to your system\n    os.system(\"netsh advfirewall firewall add rule name=NullRAT_C2_Block dir=out action=block remoteip=192.0.2.1\")\n\n    # Hash and monitor system files for integrity\n    # This is a simplified example and should be expanded for real-world use\n    system_files = ['/path/to/sensitive/file1', '/path/to/sensitive/file2']\n    for file in system_files:\n        file_hash = hashlib.sha256(open(file, 'rb').read()).hexdigest()\n        # Store or compare the hash to detect any unauthorized changes\n\n    # Limit and monitor network connections\n    # This example listens for and logs any new connections\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    sock.bind(('0.0.0.0', 8080))  # Example port\n    sock.listen(1)\n    print(\"Listening for incoming connections...\")\n    while True:\n        connection, client_address = sock.accept()\n        print(f\"New connection from {client_address}\")\n\nmitigate_nullrat()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows attackers to remotely access and control compromised systems. The exact mechanism of the vulnerability is unknown due to the lack of a CVE description, but it likely involves exploiting weaknesses in system security to establish unauthorized access. Given the nature of NullRAT, the vulnerability might involve social engineering, unpatched vulnerabilities, or weak passwords.",
             "mitigation_steps": [
-                "Identify the vulnerable system or application and assess the potential impact of the vulnerability.",
-                "Implement a secure authentication mechanism, such as the one shown in the patch, to verify the identity of clients connecting to the system.",
-                "Regularly monitor the system for suspicious activity and update the authentication mechanism as needed to prevent exploitation of the vulnerability."
+                "**Identify Vulnerabilities**: Start by identifying potential entry points that NullRAT could exploit, such as outdated software, weak passwords, or open network ports. Use vulnerability scanning tools to assess your system's security posture.",
+                "**Patch and Update**: Ensure all software, operating systems, and firmware are up to date with the latest security patches. This can help mitigate known vulnerabilities that NullRAT might exploit.",
+                "**Implement Security Measures**: Deploy a combination of security tools such as firewalls, intrusion detection systems, and antivirus software. Configure these tools to monitor for and block suspicious activity that might be associated with NullRAT or similar threats."
             ]
         }
     },
@@ -39313,6 +39313,22 @@
                 "Identify all instances of `DefaultRedirectStrategy` in your Spring MVC and WebFlux application and replace them with the custom `CustomRedirectStrategy` class.",
                 "Update your application's configuration to use the custom redirect strategy for all redirects.",
                 "Test your application to ensure that the custom redirect strategy is working correctly and that open redirects are prevented."
+            ]
+        }
+    },
+    "GHSA-cg4g-m8jx-vjv2": {
+        "summary": "dssrf has an SSRF bypass with remove_at_symbol_in_string",
+        "cvss_score": "unscored",
+        "date_added": "2026-07-30 22:02:54",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef remove_at_symbol_in_string(input_string):\n    # Original function to remove \"@\" symbol\n    return input_string.replace(\"@\", \"\")\n\ndef validate_url(input_url):\n    # New function to validate URL\n    try:\n        parsed_url = urllib.parse.urlparse(input_url)\n        if not parsed_url.scheme or not parsed_url.netloc:\n            return False\n        return True\n    except ValueError:\n        return False\n\ndef patched_remove_at_symbol_in_string(input_string):\n    # Patched function to prevent SSRF\n    input_string = remove_at_symbol_in_string(input_string)\n    if not validate_url(input_string):\n        return None  # or raise an exception\n    return input_string\n\n# Example usage:\nuser_input = \"http://example.com@internal-service.com\"\npatched_input = patched_remove_at_symbol_in_string(user_input)\nif patched_input:\n    print(patched_input)\nelse:\n    print(\"Invalid URL\")",
+            "vulnerability_explanation": "The vulnerability mechanism involves a Server-Side Request Forgery (SSRF) bypass in the `dssrf` library, which is caused by the `remove_at_symbol_in_string` function. This function is intended to prevent SSRF attacks by removing the \"@\" symbol from user-input strings, but it can be bypassed by using specially crafted input. As a result, an attacker can potentially send requests to internal or external services, leading to unauthorized access or data exfiltration.",
+            "mitigation_steps": [
+                "Identify all instances of the `remove_at_symbol_in_string` function in the codebase and replace them with the `patched_remove_at_symbol_in_string` function.",
+                "Verify that the `validate_url` function is correctly implemented and effective in preventing SSRF attacks.",
+                "Test the patched code with various input scenarios to ensure that it correctly prevents SSRF bypass attempts and handles valid user input."
             ]
         }
     }
