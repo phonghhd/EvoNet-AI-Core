@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-08-01 15:58:10",
+        "date_added": "2026-08-01 19:03:26",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef verify_connection(sock):\n    # Simple authentication mechanism to prevent unauthorized access\n    auth_key = hashlib.sha256(\"secret_key\".encode()).hexdigest()\n    sock.sendall(auth_key.encode())\n    response = sock.recv(1024)\n    if response.decode() != auth_key:\n        sock.close()\n        return False\n    return True\n\ndef secure_server():\n    host = '127.0.0.1'\n    port = 8080\n    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    server_socket.bind((host, port))\n    server_socket.listen(1)\n    print(f\"Server listening on {host}:{port}\")\n    \n    while True:\n        client_socket, address = server_socket.accept()\n        print(f\"Connection from {address}\")\n        if verify_connection(client_socket):\n            # Handle authenticated connection\n            while True:\n                request = client_socket.recv(1024)\n                if not request:\n                    break\n                # Process request\n                client_socket.sendall(b\"Request processed\")\n        else:\n            print(\"Unauthorized access attempt\")\n            client_socket.close()\n\nif __name__ == \"__main__\":\n    secure_server()",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access and control of a system. The exact mechanism is unclear due to the lack of information, but it likely involves exploiting weaknesses in network protocols or software to establish a covert channel for command and control. This could involve social engineering, buffer overflows, or other techniques to gain initial access.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(connection):\n    # Generate a secret key\n    secret_key = os.urandom(32)\n    \n    # Generate a challenge\n    challenge = os.urandom(32)\n    \n    # Send the challenge to the client\n    connection.send(challenge)\n    \n    # Receive the response from the client\n    response = connection.recv(32)\n    \n    # Calculate the expected response\n    expected_response = hmac.new(secret_key, challenge, hashlib.sha256).digest()\n    \n    # Check if the response is valid\n    if response == expected_response:\n        return True\n    else:\n        return False\n\ndef mitigate_nullrat_vulnerability(connection):\n    if authenticate_connection(connection):\n        # Allow the connection\n        print(\"Connection authenticated successfully\")\n    else:\n        # Reject the connection\n        print(\"Connection authentication failed\")\n        connection.close()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is demonstrated through a proof-of-concept code hosted on GitHub.",
             "mitigation_steps": [
-                "**Identify Vulnerable Services**: Review network services and applications for any that may be vulnerable to NullRAT or similar exploits, focusing on those with known vulnerabilities or weak authentication mechanisms.",
-                "**Implement Authentication**: Enhance security by implementing robust authentication mechanisms, such as those using cryptographic hash functions (like SHA-256) for verifying the identity of connecting clients, as demonstrated in the provided patch.",
-                "**Monitor Network Activity**: Regularly monitor network activity for signs of unauthorized access or command and control communications that may indicate a NullRAT infection, and have an incident response plan in place to quickly respond to and mitigate such threats."
+                "Identify the systems and software that are potentially vulnerable to the NullRAT malware and ensure they are updated with the latest security patches.",
+                "Implement a robust authentication mechanism, such as the one provided in the patch, to verify the identity of incoming connections and prevent unauthorized access.",
+                "Monitor system logs and network traffic for suspicious activity and implement intrusion detection and prevention systems to detect and block potential NullRAT attacks."
             ]
         }
     },
@@ -40437,6 +40437,22 @@
                 "**Identify Affected Systems**: Determine which systems and applications are using the pp-react-worldready npm package.",
                 "**Remove Vulnerable Package**: Uninstall the pp-react-worldready package from affected systems to prevent further exploitation.",
                 "**Install Safe Alternative**: If a known safe version or alternative package is available, install it using the provided Python script or through manual npm commands, ensuring to follow best practices for secure package installation."
+            ]
+        }
+    },
+    "PYSEC-2026-2946": {
+        "summary": "PraisonAI: Coarse-Grained Tool Approval Cache Bypasses Per-Invocation Consent for Shell Commands",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-01 19:03:26",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hashlib\nimport os\n\ndef execute_shell_command(command, user_id):\n    # Generate a unique cache key based on the user ID and command\n    cache_key = hashlib.sha256(f\"{user_id}{command}\".encode()).hexdigest()\n    \n    # Check if the command is approved for the user\n    if not is_command_approved(user_id, command):\n        raise Exception(\"Command not approved for user\")\n    \n    # Validate the consent for the current invocation\n    if not validate_consent(user_id, cache_key):\n        raise Exception(\"Consent not granted for command execution\")\n    \n    # Execute the shell command\n    os.system(command)\n\ndef is_command_approved(user_id, command):\n    # Implement logic to check if the command is approved for the user\n    # This can be based on a database query or other authorization mechanism\n    pass\n\ndef validate_consent(user_id, cache_key):\n    # Implement logic to validate the consent for the current invocation\n    # This can be based on a database query or other authorization mechanism\n    pass",
+            "vulnerability_explanation": "The PraisonAI coarse-grained tool approval cache bypasses per-invocation consent for shell commands, allowing an attacker to execute unauthorized shell commands. This occurs because the cache does not properly validate the consent for each invocation, enabling an attacker to reuse a previously granted consent. As a result, an attacker can bypass the intended security controls and execute malicious shell commands.",
+            "mitigation_steps": [
+                "Identify the vulnerable code in the PraisonAI tool approval system that handles shell command execution and modify it to include the unique cache key generation and consent validation.",
+                "Implement the `is_command_approved` function to check if a command is approved for a given user, using a database query or other authorization mechanism.",
+                "Implement the `validate_consent` function to validate the consent for the current invocation, using a database query or other authorization mechanism, and ensure it properly checks for per-invocation consent."
             ]
         }
     }
