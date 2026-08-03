@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-08-03 12:18:47",
+        "date_added": "2026-08-03 17:06:44",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef authenticate_connection(remote_ip, expected_hash):\n    # Calculate the hash of the remote IP\n    remote_hash = hashlib.sha256(remote_ip.encode()).hexdigest()\n    \n    # Compare the calculated hash with the expected hash\n    if hmac.compare_digest(remote_hash, expected_hash):\n        return True\n    else:\n        return False\n\ndef secure_connection_establishment(expected_hash):\n    # Get the remote IP address\n    remote_ip = os.environ.get('REMOTE_IP')\n    \n    # Authenticate the connection\n    if authenticate_connection(remote_ip, expected_hash):\n        # Establish the connection\n        print(\"Connection established successfully\")\n    else:\n        # Reject the connection\n        print(\"Connection rejected due to authentication failure\")\n\n# Example usage\nexpected_hash = \"expected_hash_value\"\nsecure_connection_establishment(expected_hash)",
-            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access and control of a system. The exact vulnerability mechanism is unknown due to the lack of information, but it likely involves exploiting weaknesses in system security or software vulnerabilities to establish remote access. This could be achieved through various means such as social engineering, exploiting unpatched vulnerabilities, or using malware.",
+            "diff_code": "import hashlib\nimport hmac\nimport socket\nimport ssl\n\ndef secure_socket_connection(host, port):\n    # Create a secure socket connection\n    context = ssl.create_default_context()\n    with socket.create_connection((host, port)) as sock:\n        with context.wrap_socket(sock, server_hostname=host) as ssock:\n            # Verify the server's identity\n            server_cert = ssock.getpeercert()\n            if not server_cert:\n                raise Exception(\"Failed to get server certificate\")\n            # Calculate a hash of the server's certificate\n            cert_hash = hashlib.sha256(server_cert.encode()).hexdigest()\n            # Compare the calculated hash with a known good hash\n            known_good_hash = \"your_known_good_hash_here\"\n            if cert_hash != known_good_hash:\n                raise Exception(\"Server certificate mismatch\")\n            # Authenticate the client using a shared secret\n            shared_secret = \"your_shared_secret_here\"\n            auth_token = hmac.new(shared_secret.encode(), ssock.getpeercert().encode(), hashlib.sha256).hexdigest()\n            ssock.sendall(auth_token.encode())\n            # Receive and verify the server's response\n            response = ssock.recv(1024)\n            if response != b\"Authenticated\":\n                raise Exception(\"Authentication failed\")\n\n# Example usage:\nsecure_socket_connection(\"example.com\", 443)",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a system. The exact mechanism is unknown due to the lack of a CVE description, but based on the PoC URL, it seems to involve exploiting unknown vulnerabilities to gain remote control. This could involve social engineering, buffer overflows, or other exploit techniques to bypass security controls.",
             "mitigation_steps": [
-                "Identify potential entry points for the NullRAT malware, such as outdated software, weak passwords, or open network ports, and address these vulnerabilities by applying patches, using strong passwords, and configuring firewalls.",
-                "Implement a robust authentication and authorization system to prevent unauthorized access, using techniques such as IP whitelisting, two-factor authentication, and role-based access control.",
-                "Monitor system logs and network traffic for suspicious activity, and deploy intrusion detection and prevention systems to detect and block potential NullRAT attacks, ensuring timely response and mitigation of the threat."
+                "Identify and remove any instances of NullRAT from your system, as it is a malicious tool designed for unauthorized access.",
+                "Implement a secure socket connection using SSL/TLS to encrypt and authenticate all communication between the client and server.",
+                "Verify the server's identity by checking its certificate and comparing it to a known good certificate or hash, and authenticate the client using a shared secret or other secure authentication mechanism."
             ]
         }
     },
@@ -40469,6 +40469,72 @@
                 "Identify all occurrences of @goodjavascript/dotenv in your project and assess the potential impact of the vulnerability.",
                 "Replace the vulnerable @goodjavascript/dotenv package with a secure alternative, such as the `python-dotenv` library, or apply the provided patch to mitigate the issue.",
                 "Validate user input and ensure proper handling of environment variables to prevent malicious code execution, using techniques like input validation and sanitization, as demonstrated in the provided patch."
+            ]
+        }
+    },
+    "GHSA-rgw5-rvv9-x895": {
+        "summary": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-03 17:06:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef safe_brace_expansion(pattern):\n    # Define a maximum limit for the number of expansions to prevent unbounded growth\n    MAX_EXPANSIONS = 1000\n    \n    # Use regular expressions to find brace expressions in the pattern\n    brace_expressions = re.findall(r'{(.*?)}', pattern)\n    \n    # Initialize a counter to track the number of expansions\n    expansion_count = 0\n    \n    # Iterate over each brace expression found in the pattern\n    for expression in brace_expressions:\n        # Split the expression into individual values\n        values = expression.split(',')\n        \n        # Calculate the number of expansions required for this expression\n        num_expansions = len(values)\n        \n        # Check if adding these expansions would exceed the maximum limit\n        if expansion_count + num_expansions > MAX_EXPANSIONS:\n            # If the limit would be exceeded, raise an exception to prevent the DoS\n            raise ValueError(\"Brace expansion exceeds maximum limit\")\n        \n        # Otherwise, update the expansion count\n        expansion_count += num_expansions\n    \n    # If no issues were found, proceed with the expansion as normal\n    # This part may vary depending on the actual implementation of brace expansion\n    # For demonstration purposes, a simple replacement is shown\n    expanded_pattern = pattern\n    for expression in brace_expressions:\n        values = expression.split(',')\n        expanded_pattern = expanded_pattern.replace('{' + expression + '}', '(' + '|'.join(values) + ')')\n    \n    return expanded_pattern",
+            "vulnerability_explanation": "The vulnerability in the `brace-expansion` library allows for a Denial of Service (DoS) attack via unbounded intermediate arrays, effectively bypassing the mitigation put in place for CVE-2026-14257. This occurs because the library does not properly limit the expansion of brace expressions, leading to potential memory exhaustion. An attacker could exploit this by crafting a malicious input that causes the library to create an excessively large number of intermediate arrays.",
+            "mitigation_steps": [
+                "**Identify Vulnerable Code**: Review your codebase to identify any areas where the `brace-expansion` library is used, particularly in functions that handle user input or external data.",
+                "**Apply the Patch**: Replace the vulnerable `brace-expansion` functionality with the `safe_brace_expansion` function provided in the patch. This may involve modifying function calls, importing the new function, and adjusting any related logic to handle the new safety checks.",
+                "**Test Thoroughly**: After applying the patch, thoroughly test your application to ensure that the `safe_brace_expansion` function works as expected and does not introduce any new issues. Pay particular attention to error handling and edge cases, such as very large or complex brace expressions."
+            ]
+        }
+    },
+    "GHSA-jj27-h5hq-8x99": {
+        "summary": "Angular i18n: Cross-Site Scripting (XSS) via event-handler attributes",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-03 17:06:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_event_handler_attributes(input_data):\n    \"\"\"\n    Sanitizes event-handler attributes to prevent XSS attacks.\n    \n    Args:\n    input_data (str): The user-input data to be sanitized.\n    \n    Returns:\n    str: The sanitized input data.\n    \"\"\"\n    # Use html.escape to replace special characters with their corresponding HTML entities\n    sanitized_data = html.escape(input_data)\n    \n    # Remove any remaining event-handler attributes\n    sanitized_data = sanitized_data.replace(\"on\", \"\")\n    \n    return sanitized_data\n\n# Example usage:\nuser_input = \"<img src=x onerror=alert('XSS')>\"\nsanitized_input = sanitize_event_handler_attributes(user_input)\nprint(sanitized_input)",
+            "vulnerability_explanation": "The Angular i18n Cross-Site Scripting (XSS) vulnerability occurs when an attacker injects malicious code into event-handler attributes, allowing them to execute arbitrary JavaScript code. This happens because the Angular i18n module does not properly sanitize user-input data, enabling an attacker to inject malicious code. As a result, an attacker can steal user data, perform unauthorized actions, or take control of the user's session.",
+            "mitigation_steps": [
+                "Identify all instances where user-input data is used in event-handler attributes within the Angular i18n module.",
+                "Apply the `sanitize_event_handler_attributes` function to sanitize the user-input data before using it in event-handler attributes.",
+                "Verify that the sanitized data does not contain any malicious code by testing the application with various input scenarios.",
+                "Consider implementing a Web Application Firewall (WAF) to detect and prevent XSS attacks at the application level.",
+                "Regularly update and patch the Angular i18n module to ensure you have the latest security fixes and mitigations."
+            ]
+        }
+    },
+    "GHSA-vpx6-8pjr-4g3v": {
+        "summary": "Angular SSR: Missing Fallback Raw-Content Serialization Escaping leads to Cross-Site Scripting (XSS)",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-03 17:06:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef escape_raw_content(content):\n    \"\"\"\n    Escapes raw content to prevent XSS attacks.\n    \n    Args:\n        content (str): The raw content to be escaped.\n    \n    Returns:\n        str: The escaped content.\n    \"\"\"\n    return html.escape(content)\n\n# Example usage:\nraw_content = \"<script>alert('XSS')</script>\"\nescaped_content = escape_raw_content(raw_content)\nprint(escaped_content)  # Output: &lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;",
+            "vulnerability_explanation": "The Angular SSR vulnerability is caused by a missing fallback raw-content serialization escaping, which allows an attacker to inject malicious scripts, leading to Cross-Site Scripting (XSS) attacks. This occurs when the application fails to properly escape user-inputted data, allowing it to be executed as code. As a result, an attacker can inject malicious scripts, potentially stealing user data or taking control of the user's session.",
+            "mitigation_steps": [
+                "Identify all instances where user-inputted data is being rendered as raw HTML content in your Angular SSR application.",
+                "Wrap the raw content with the `escape_raw_content` function to ensure proper escaping, as shown in the example usage.",
+                "Verify that the patched code is correctly escaping user-inputted data by testing it with various XSS payloads, such as `<script>alert('XSS')</script>`, to ensure that they are properly escaped and do not execute as code."
+            ]
+        }
+    },
+    "GHSA-jhpw-976m-542j": {
+        "summary": "Angular: Cache-Key Ambiguity in HttpTransferCache Leading to Cross-Request Response Reuse and State Poisoning",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-03 17:06:44",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hashlib\n\ndef generate_cache_key(request):\n    # Create a unique cache key based on the request URL, method, and headers\n    cache_key = hashlib.sha256()\n    cache_key.update(request.url.encode())\n    cache_key.update(request.method.encode())\n    for header, value in request.headers.items():\n        cache_key.update(f\"{header}:{value}\".encode())\n    return cache_key.hexdigest()\n\nclass HttpTransferCache:\n    def __init__(self):\n        self.cache = {}\n\n    def get(self, request):\n        cache_key = generate_cache_key(request)\n        return self.cache.get(cache_key)\n\n    def set(self, request, response):\n        cache_key = generate_cache_key(request)\n        self.cache[cache_key] = response\n\n# Example usage:\ncache = HttpTransferCache()\nrequest = Request(url=\"https://example.com\", method=\"GET\", headers={\"Authorization\": \"Bearer token\"})\nresponse = Response(status_code=200, content=\"Hello World\")\ncache.set(request, response)",
+            "vulnerability_explanation": "The Angular vulnerability GHSA-jhpw-976m-542j is caused by cache-key ambiguity in the HttpTransferCache, which can lead to cross-request response reuse and state poisoning. This occurs when the cache key is not unique enough, allowing an attacker to manipulate the cache and reuse responses from previous requests. As a result, sensitive information can be exposed or modified, compromising the security of the application.",
+            "mitigation_steps": [
+                "Identify the vulnerable Angular version and update to the latest version that includes the fix for GHSA-jhpw-976m-542j.",
+                "Implement a unique cache key generation mechanism, such as the one provided in the patch, to prevent cache-key ambiguity.",
+                "Review and test the application's caching mechanism to ensure it is properly secured and does not allow for cross-request response reuse or state poisoning."
             ]
         }
     }
