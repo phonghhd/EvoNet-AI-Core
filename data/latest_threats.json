@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-08-10 12:59:23",
+        "date_added": "2026-08-10 15:57:02",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(ip, port):\n    # Create a socket object\n    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n    \n    # Try to connect to the remote server\n    try:\n        sock.connect((ip, port))\n    except socket.error:\n        # If the connection fails, return False\n        return False\n    \n    # If the connection is successful, return True\n    return True\n\ndef generate_hash(data):\n    # Generate a SHA-256 hash of the input data\n    return hashlib.sha256(data.encode()).hexdigest()\n\ndef authenticate_client(ip, port, expected_hash):\n    # Validate the connection to the client\n    if not validate_connection(ip, port):\n        return False\n    \n    # Generate a hash of the client's IP and port\n    client_hash = generate_hash(f\"{ip}:{port}\")\n    \n    # Check if the generated hash matches the expected hash\n    if client_hash != expected_hash:\n        return False\n    \n    # If the hash matches, return True\n    return True\n\n# Example usage:\nip = \"192.168.1.100\"\nport = 8080\nexpected_hash = \"expected_hash_value\"\n\nif authenticate_client(ip, port, expected_hash):\n    print(\"Client authenticated successfully\")\nelse:\n    print(\"Client authentication failed\")",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information provided, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is being exploited by the NullRAT tool, which is hosted on a publicly available GitHub repository.",
+            "diff_code": "import socket\nimport hashlib\n\ndef validate_connection(sock):\n    # Get the client's IP address\n    client_ip = sock.getpeername()[0]\n    \n    # Calculate a hash of the client's IP address\n    client_hash = hashlib.sha256(client_ip.encode()).hexdigest()\n    \n    # Check if the client's hash is in a whitelist\n    if client_hash not in whitelisted_clients:\n        # If not, close the connection\n        sock.close()\n        return False\n    else:\n        # If it is, allow the connection\n        return True\n\n# Example whitelist\nwhitelisted_clients = [\"8c5e4e7fd8b6e11e9b6e11e9b6e11e9b\"]\n\n# Example server code\nserver_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nserver_socket.bind((\"localhost\", 8080))\nserver_socket.listen(1)\n\nwhile True:\n    client_socket, address = server_socket.accept()\n    if validate_connection(client_socket):\n        # Handle the connection\n        data = client_socket.recv(1024)\n        client_socket.sendall(data)\n    else:\n        # Close the connection if it's not validated\n        client_socket.close()",
+            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software flaw that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability can be exploited using the NullRAT tool, which is available on GitHub.",
             "mitigation_steps": [
-                "Identify and remove any instances of the NullRAT tool from the system, as it is a malicious tool designed to gain unauthorized access.",
-                "Implement a robust authentication mechanism, such as the one provided in the patch, to validate the identity of clients connecting to the system.",
-                "Regularly monitor system logs and network traffic to detect and respond to potential security incidents, and consider implementing additional security measures such as firewalls, intrusion detection systems, and antivirus software to prevent similar vulnerabilities in the future."
+                "Identify the vulnerable system or software component and assess the potential impact of the vulnerability.",
+                "Implement a whitelist-based validation mechanism, such as the one shown in the patch, to restrict access to authorized clients only.",
+                "Continuously monitor the system for suspicious activity and update the whitelist as needed to ensure that only trusted clients can connect to the system."
             ]
         }
     },
@@ -44291,6 +44291,54 @@
                 "**Validate Package Integrity**: Before installing any npm package, especially @ssgw/icon, ensure you validate its integrity by checking its versions and ensuring it comes from a trusted source.",
                 "**Use Safe Installation Scripts**: Implement safe installation scripts like the one provided above to handle package installation. This script checks the package's versions before installing, which can help mitigate the risk of installing malicious packages.",
                 "**Keep npm and Packages Up-to-Date**: Regularly update npm and all installed packages to the latest versions to ensure you have the latest security patches. Use `npm update` or `npm install <package>@latest` to update specific packages."
+            ]
+        }
+    },
+    "GHSA-jx74-cqjv-2c67": {
+        "summary": "Flyto2 Core: Unauthenticated flyto-verification /run: callback_url SSRF and internal runner-secret exfiltration",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-10 15:57:02",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\nfrom flask import request, jsonify\n\n# Existing endpoint definition\n@app.route('/flyto-verification/run', methods=['POST'])\ndef flyto_verification_run():\n    # Extract callback_url from request\n    callback_url = request.json.get('callback_url')\n\n    # Validate and sanitize callback_url to prevent SSRF\n    if callback_url:\n        parsed_url = urllib.parse.urlparse(callback_url)\n        if not parsed_url.scheme or not parsed_url.netloc:\n            return jsonify({'error': 'Invalid callback URL'}), 400\n\n        # Restrict callback_url to specific allowed domains or IP addresses\n        allowed_domains = ['example.com', 'another-allowed-domain.com']\n        if parsed_url.netloc not in allowed_domains:\n            return jsonify({'error': 'Callback URL is not allowed'}), 403\n\n    # Proceed with the rest of the endpoint logic\n    # ...",
+            "vulnerability_explanation": "The vulnerability in Flyto2 Core allows for unauthenticated access to the flyto-verification /run endpoint, enabling an attacker to exploit a callback_url Server-Side Request Forgery (SSRF) vulnerability and potentially exfiltrate internal runner-secrets. This occurs due to insufficient validation and sanitization of the callback_url parameter, allowing an attacker to manipulate requests and redirect them to internal or external services. As a result, sensitive information can be leaked or unauthorized access can be gained to internal systems.",
+            "mitigation_steps": [
+                "**Validate User Input**: Ensure that all user-provided input, especially URLs, is thoroughly validated and sanitized to prevent SSRF attacks. Use established libraries for URL parsing and validation.",
+                "**Implement Domain Whitelisting**: Restrict callback URLs to a predefined set of allowed domains or IP addresses to prevent unauthorized access to internal or external services.",
+                "**Regularly Review and Update Code**: Periodically review endpoint logic and update validation mechanisms to address newly discovered vulnerabilities and ensure the security of the Flyto2 Core application."
+            ]
+        }
+    },
+    "GHSA-q3j6-qgpj-74h6": {
+        "summary": "fast-uri vulnerable to path traversal via percent-encoded dot segments",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-10 15:57:02",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef normalize_path(path):\n    \"\"\"\n    Normalize the given path to prevent path traversal attacks.\n    \"\"\"\n    # Split the path into segments\n    segments = path.split('/')\n    \n    # Initialize a new list to store the normalized segments\n    normalized_segments = []\n    \n    # Iterate over each segment\n    for segment in segments:\n        # If the segment is empty or a single dot, skip it\n        if segment == '' or segment == '.':\n            continue\n        # If the segment is a double dot, remove the last segment from the normalized list\n        elif segment == '..':\n            if normalized_segments:\n                normalized_segments.pop()\n        # Otherwise, add the segment to the normalized list\n        else:\n            # Check for percent-encoded dot segments\n            if '%' in segment:\n                decoded_segment = urllib.parse.unquote(segment)\n                if '.' in decoded_segment:\n                    # If the decoded segment contains a dot, it's a potential path traversal attack\n                    raise ValueError(\"Potential path traversal attack detected\")\n            normalized_segments.append(segment)\n    \n    # Join the normalized segments back into a path\n    normalized_path = '/'.join(normalized_segments)\n    \n    return normalized_path\n\n# Example usage:\npath = \"/.././example/%2e%2e/%2e\"\nnormalized_path = normalize_path(path)\nprint(normalized_path)",
+            "vulnerability_explanation": "The fast-uri library is vulnerable to path traversal attacks due to its improper handling of percent-encoded dot segments. This allows an attacker to manipulate the URL path and access sensitive files or directories outside the intended directory. By encoding dot segments, an attacker can bypass security checks and traverse the directory tree.",
+            "mitigation_steps": [
+                "Identify all instances where the fast-uri library is used in your application to handle URLs or file paths.",
+                "Replace the vulnerable code with the provided `normalize_path` function to ensure that all paths are properly normalized and sanitized.",
+                "Test your application thoroughly to ensure that the patch does not introduce any regressions or unexpected behavior, and that it effectively prevents path traversal attacks."
+            ]
+        }
+    },
+    "GHSA-v39h-62p7-jpjc": {
+        "summary": "fast-uri vulnerable to host confusion via percent-encoded authority delimiters",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-10 15:57:02",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef parse_uri(uri):\n    \"\"\"\n    Parse a URI and return its components.\n    \n    This function uses the urllib.parse module to parse the URI, which properly handles percent-encoded characters.\n    \"\"\"\n    try:\n        # Use urllib.parse.urlparse to parse the URI\n        parsed_uri = urllib.parse.urlparse(uri)\n        \n        # Check if the authority component contains any percent-encoded delimiters\n        if '%' in parsed_uri.netloc:\n            # If it does, unquote the authority component to handle percent-encoded characters\n            parsed_uri = parsed_uri._replace(netloc=urllib.parse.unquote(parsed_uri.netloc))\n        \n        return parsed_uri\n    except ValueError:\n        # If the URI is malformed, return an error message\n        return \"Invalid URI\"\n\n# Example usage:\nuri = \"http://example.com/%40@example.net\"\nparsed_uri = parse_uri(uri)\nprint(parsed_uri)",
+            "vulnerability_explanation": "The fast-uri library is vulnerable to host confusion via percent-encoded authority delimiters, which can lead to incorrect parsing of URLs and potentially allow attackers to bypass security controls. This occurs when the library fails to properly handle percent-encoded characters in the authority component of a URL, allowing an attacker to manipulate the host or other components of the URL. As a result, an attacker could potentially trick the library into accepting a malicious URL as legitimate.",
+            "mitigation_steps": [
+                "Identify all instances of the fast-uri library in your codebase and replace them with the patched parse_uri function.",
+                "Update any dependent libraries or frameworks to use the patched parse_uri function.",
+                "Test your application thoroughly to ensure that the patched function does not introduce any regressions or compatibility issues, and verify that it correctly handles percent-encoded authority delimiters in URLs."
             ]
         }
     }
