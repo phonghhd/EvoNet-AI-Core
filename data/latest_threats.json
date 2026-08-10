@@ -44261,5 +44261,21 @@
                 "**Monitor for updates and patches**: Keep an eye on the PyPI repository and the kotanku project for any updates, patches, or security advisories related to this vulnerability, and apply them as soon as they become available."
             ]
         }
+    },
+    "RUSTSEC-2026-0245": {
+        "summary": "Relative/Absolute Path Traversal (CWE-23/CWE-36) in `decompress_impl` that enables an arbitrary file write.",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-10 07:25:17",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import os\n\ndef decompress_impl(file_path, destination):\n    # Normalize the file path to prevent traversal attacks\n    normalized_path = os.path.normpath(file_path)\n    \n    # Get the absolute path of the destination directory\n    dest_dir = os.path.abspath(destination)\n    \n    # Check if the normalized path is within the destination directory\n    if not normalized_path.startswith(dest_dir):\n        raise ValueError(\"File path is outside the destination directory\")\n    \n    # Proceed with decompression\n    # ... (rest of the decompression code remains the same)\n\n# Example usage:\ndecompress_impl(\"path/to/file\", \"/safe/destination\")",
+            "vulnerability_explanation": "The vulnerability mechanism involves a Relative/Absolute Path Traversal issue in the `decompress_impl` function, which allows an attacker to write to arbitrary files on the system. This is possible because the function does not properly sanitize the file paths it receives, enabling an attacker to traverse the file system and write to sensitive locations. By exploiting this vulnerability, an attacker could potentially overwrite critical system files or execute malicious code.",
+            "mitigation_steps": [
+                "Identify all instances of the `decompress_impl` function in your codebase and apply the patch to each occurrence.",
+                "Verify that the `destination` parameter is always a safe and intended directory, and that the `file_path` parameter is properly sanitized before being passed to the function.",
+                "Test the patched function thoroughly to ensure it correctly prevents path traversal attacks and raises an error when attempting to write to an arbitrary location."
+            ]
+        }
     }
 }
