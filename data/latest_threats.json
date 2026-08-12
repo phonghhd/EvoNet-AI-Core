@@ -2,17 +2,17 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-08-12 18:57:25",
+        "date_added": "2026-08-12 21:41:09",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Groq",
-            "diff_code": "# This patch is a basic example of how to mitigate a RAT vulnerability by \n# restricting unauthorized access to sensitive system resources.\n# Please note that this is a hypothetical patch and may not be applicable \n# to the actual vulnerability.\n\nimport os\nimport socket\n\ndef restrict_access():\n    # Restrict access to sensitive system resources\n    restricted_paths = [\"/etc/passwd\", \"/etc/shadow\", \"/root\"]\n    for path in restricted_paths:\n        if os.path.exists(path):\n            # Set permissions to restrict access\n            os.chmod(path, 0o600)\n\n    # Restrict incoming connections\n    host = socket.gethostname()\n    port = 8080\n    try:\n        # Create a socket object\n        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n        # Bind the socket to the host and port\n        server_socket.bind((host, port))\n        # Listen for incoming connections\n        server_socket.listen(1)\n        print(f\"Listening for incoming connections on {host}:{port}\")\n    except socket.error as e:\n        print(f\"Failed to restrict incoming connections: {e}\")\n\nif __name__ == \"__main__\":\n    restrict_access()",
-            "vulnerability_explanation": "The vulnerability appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows attackers to remotely access and control compromised systems. The exact mechanism of the vulnerability is unknown due to the lack of information, but it is likely related to a security flaw in a specific software or system that allows the NullRAT to gain unauthorized access. Without more information, it's difficult to provide a detailed explanation of the vulnerability mechanism.",
+            "diff_code": "import hashlib\nimport hmac\nimport os\n\ndef validate_request(request):\n    # Assuming a secret key is stored in an environment variable\n    secret_key = os.environ.get('SECRET_KEY')\n    if not secret_key:\n        raise ValueError(\"SECRET_KEY environment variable is not set\")\n\n    # Calculate the expected HMAC signature\n    expected_signature = hmac.new(secret_key.encode(), request.encode(), hashlib.sha256).hexdigest()\n\n    # Get the provided HMAC signature from the request\n    provided_signature = request.headers.get('X-HMAC-Signature')\n\n    # Compare the expected and provided signatures\n    if not hmac.compare_digest(expected_signature, provided_signature):\n        raise ValueError(\"Invalid HMAC signature\")\n\n    # If the signatures match, the request is valid\n    return True\n\ndef mitigate_nullrat_vulnerability(request):\n    try:\n        validate_request(request)\n    except ValueError as e:\n        # Log the error and return an error response\n        print(f\"Error: {e}\")\n        return {\"error\": \"Invalid request\"}",
+            "vulnerability_explanation": "The vulnerability mechanism appears to be related to a Remote Access Trojan (RAT) known as NullRAT, which is a malicious tool that allows unauthorized access to a victim's system. The exact vulnerability mechanism is unknown due to the lack of information, but it is likely related to a weakness in the system's security configuration or a software vulnerability that allows the RAT to gain unauthorized access. The PoC URL suggests that the vulnerability is related to a proof-of-concept exploit for NullRAT.",
             "mitigation_steps": [
-                "Identify the vulnerable software or system component: Determine which software or system component is affected by the NullRAT vulnerability.",
-                "Apply security patches and updates: Apply any available security patches and updates to the affected software or system component to fix the underlying vulnerability.",
-                "Implement additional security measures: Implement additional security measures, such as restricting access to sensitive system resources, monitoring system activity, and using intrusion detection and prevention systems to detect and prevent NullRAT attacks."
+                "Identify the systems and software that are vulnerable to NullRAT and prioritize patching and mitigation efforts accordingly.",
+                "Implement a Web Application Firewall (WAF) to detect and prevent malicious traffic, including NullRAT exploits.",
+                "Use the provided `mitigate_nullrat_vulnerability` function to validate incoming requests and prevent unauthorized access to the system, by integrating it into the application's request handling logic."
             ]
         }
     },
@@ -45513,6 +45513,217 @@
                 "**Identify Vulnerable Components**: First, identify all instances where the svelte-kit-vim package is used within your project. This involves reviewing your package.json file and any direct imports or requires of the package.",
                 "**Apply Sanitization and Validation**: Implement the provided `sanitize_input` and `validate_url` functions to sanitize any user input or external data before it is processed by the svelte-kit-vim package. This step is crucial in preventing malicious code execution.",
                 "**Monitor and Update**: Regularly monitor the npm repository for updates to the svelte-kit-vim package and apply patches as soon as they become available. Consider setting up automated dependency update tools to streamline this process."
+            ]
+        }
+    },
+    "GHSA-hp3v-mfqw-h74c": {
+        "summary": "@astrojs/netlify generates an overly-broad Netlify Image CDN allowlist because remotePatterns.pathname metacharacters are not escaped",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef escape_metacharacters(pattern):\n    \"\"\"\n    Escapes metacharacters in a given pattern to prevent overly broad matching.\n    \"\"\"\n    metacharacters = r\".^$*+?{}[]|()\"\n    for char in metacharacters:\n        pattern = pattern.replace(char, f\"\\\\{char}\")\n    return pattern\n\ndef generate_allowlist(remote_patterns):\n    \"\"\"\n    Generates a Netlify Image CDN allowlist with properly escaped metacharacters.\n    \"\"\"\n    allowlist = []\n    for pattern in remote_patterns:\n        escaped_pattern = escape_metacharacters(pattern.pathname)\n        allowlist.append(escaped_pattern)\n    return allowlist\n\n# Example usage:\nremote_patterns = [\n    {\"pathname\": \"/images/*.jpg\"},\n    {\"pathname\": \"/assets/*.png\"}\n]\n\nallowlist = generate_allowlist(remote_patterns)\nprint(allowlist)",
+            "vulnerability_explanation": "The vulnerability in @astrojs/netlify occurs because the `remotePatterns.pathname` metacharacters are not properly escaped, leading to an overly broad Netlify Image CDN allowlist. This allows an attacker to potentially bypass intended access restrictions and manipulate image URLs. As a result, sensitive data or unauthorized access to the Netlify Image CDN may be exposed.",
+            "mitigation_steps": [
+                "Identify the `@astrojs/netlify` package in your project and verify the version to ensure it's vulnerable to GHSA-hp3v-mfqw-h74c.",
+                "Apply the provided patch code to your project, integrating the `escape_metacharacters` and `generate_allowlist` functions into your Netlify Image CDN configuration.",
+                "Update your Netlify Image CDN allowlist generation to utilize the `generate_allowlist` function, ensuring that all `remotePatterns.pathname` metacharacters are properly escaped to prevent overly broad matching."
+            ]
+        }
+    },
+    "GHSA-r557-wffq-wvrc": {
+        "summary": "@astrojs/node: Backslash-prefixed paths not recognized as internal by trailing-slash redirect",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef normalize_path(path):\n    \"\"\"\n    Normalize a path by converting backslashes to forward slashes and removing any trailing slashes.\n    \"\"\"\n    # Convert backslashes to forward slashes for consistent path handling\n    normalized_path = path.replace('\\\\', '/')\n    \n    # Remove any trailing slashes\n    if normalized_path.endswith('/'):\n        normalized_path = normalized_path[:-1]\n    \n    return normalized_path\n\ndef is_internal_path(path):\n    \"\"\"\n    Check if a path is internal by checking if it starts with a forward slash.\n    \"\"\"\n    # Normalize the path before checking\n    normalized_path = normalize_path(path)\n    \n    # Check if the normalized path starts with a forward slash\n    return normalized_path.startswith('/')\n\n# Example usage:\npath = \"\\\\\\\\\\\\\\\\internal\\\\\\\\path\"\nif is_internal_path(path):\n    print(\"The path is internal.\")\nelse:\n    print(\"The path is not internal.\")",
+            "vulnerability_explanation": "The vulnerability in @astrojs/node occurs when backslash-prefixed paths are not recognized as internal by the trailing-slash redirect, potentially allowing an attacker to bypass security mechanisms. This could lead to unauthorized access to internal resources. The vulnerability exploits the difference in path handling between backslashes and forward slashes.",
+            "mitigation_steps": [
+                "Identify all instances where path handling is performed in the @astrojs/node codebase, particularly focusing on areas where trailing-slash redirects are implemented.",
+                "Apply the `normalize_path` function to all paths before they are processed or compared, ensuring consistent handling of backslashes and forward slashes.",
+                "Implement the `is_internal_path` function to check if a path is internal, using the normalized path to prevent bypassing security mechanisms due to backslash-prefixed paths."
+            ]
+        }
+    },
+    "GHSA-f48w-9m4c-m7f5": {
+        "summary": "Astro: XSS via unescaped spread attribute names in renderHTMLElement (incomplete fix for CVE-2026-54298)",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef renderHTMLElement(element, attributes):\n    # Escape attribute names to prevent XSS\n    escaped_attributes = {html.escape(key): value for key, value in attributes.items()}\n    \n    # Render the HTML element with escaped attribute names\n    html_element = \"<\" + element\n    for key, value in escaped_attributes.items():\n        html_element += \" \" + key + \"='\" + html.escape(value) + \"'\"\n    html_element += \">\"\n\n    return html_element\n\n# Example usage:\nattributes = {\"class\": \"example-class\", \"id\": \"example-id\"}\nhtml_element = renderHTMLElement(\"div\", attributes)\nprint(html_element)",
+            "vulnerability_explanation": "The vulnerability exists in the Astro framework, where unescaped spread attribute names in the `renderHTMLElement` function can lead to a Cross-Site Scripting (XSS) attack. This occurs because the previous fix for CVE-2026-54298 was incomplete, allowing an attacker to inject malicious code by manipulating attribute names. As a result, an attacker can execute arbitrary JavaScript code on a user's browser, potentially leading to sensitive data theft or other malicious activities.",
+            "mitigation_steps": [
+                "Identify all instances of `renderHTMLElement` in your Astro framework codebase and replace them with the patched version that escapes attribute names.",
+                "Ensure that all attribute names and values are properly escaped using a library like `html` to prevent XSS attacks.",
+                "Test your application thoroughly to ensure that the patch does not introduce any regressions or breaking changes, and verify that the XSS vulnerability is successfully mitigated."
+            ]
+        }
+    },
+    "GHSA-8j5q-mfj2-5q9q": {
+        "summary": "@astrojs/rss: XML Injection via Unescaped RSS Feed Fields",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import xml.sax.saxutils as saxutils\n\ndef generate_rss_feed(title, link, description):\n    # Escape user-provided data to prevent XML injection\n    title = saxutils.escape(title)\n    link = saxutils.escape(link)\n    description = saxutils.escape(description)\n\n    # Generate the RSS feed with escaped data\n    rss_feed = f\"\"\"\n    <rss version=\"2.0\">\n        <channel>\n            <title>{title}</title>\n            <link>{link}</link>\n            <description>{description}</description>\n        </channel>\n    </rss>\n    \"\"\"\n    return rss_feed",
+            "vulnerability_explanation": "The vulnerability in @astrojs/rss occurs due to unescaped RSS feed fields, allowing an attacker to inject malicious XML code. This can lead to XML injection attacks, potentially resulting in data theft, denial-of-service, or even code execution. The vulnerability arises from the lack of proper input validation and sanitization of user-provided data in the RSS feed generation process.",
+            "mitigation_steps": [
+                "Identify all locations in the code where user-provided data is used to generate RSS feeds, and ensure that this data is properly escaped using a library like `xml.sax.saxutils`.",
+                "Implement input validation to restrict user-provided data to expected formats and character sets, reducing the risk of malicious input.",
+                "Update the @astrojs/rss dependency to the latest version, if available, and apply the provided patch to mitigate the XML injection vulnerability."
+            ]
+        }
+    },
+    "GHSA-7pw4-f3q4-r2p2": {
+        "summary": "Astro: Cross-site scripting via unescaped transition:* directive values on hydrated islands",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_transition_directive(value):\n    \"\"\"\n    Sanitizes the transition directive value to prevent XSS attacks.\n    \"\"\"\n    # Use html.escape to escape any special characters in the value\n    sanitized_value = html.escape(value)\n    return sanitized_value\n\ndef hydrate_island(island_data):\n    \"\"\"\n    Hydrates an island with sanitized transition directive values.\n    \"\"\"\n    # Assume island_data is a dictionary containing the transition directive values\n    for key, value in island_data.items():\n        if key.startswith(\"transition:\"):\n            # Sanitize the transition directive value\n            island_data[key] = sanitize_transition_directive(value)\n    return island_data",
+            "vulnerability_explanation": "The Astro framework is vulnerable to cross-site scripting (XSS) attacks due to unescaped transition directive values on hydrated islands. This allows an attacker to inject malicious JavaScript code, potentially leading to unauthorized access or data theft. The vulnerability occurs when user-input data is not properly sanitized before being used in transition directives.",
+            "mitigation_steps": [
+                "Identify all locations in the Astro framework where transition directive values are used and ensure they are properly sanitized using the `sanitize_transition_directive` function.",
+                "Update the `hydrate_island` function to use the sanitized transition directive values.",
+                "Verify that all user-input data is properly validated and sanitized before being used in transition directives to prevent XSS attacks."
+            ]
+        }
+    },
+    "GHSA-2pvr-wf23-7pc7": {
+        "summary": "Astro: Host header SSRF in prerendered error page fetch",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import urllib.parse\n\ndef fetch_prerendered_error_page(url):\n    # Parse the URL to extract the host\n    parsed_url = urllib.parse.urlparse(url)\n    host = parsed_url.netloc\n    \n    # Validate the host to prevent SSRF\n    if not is_valid_host(host):\n        raise ValueError(\"Invalid host\")\n    \n    # Make the request to the validated host\n    return make_request(url)\n\ndef is_valid_host(host):\n    # Define a list of allowed hosts\n    allowed_hosts = [\"example.com\", \"localhost\"]\n    \n    # Check if the host is in the list of allowed hosts\n    return host in allowed_hosts\n\ndef make_request(url):\n    # Make the request to the validated host\n    # This function should be implemented according to the Astro framework's requirements\n    pass",
+            "vulnerability_explanation": "The vulnerability is a Host header SSRF (Server-Side Request Forgery) in the prerendered error page fetch of the Astro framework. This allows an attacker to manipulate the Host header of a request to the Astro server, potentially leading to unauthorized access to internal services or sensitive data. The vulnerability occurs because the Astro server does not properly validate the Host header before making requests to the specified host.",
+            "mitigation_steps": [
+                "Identify the function responsible for fetching prerendered error pages in the Astro framework and replace it with the `fetch_prerendered_error_page` function from the patch.",
+                "Implement the `is_valid_host` function to define a list of allowed hosts and validate the Host header against this list.",
+                "Implement the `make_request` function according to the Astro framework's requirements to make the request to the validated host.",
+                "Test the patched function to ensure it properly validates the Host header and prevents SSRF attacks."
+            ]
+        }
+    },
+    "GHSA-8hv8-536x-4wqp": {
+        "summary": "Astro: Reflected XSS via unescaped slot name",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_slot_name(slot_name):\n    \"\"\"\n    Sanitizes the slot name to prevent XSS attacks.\n    \"\"\"\n    return html.escape(slot_name)\n\n# Example usage:\nclass AstroComponent:\n    def __init__(self, slot_name):\n        self.slot_name = sanitize_slot_name(slot_name)\n\n    def render(self):\n        # Use the sanitized slot name to prevent XSS\n        return f\"<div>{self.slot_name}</div>\"",
+            "vulnerability_explanation": "The vulnerability is a Reflected XSS (Cross-Site Scripting) issue in the Astro framework, where an attacker can inject malicious code by manipulating the slot name, which is not properly escaped. This allows an attacker to execute arbitrary JavaScript code on the victim's browser, potentially leading to sensitive data theft or other malicious activities. The root cause of this issue is the lack of proper input validation and sanitization of the slot name.",
+            "mitigation_steps": [
+                "Identify all instances where the slot name is used in the Astro framework and ensure that it is properly sanitized using a function like `html.escape()` or a similar sanitization mechanism.",
+                "Update the code to use the sanitized slot name instead of the original, potentially malicious input.",
+                "Test the updated code to ensure that it properly prevents XSS attacks and does not introduce any regressions or other security vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-8mv7-9c27-98vc": {
+        "summary": "Astro: composable `astro/hono` pipeline bypasses `security.checkOrigin` when `middleware()` is absent or misordered",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "# Ensure middleware() is present and correctly ordered\ndef create_pipeline():\n    # Existing pipeline creation code...\n    pipeline = astro.hono.pipeline()\n    \n    # Add security.checkOrigin as the first middleware\n    pipeline.middleware(security.checkOrigin)\n    \n    # Add other middleware functions after security.checkOrigin\n    pipeline.middleware(other_middleware_function)\n    \n    return pipeline\n\n# Example usage:\npipeline = create_pipeline()",
+            "vulnerability_explanation": "The vulnerability in Astro's composable `astro/hono` pipeline occurs when the `middleware()` function is either absent or misordered, allowing requests to bypass the `security.checkOrigin` check. This bypass can lead to unauthorized access and potential security breaches. The issue arises from the incorrect ordering or absence of middleware functions, which are crucial for enforcing security checks in the pipeline.",
+            "mitigation_steps": [
+                "Review your Astro `astro/hono` pipeline configuration to ensure that `middleware()` is present and correctly ordered.",
+                "Verify that `security.checkOrigin` is the first middleware function in the pipeline to prevent bypassing of security checks.",
+                "Update your pipeline creation code to include the `security.checkOrigin` middleware as the first function, followed by any other necessary middleware functions, as demonstrated in the provided patch code."
+            ]
+        }
+    },
+    "GHSA-4g3v-8h47-v7g6": {
+        "summary": "Astro: Reflected XSS via unescaped View Transition animation properties",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import html\n\ndef sanitize_animation_properties(properties):\n    \"\"\"\n    Sanitizes the View Transition animation properties to prevent XSS attacks.\n    \n    Args:\n        properties (dict): The animation properties to be sanitized.\n    \n    Returns:\n        dict: The sanitized animation properties.\n    \"\"\"\n    sanitized_properties = {}\n    for key, value in properties.items():\n        # Use html.escape to escape any user-controlled data\n        sanitized_properties[key] = html.escape(str(value))\n    return sanitized_properties\n\n# Example usage:\nanimation_properties = {\n    \"transition\": \"slide\",\n    \"duration\": 500,\n    \"easing\": \"ease-in-out\"\n}\n\n# Sanitize the animation properties before using them\nsanitized_properties = sanitize_animation_properties(animation_properties)",
+            "vulnerability_explanation": "The Astro library is vulnerable to a Reflected XSS attack due to unescaped View Transition animation properties. This allows an attacker to inject malicious JavaScript code, which can be executed when a user navigates to a specially crafted URL. The vulnerability arises from the lack of proper input validation and sanitization of user-controlled data in the animation properties.",
+            "mitigation_steps": [
+                "Identify all instances where user-controlled data is used to set View Transition animation properties in your Astro application.",
+                "Wrap the user-controlled data with the `sanitize_animation_properties` function to ensure it is properly escaped and sanitized.",
+                "Verify that the `sanitize_animation_properties` function is correctly implemented and used throughout the application to prevent Reflected XSS attacks.",
+                "Test the application to ensure that the patch does not introduce any regressions or break existing functionality.",
+                "Consider implementing additional security measures, such as input validation and Content Security Policy (CSP), to further protect against XSS attacks."
+            ]
+        }
+    },
+    "GHSA-8fpg-xm3f-6cx3": {
+        "summary": "Auth.js: Configuration errors can cause existence-based auth checks to fail open (auth object populated with an error)",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import logging\n\ndef authenticate_user(auth_config, user_credentials):\n    try:\n        # Attempt to authenticate the user\n        auth_result = perform_auth_check(auth_config, user_credentials)\n        if auth_result.is_authenticated:\n            return auth_result\n        else:\n            # If authentication fails, return an empty auth object\n            return AuthObject(is_authenticated=False, error=\"Authentication failed\")\n    except Exception as e:\n        # Log the error and return an empty auth object\n        logging.error(f\"Authentication error: {str(e)}\")\n        return AuthObject(is_authenticated=False, error=\"Authentication error\")\n\nclass AuthObject:\n    def __init__(self, is_authenticated, error=None):\n        self.is_authenticated = is_authenticated\n        self.error = error\n\ndef perform_auth_check(auth_config, user_credentials):\n    # Implement the actual authentication check logic here\n    # For demonstration purposes, assume this function returns an AuthObject\n    # with is_authenticated set to True if the credentials are valid\n    if user_credentials[\"username\"] == auth_config[\"expected_username\"] and user_credentials[\"password\"] == auth_config[\"expected_password\"]:\n        return AuthObject(is_authenticated=True)\n    else:\n        return AuthObject(is_authenticated=False)",
+            "vulnerability_explanation": "The vulnerability in Auth.js occurs when configuration errors cause existence-based authentication checks to fail open, resulting in the authentication object being populated with an error. This can lead to unauthorized access, as the authentication check fails to properly verify the user's credentials. The root cause of this issue is likely due to improper error handling in the authentication configuration.",
+            "mitigation_steps": [
+                "Identify the authentication configuration and user credential validation logic in your codebase, and ensure that it is properly handling errors and exceptions.",
+                "Implement a try-except block around the authentication check logic to catch and log any errors that occur, and return an empty or error-filled authentication object to prevent fail-open scenarios.",
+                "Review and test your authentication configuration to ensure that it is correctly set up and functioning as expected, with proper error handling and logging in place to detect and respond to any potential security incidents."
+            ]
+        }
+    },
+    "GHSA-7rqj-j65f-68wh": {
+        "summary": "Auth.js: Email normalizer validates the address before Unicode normalization, allowing a homoglyph @ bypass",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import unicodedata\nimport re\n\ndef normalize_email(email):\n    # Apply Unicode normalization before validation\n    normalized_email = unicodedata.normalize('NFKC', email)\n    \n    # Validate the normalized email address\n    if not re.match(r\"[^@]+@[^@]+\\.[^@]+\", normalized_email):\n        raise ValueError(\"Invalid email address\")\n    \n    return normalized_email\n\n# Example usage:\nemail = \"test@exаmple.com\"  # Cyrillic \"а\" instead of Latin \"a\"\ntry:\n    normalized_email = normalize_email(email)\n    print(f\"Normalized email: {normalized_email}\")\nexcept ValueError as e:\n    print(f\"Error: {e}\")",
+            "vulnerability_explanation": "The vulnerability in Auth.js occurs because the email normalizer validates the address before applying Unicode normalization, allowing an attacker to bypass authentication using homoglyph characters, such as a Cyrillic \"а\" instead of a Latin \"a\", in the \"@\" symbol. This can lead to unauthorized access to accounts. The issue arises from the incorrect order of operations in the email validation process.",
+            "mitigation_steps": [
+                "Identify all instances of email validation in the Auth.js codebase and replace them with the `normalize_email` function provided in the patch.",
+                "Ensure that the `unicodedata` and `re` modules are available in the Python environment.",
+                "Test the updated code with various email addresses, including those containing homoglyph characters, to verify that the normalization and validation are working correctly."
+            ]
+        }
+    },
+    "GHSA-x445-f3h2-j279": {
+        "summary": "Auth.js: OAuth state, nonce, and PKCE check cookies are not bound to the provider that created them",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import hashlib\n\n# Assuming 'provider_id' is the unique identifier of the OAuth provider\n# and 'cookie_value' is the value of the OAuth state, nonce, or PKCE check cookie\n\ndef bind_cookie_to_provider(provider_id, cookie_value):\n    # Create a hash that binds the cookie value to the provider ID\n    bound_cookie_value = f\"{cookie_value}:{provider_id}\"\n    # Use a secure hash function like SHA-256 to create a digest\n    bound_cookie_hash = hashlib.sha256(bound_cookie_value.encode()).hexdigest()\n    return bound_cookie_hash\n\ndef verify_bound_cookie(provider_id, cookie_value, expected_hash):\n    # Recreate the bound cookie hash and compare it with the expected hash\n    bound_cookie_hash = bind_cookie_to_provider(provider_id, cookie_value)\n    return bound_cookie_hash == expected_hash\n\n# Example usage:\nprovider_id = \"google\"\ncookie_value = \"some_oauth_state_value\"\nbound_cookie_hash = bind_cookie_to_provider(provider_id, cookie_value)\n\n# Store 'bound_cookie_hash' securely and compare it with the result of 'verify_bound_cookie'\n# when verifying the cookie to ensure it's bound to the correct provider",
+            "vulnerability_explanation": "The vulnerability in Auth.js occurs because OAuth state, nonce, and PKCE check cookies are not bound to the provider that created them, allowing an attacker to potentially reuse these values across different providers, leading to authentication bypass or other security issues. This is a significant flaw since it undermines the security mechanisms designed to prevent unauthorized access. By not binding these cookies to their respective providers, the system fails to ensure the authenticity and integrity of the authentication process.",
+            "mitigation_steps": [
+                "**Identify Affected Components**: Review your application's codebase to identify all instances where OAuth state, nonce, and PKCE check cookies are used without being bound to their respective providers.",
+                "**Apply the Patch**: Implement the `bind_cookie_to_provider` and `verify_bound_cookie` functions in your application to ensure that all OAuth state, nonce, and PKCE check cookies are properly bound to their providers. Replace the existing cookie handling logic with these new functions.",
+                "**Test Thoroughly**: Perform comprehensive testing of your application's authentication flows to ensure that the patch does not introduce any regressions and that the cookies are correctly bound to their providers, enhancing the security of your OAuth implementation."
+            ]
+        }
+    },
+    "GHSA-xmf8-cvqr-rfgj": {
+        "summary": "Auth.js: getToken() throws an uncaught exception on malformed Bearer authorization headers",
+        "cvss_score": "unscored",
+        "date_added": "2026-08-12 21:41:09",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Groq",
+            "diff_code": "import re\n\ndef getToken(header):\n    \"\"\"\n    Extracts the token from a Bearer authorization header.\n    \n    Args:\n    header (str): The authorization header.\n    \n    Returns:\n    str: The extracted token or None if the header is malformed.\n    \"\"\"\n    # Check if the header is None or empty\n    if not header:\n        return None\n    \n    # Check if the header starts with 'Bearer '\n    if not header.startswith('Bearer '):\n        return None\n    \n    # Extract the token using a regular expression\n    match = re.match(r'Bearer\\s+(.*)', header)\n    if match:\n        return match.group(1)\n    else:\n        return None\n\n# Example usage:\nheader = 'Bearer my_token'\ntoken = getToken(header)\nif token:\n    print(f'Token: {token}')\nelse:\n    print('Malformed header')",
+            "vulnerability_explanation": "The vulnerability occurs in the `getToken()` function of Auth.js, which throws an uncaught exception when encountering malformed Bearer authorization headers. This happens because the function does not properly handle invalid or malformed input, leading to a potential denial-of-service (DoS) attack. As a result, an attacker could exploit this vulnerability by sending a crafted request with a malformed Bearer authorization header, causing the application to crash.",
+            "mitigation_steps": [
+                "Identify the `getToken()` function in your Auth.js code and replace it with the patched version above, which properly handles malformed input and returns `None` instead of throwing an exception.",
+                "Update your error handling to check for `None` values returned by the `getToken()` function and handle them accordingly, such as by returning a 401 Unauthorized response.",
+                "Test your application with various types of malformed Bearer authorization headers to ensure that it no longer crashes or throws uncaught exceptions, and that it correctly handles invalid input."
             ]
         }
     }
