@@ -2,13 +2,13 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-09-29 19:45:49",
+        "date_added": "2026-09-30 00:02:52",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Cloudflare",
-            "diff_code": "### VULNERABILITY: \nThe provided PoC URL points to a repository containing NullRAT, which appears to be a Remote Administration Tool (RAT) designed for unauthorized access to systems. While the CVE ID and CWE IDs are not specified, the presence of such a tool typically indicates vulnerabilities related to remote code execution, unauthorized access, or privilege escalation. This PoC likely demonstrates how an attacker can exploit these vulnerabilities to gain control over a target system.\n\n### PATCH:\nGiven the nature of the PoC and the lack of specific details about the vulnerability, it is challenging to provide a precise patch. However, I will assume a common scenario where the vulnerability involves insecure deserialization of data received from an untrusted source, which is a frequent issue in RATs and similar tools. The following patch demonstrates how to securely handle serialized data using a safer serialization format like JSON instead of pickle, which is inherently insecure.\n\n```python\nimport json\nimport base64\n\n# Example function to safely serialize data\ndef safe_serialize(data):\n    # Convert data to JSON string\n    json_data = json.dumps(data)\n    # Encode JSON string to bytes and then to base64 to ensure safe transmission\n    encoded_data = base64.b64encode(json_data.encode",
-            "vulnerability_explanation": "The provided PoC URL points to a repository containing NullRAT, which appears to be a Remote Administration Tool (RAT) designed for unauthorized access to systems. While the CVE ID and CWE IDs are not specified, the presence of such a tool typically indicates vulnerabilities related to remote code execution, unauthorized access, or privilege escalation. This PoC likely demonstrates how an attacker can exploit these vulnerabilities to gain control over a target system.\n\n###",
+            "diff_code": "Given the lack of a specific CVE ID and summary, I'll assume a common vulnerability often found in remote administration tools (RATs) like the one linked in the PoC URL: **unauthenticated remote code execution**. This is a serious vulnerability where an attacker can execute arbitrary commands on the target machine without any authentication.\n\n### VULNERABILITY:\nThe vulnerability likely arises from the RAT server not properly authenticating clients before executing commands received from them. An attacker could exploit this to send malicious commands to the RAT server, leading to unauthorized actions on the target system.\n\n### PATCH:\nTo mitigate this vulnerability, we need to implement a simple authentication mechanism. Below is a Python code snippet demonstrating how to add a basic username/password check before executing commands.\n\n```python\nimport socket\nimport threading\n\n# Simple authentication credentials\nUSERNAME = \"admin\"\nPASSWORD = \"securepassword\"\n\ndef handle_client(client_socket):\n    # Authentication step\n    client_socket.send(b\"Username: \")\n    username = client_socket.recv(1024).strip().decode()\n    \n    client_socket.send(b\"Password: \")\n    password = client_socket.recv(1024).strip().decode()\n    \n    if username == USERNAME and password == PASSWORD:\n        client_socket.send(b\"Authentication",
+            "vulnerability_explanation": "The vulnerability likely arises from the RAT server not properly authenticating clients before executing commands received from them. An attacker could exploit this to send malicious commands to the RAT server, leading to unauthorized actions on the target system.\n\n###",
             "mitigation_steps": []
         }
     },
@@ -55603,6 +55603,62 @@
             "mitigation_steps": [
                 "**Validate Redirect URLs**: Implement a function to validate the target URL before performing any redirection. Ensure"
             ]
+        }
+    },
+    "GHSA-9v7f-9g4p-ffgj": {
+        "summary": "PyJWT: PyJWKClient follows redirects when fetching JWKS",
+        "cvss_score": "unscored",
+        "date_added": "2026-09-30 00:02:52",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "from jwt.jwks_client import PyJWKClient\n\nclass SecurePyJWKClient(PyJWKClient):\n    def fetch_data(self):\n        import requests\n        response = requests.get(self.uri, allow_redirects=False)\n        if response.status_code == 301 or response.status_code == 302:\n            raise Exception(\"Redirects are not allowed for JWKS URI\")\n        response.raise_for_status()\n        return response.json()",
+            "vulnerability_explanation": "The vulnerability in PyJWT's PyJWKClient allows an attacker to exploit the fact that it follows HTTP redirects when fetching JWKS (JSON Web Key Set) data. This can lead to potential man-in-the-middle attacks where an attacker could redirect the request to a malicious server, serving a fake JWKS.",
+            "mitigation_steps": [
+                "Replace all instances of `PyJWKClient` with `SecurePyJWKClient` in your codebase.",
+                "Ensure that the `requests` library is up-to-date to handle HTTP requests securely.",
+                "Test the application thoroughly to ensure that the patch does not introduce any regressions or new issues."
+            ]
+        }
+    },
+    "GHSA-p4g4-x82p-q773": {
+        "summary": "PyJWT: Public keys in DER form are accepted as HMAC secrets, bypassing the CVE-2022-29217 guard",
+        "cvss_score": "unscored",
+        "date_added": "2026-09-30 00:02:52",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "from jwt.api_jws import _jws_global_obj\nfrom jwt.algorithms import RSAAlgorithm\n\ndef patched_rsa_from_jwk(cls, jwk):\n    if 'kty' in jwk and jwk['kty'] == 'RSA':\n        raise ValueError(\"RSA keys should not be used as HMAC secrets.\")\n    return cls.from_jwk(jwk)\n\n# Patch the RSAAlgorithm class to prevent RSA keys from being used as HMAC secrets\nRSAAlgorithm.from_jwk = classmethod(patched_rsa_from_jwk)\n\n# Ensure that the global JWT object is using the patched method\n_jwt_global_obj._algorithms['RS256'] = RSAAlgorithm()\n_jwt_global_obj._algorithms['RS384'] = RSAAlgorithm()\n_jwt_global_obj._algorithms['RS512'] = RSAAlgorithm()",
+            "vulnerability_explanation": "The vulnerability in PyJWT allows public keys in DER format to be incorrectly accepted as HMAC secrets. This can lead to signature verification bypasses, undermining the intended security measures implemented to prevent such issues as described in CVE-2022-29217.",
+            "mitigation_steps": [
+                "Replace the `from_jwk` method in the `RSAAlgorithm` class with the patched version"
+            ]
+        }
+    },
+    "GHSA-r6x4-923q-g947": {
+        "summary": "PyJWT BOM Bypass",
+        "cvss_score": "unscored",
+        "date_added": "2026-09-30 00:02:52",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import jwt\nimport codecs\n\ndef decode_jwt(token, secret):\n    # Remove Byte Order Mark (BOM) from the token if present\n    if isinstance(token, str) and token.startswith(codecs.BOM_UTF8.decode('utf-8')):\n        token = token[len(codecs.BOM_UTF8.decode('utf-8')):]\n    \n    try:\n        decoded_token = jwt.decode(token, secret, algorithms=[\"HS256\"])\n        return decoded_token\n    except jwt.PyJWTError as e:\n        print(f\"Token decoding failed: {e}\")\n        return None",
+            "vulnerability_explanation": "The vulnerability in PyJWT (Python JSON Web Token) allows an attacker to bypass the Byte Order Mark (BOM) check, which could lead to the processing of malicious JWT tokens. This can potentially allow for unauthorized access or other security issues if not properly handled.\n\n###",
+            "mitigation_steps": [
+                "**Step 1**: Locate the function in your codebase where JWT tokens are being"
+            ]
+        }
+    },
+    "GHSA-2gx3-rcp4-g85q": {
+        "summary": "PyJWT: PyJWKClient still amplifies unauthenticated JWKS fetches on unknown kid values (incomplete fix of CVE-2026-48524)",
+        "cvss_score": "unscored",
+        "date_added": "2026-09-30 00:02:52",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY:\nThe vulnerability in PyJWT's `PyJWKClient` allows for unauthenticated JWKS (JSON Web Key Set) fetches when an unknown `kid` (Key ID) is provided. This can lead to excessive requests to the JWKS endpoint, potentially amplifying denial-of-service attacks or increasing unnecessary network traffic.\n\n### PATCH:\n```python\n# Patch to add a limit on the number of attempts to fetch JWKS for unknown kid values\nfrom pyjwt import PyJWKClient\nimport logging\n\nclass LimitedFetchPyJWKClient(PyJWKClient):\n    def __init__(self, uri, max_fetch_attempts=5):\n        super().__init__(uri)\n        self.max_fetch_attempts = max_fetch_attempts\n        self.fetch_attempts = {}\n\n    def get_signing_key(self, kid):\n        if kid not in self._jwks:\n            if kid not in self.fetch_attempts:\n                self.fetch_attempts[kid] = 0\n            if self.fetch_attempts[kid] >= self.max_fetch_attempts:\n                logging.warning(f\"Maximum fetch attempts reached for kid: {kid}\")\n                raise ValueError(f\"Exceeded maximum fetch attempts for kid: {kid}\")\n            self.fetch_attempts[kid] += 1\n           ",
+            "vulnerability_explanation": "The vulnerability in PyJWT's `PyJWKClient` allows for unauthenticated JWKS (JSON Web Key Set) fetches when an unknown `kid` (Key ID) is provided. This can lead to excessive requests to the JWKS endpoint, potentially amplifying denial-of-service attacks or increasing unnecessary network traffic.\n\n###",
+            "mitigation_steps": []
         }
     }
 }
