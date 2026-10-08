@@ -2,13 +2,13 @@
     "null": {
         "summary": "No description",
         "cvss_score": "unscored",
-        "date_added": "2026-10-08 09:55:29",
+        "date_added": "2026-10-08 18:22:49",
         "stage": "3_Ready_for_Fine_Tuning",
         "poc_url": "https://github.com/NullCode1337/NullRAT",
         "patch_analysis": {
             "status": "Patched_by_Cloudflare",
-            "diff_code": "import subprocess\n\ndef execute_command(command):\n    result = subprocess.run(command, shell=True, capture_output=True, text=True)\n    return result.stdout",
-            "vulnerability_explanation": "The vulnerability likely involves insecure command execution where user input is taken and executed without proper validation or sanitization, allowing an attacker to run arbitrary commands on the server.\n\n###",
+            "diff_code": "Given the provided information, it appears that there is a lack of specific details about the CVE, such as its ID, summary, and CWE IDs. However, based on the PoC URL provided, which points to a repository for \"NullRAT\" (a Remote Access Tool), we can infer that the vulnerability likely pertains to a security flaw in the NullRAT codebase that could allow unauthorized access or control over the target system.\n\nFor the purpose of this exercise, let's assume the vulnerability is related to an insecure command execution mechanism within the NullRAT code, where user input is directly passed to the `subprocess` module without proper validation or sanitization, leading to potential command injection attacks.\n\n### VULNERABILITY:\nThe vulnerability involves insecure command execution within the NullRAT application, where user input is directly used to execute system commands without proper validation or sanitization, potentially allowing attackers to inject malicious commands.\n\n### PATCH:\n```python\nimport subprocess\nimport shlex\n\ndef execute_command(command):\n    # Validate and sanitize the command input\n    if not isinstance(command, str) or not command.strip():\n        raise ValueError(\"Invalid command input\")\n    \n    # Use shlex.split to safely split the command into arguments\n    try:\n        args =",
+            "vulnerability_explanation": "The vulnerability involves insecure command execution within the NullRAT application, where user input is directly used to execute system commands without proper validation or sanitization, potentially allowing attackers to inject malicious commands.\n\n###",
             "mitigation_steps": []
         }
     },
@@ -56256,6 +56256,294 @@
             "status": "Patched_by_Cloudflare",
             "diff_code": "Given the limited information provided, it seems challenging to pinpoint the exact vulnerability without a CVE summary or a Proof of Concept (PoC). However, based on the CWE IDs being unknown, I'll assume a common vulnerability for demonstration purposes. Let's consider a generic example of a Cross-Site Scripting (XSS) vulnerability in a web application that could be represented by this CVE ID.\n\n### Hypothetical Vulnerability Explanation:\n**VULNERABILITY:** The application does not properly sanitize user input before rendering it on a webpage, allowing an attacker to inject malicious scripts into the web page viewed by other users.\n\n### Concrete Python Code Patch:\nAssuming we have a simple Flask web application that echoes back user input without sanitization, here is how you can mitigate the XSS vulnerability using Flask's built-in escaping mechanism.\n\n```python\nfrom flask import Flask, request, escape, render_template_string\n\napp = Flask(__name__)\n\n@app.route('/')\ndef index():\n    user_input = request.args.get('input', '')\n    # Sanitize user input before rendering it in the template\n    safe_user_input = escape(user_input)\n    return render_template_string('<html><body>You entered: {{ user_input }}</body></html>', user_input=safe_user_input)\n\nif __name__",
             "vulnerability_explanation": "** The application does not properly sanitize user input before rendering it on a webpage, allowing an attacker to inject malicious scripts into the web page viewed by other users.\n\n### Concrete Python Code Patch:\nAssuming we have a simple Flask web application that echoes back user input without sanitization, here is how you can mitigate the XSS vulnerability using Flask's built-in escaping mechanism.\n\n```python\nfrom flask import Flask, request, escape, render_template_string\n\napp = Flask(__name__)\n\n@app.route('/')\ndef index():\n    user_input = request.args.get('input', '')\n    # Sanitize user input before rendering it in the template\n    safe_user_input = escape(user_input)\n    return render_template_string('<html><body>You entered: {{ user_input }}</body></html>', user_input=safe_user_input)\n\nif __name__",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-jw42-f3rr-4cc3": {
+        "summary": "Excelize: Unbounded row number in Rows.Columns makes GetRows and the Rows iterator loop for days",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY: \nThe vulnerability in Excelize occurs due to an unbounded row number in the `Rows.Columns` method, which can cause the `GetRows` and the `Rows` iterator to loop indefinitely if not properly handled. This can lead to denial-of-service conditions where the application becomes unresponsive due to excessive processing time.\n\n### PATCH:\nTo mitigate this issue, we can introduce a maximum row limit when iterating through rows or retrieving columns. Here's a concrete patch that adds a configurable maximum row limit:\n\n```python\n# Assuming the original Rows class and methods are part of the Excelize library\nclass Rows:\n    def __init__(self, sheet, max_rows=None):\n        self.sheet = sheet\n        self.max_rows = max_rows  # Maximum number of rows to process\n\n    def Columns(self, rowIndex):\n        if self.max_rows is not None and rowIndex >= self.max_rows:\n            raise ValueError(\"Row index exceeds the maximum allowed rows\")\n        # Original implementation of Columns method\n        pass\n\n    def GetRows(self):\n        rows = []\n        for rowIndex in range(self.sheet.MaxRow()):\n            if self.max_rows is not None and rowIndex >= self.max_rows:\n                break\n            # Original implementation to get row data\n           ",
+            "vulnerability_explanation": "The vulnerability in Excelize occurs due to an unbounded row number in the `Rows.Columns` method, which can cause the `GetRows` and the `Rows` iterator to loop indefinitely if not properly handled. This can lead to denial-of-service conditions where the application becomes unresponsive due to excessive processing time.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-r7x5-4969-99p7": {
+        "summary": "Excelize: Nil-pointer dereference in GetSlicers when a worksheet has extLst present but no drawing element",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "# Assuming the vulnerable section of the code is within the GetSlicers method\ndef GetSlicers(self, sheetName):\n    # ... existing code ...\n    if 'extLst' in sheetData and 'drawing' not in sheetData:\n        return []  # Return an empty list or handle appropriately instead of proceeding\n    # ... rest of the existing code ...",
+            "vulnerability_explanation": "The vulnerability occurs in the Excelize library's `GetSlicers` function when processing a worksheet that contains an `extLst` element but lacks a corresponding `drawing` element. This mismatch can lead to a nil-pointer dereference, causing a runtime panic or crash.",
+            "mitigation_steps": [
+                "Identify the specific section of the Excelize library's `GetSlicers` method where the nil-pointer dereference occurs.",
+                "Insert a check to ensure that if the `extLst` element is present, a `drawing` element must also be present before proceeding with further operations.",
+                "Test the patched code with various Excel files, including those with and without the `extLst` and `drawing` elements, to confirm that the vulnerability is resolved and no regressions have been introduced."
+            ]
+        }
+    },
+    "GHSA-2jwh-9rmr-j4xf": {
+        "summary": "AsyncHttpClient CookieStore Silently Overrides Caller's Explicit Cookie Header via setHeader (Bypass of CVE-2024-53990 Fix)",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY:\nThe vulnerability in AsyncHttpClient involves the `CookieStore` silently overriding an explicit cookie header set by the caller via `setHeader`. This can lead to unintended behavior where cookies managed by the `CookieStore` take precedence over those explicitly specified by the user, potentially bypassing intended security measures or leading to incorrect request handling.\n\n### PATCH:\nTo mitigate this issue, we need to ensure that any explicitly set cookie headers are not overridden by the `CookieStore`. This can be achieved by checking if a cookie header is already set before adding cookies from the `CookieStore`.\n\n```python\n# Assuming we have access to the relevant parts of the AsyncHttpClient codebase\nfrom async_http_client import Request, CookieStore\n\nclass CustomRequest(Request):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.cookie_store = CookieStore()\n\n    def prepare_headers(self):\n        # Check if 'Cookie' header is already set\n        if 'Cookie' not in self.headers:\n            # If not set, add cookies from the CookieStore\n            cookies = self.cookie_store.get_cookies_for_url(self.url)\n            if cookies:\n                self.headers['Cookie'] = '; '.join(cookies)\n\n   ",
+            "vulnerability_explanation": "The vulnerability in AsyncHttpClient involves the `CookieStore` silently overriding an explicit cookie header set by the caller via `setHeader`. This can lead to unintended behavior where cookies managed by the `CookieStore` take precedence over those explicitly specified by the user, potentially bypassing intended security measures or leading to incorrect request handling.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-p2jm-6hj6-9rjg": {
+        "summary": "AsyncHttpClient: Cookies received over plaintext HTTP can plant, overwrite or delete Secure cookies set over HTTPS",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY: \nThe vulnerability in AsyncHttpClient allows cookies received over an unsecured HTTP connection to potentially plant, overwrite, or delete cookies that were originally set over a secure HTTPS connection. This can lead to security issues such as session hijacking or unauthorized access.\n\n### PATCH:\nTo mitigate this vulnerability, we need to ensure that cookies received over HTTP do not affect cookies set over HTTPS. One way to achieve this is by configuring the `AsyncHttpClient` to reject cookies from HTTP responses if they are intended for secure contexts.\n\nHere is a concrete Python code patch using the `aiohttp` library, which is similar to `AsyncHttpClient`:\n\n```python\nimport aiohttp\nfrom aiohttp import CookieJar\n\nclass SecureCookieJar(CookieJar):\n    def update_cookies(self, cookies, response_url):\n        # Check if the response URL is HTTPS\n        if not response_url.startswith('https://'):\n            return  # Ignore cookies from non-HTTPS responses\n        \n        super().update_cookies(cookies, response_url)\n\nasync def fetch(session, url):\n    async with session.get(url) as response:\n        return await response.text()\n\nasync def main():\n    cookie_jar = SecureCookieJar()\n    async with aiohttp.ClientSession(cookie_jar=cookie",
+            "vulnerability_explanation": "The vulnerability in AsyncHttpClient allows cookies received over an unsecured HTTP connection to potentially plant, overwrite, or delete cookies that were originally set over a secure HTTPS connection. This can lead to security issues such as session hijacking or unauthorized access.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-x8v2-478q-2hvg": {
+        "summary": "AsyncHttpClient: Unbounded WebSocket permessage-deflate decompression enables a decompression-bomb denial of service when compression is enabled",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY: \nThe vulnerability in AsyncHttpClient occurs due to the lack of bounds on the decompression size for WebSocket messages using the `permessage-deflate` extension. An attacker can exploit this by sending highly compressed messages that, when decompressed, consume excessive resources, leading to a denial-of-service (DoS) condition.\n\n### PATCH:\nTo mitigate this vulnerability, we need to set a maximum allowed decompressed message size. Here's a patch that demonstrates how to apply such a limit using the `AsyncHttpClient` library:\n\n```python\nfrom aiohttp import ClientSession, WSMsgType\nimport zlib\n\n# Constants for configuration\nMAX_DECOMPRESSED_SIZE = 10 * 1024 * 1024  # 10 MB\n\nasync def safe_websocket_handler(url):\n    async with ClientSession() as session:\n        async with session.ws_connect(url) as ws:\n            async for msg in ws:\n                if msg.type == WSMsgType.BINARY:\n                    # Decompress the message\n                    try:\n                        decompressed_msg = zlib.decompress(msg.data)\n                        if len(decompressed_msg) > MAX_DECOMPRESSED_SIZE:\n                            print(\"Decompressed message too large, ignoring.\")\n                            continue\n                       ",
+            "vulnerability_explanation": "The vulnerability in AsyncHttpClient occurs due to the lack of bounds on the decompression size for WebSocket messages using the `permessage-deflate` extension. An attacker can exploit this by sending highly compressed messages that, when decompressed, consume excessive resources, leading to a denial-of-service (DoS) condition.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-v2j5-22fr-j62r": {
+        "summary": "AsyncHttpClient: Pooled connections can still be shared across NTLM, Negotiate and proxy logins",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY:\nThe vulnerability in AsyncHttpClient allows pooled connections to be shared across different authentication mechanisms such as NTLM, Negotiate, and proxy logins. This can lead to unauthorized access or information leakage since connections intended for one authenticated session might be reused for another session with different credentials.\n\n### PATCH:\nTo mitigate this vulnerability, we need to ensure that connections are not pooled across different authentication contexts. One way to achieve this is by configuring the connection pool to differentiate connections based on the authentication scheme used.\n\nHere's a concrete Python code patch using `aiohttp` as an example, which demonstrates how to configure the connection pool to avoid sharing connections across different authentication mechanisms:\n\n```python\nfrom aiohttp import ClientSession, BasicAuth\nfrom yarl import URL\n\nasync def fetch(url, auth):\n    # Create a unique connection key based on the URL and the auth type\n    conn_key = f\"{url}{auth.login if auth else 'no-auth'}\"\n    \n    # Use a custom connector that respects the unique connection key\n    async with ClientSession(connector=aiohttp.TCPConnector(limit_per_host=10)) as session:\n        async with session.get(url, auth=auth) as response:\n            return await response.text()\n\n# Example",
+            "vulnerability_explanation": "The vulnerability in AsyncHttpClient allows pooled connections to be shared across different authentication mechanisms such as NTLM, Negotiate, and proxy logins. This can lead to unauthorized access or information leakage since connections intended for one authenticated session might be reused for another session with different credentials.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-c44f-37qr-gw3f": {
+        "summary": "PraisonAI: SkillTools Executes Scripts Without Path Containment Validation",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nimport subprocess\n\ndef execute_script(script_path, base_directory):\n    # Ensure the script path is within the base directory\n    if not os.path.commonpath([os.path.abspath(script_path), os.path.abspath(base_directory)]) == os.path.abspath(base_directory):\n        raise ValueError(\"Script path is not contained within the base directory.\")\n    \n    # Execute the script safely\n    try:\n        subprocess.run(['python', script_path], check=True)\n    except subprocess.CalledProcessError as e:\n        print(f\"An error occurred while executing the script: {e}\")\n\n# Example usage\nbase_dir = '/trusted/directory'\nscript_to_run = '/trusted/directory/safe_script.py'\nexecute_script(script_to_run, base_dir)",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's SkillTools arises from the execution of scripts without validating whether the script path is contained within a trusted directory. This can lead to arbitrary code execution if an attacker can manipulate the script path to point to a malicious script located outside the intended directory.\n\n###",
+            "mitigation_steps": [
+                "**Validate Script Path**: Modify the script execution function to include a check ensuring the script path is within a predefined, trusted directory.",
+                "**Use Absolute Paths**:"
+            ]
+        }
+    },
+    "GHSA-f352-4x87-wmjh": {
+        "summary": "Duplicate Advisory: PraisonAI: SkillTools Executes Scripts Without Path Containment Validation",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nimport subprocess\n\ndef execute_script(script_path):\n    # Validate that the script path is within an expected directory\n    expected_directory = \"/safe/scripts/directory\"\n    absolute_script_path = os.path.abspath(script_path)\n    \n    if not absolute_script_path.startswith(expected_directory):\n        raise ValueError(\"Script path is outside the allowed directory\")\n    \n    # Execute the script safely\n    try:\n        result = subprocess.run(['bash', absolute_script_path], check=True, text=True, capture_output=True)\n        print(result.stdout)\n    except subprocess.CalledProcessError as e:\n        print(f\"An error occurred while executing the script: {e.stderr}\")\n\n# Example usage\nexecute_script(\"/safe/scripts/directory/allowed_script.sh\")",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's SkillTools arises from the execution of scripts without validating their paths, which could allow an attacker to execute arbitrary scripts if they can manipulate the script path input.",
+            "mitigation_steps": [
+                "Ensure that the `expected_directory` variable in the `execute_script` function points to a secure directory where only trusted scripts reside.",
+                "Regularly review and audit the contents of the `expected_directory` to ensure no malicious scripts have been introduced.",
+                "Implement logging and"
+            ]
+        }
+    },
+    "GHSA-4gfv-wg42-7jw5": {
+        "summary": "PraisonAI: Unsafe Dynamic Module Loading Leads to Arbitrary Code Execution via tools.py in AgentFlow",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY: \nThe vulnerability in PraisonAI's AgentFlow arises from unsafe dynamic module loading in the `tools.py` file. This allows an attacker to execute arbitrary code if they can control the module path or name being loaded, potentially leading to remote code execution.\n\n### PATCH:\n```python\nimport importlib.util\nimport sys\nimport os\n\ndef safe_import_module(module_name, allowed_paths):\n    \"\"\"\n    Safely imports a module only if it is located within one of the allowed paths.\n    \n    :param module_name: Name of the module to import.\n    :param allowed_paths: List of paths where the module is allowed to be located.\n    :return: The imported module.\n    :raises ImportError: If the module is not found in the allowed paths.\n    \"\"\"\n    for path in allowed_paths:\n        module_path = os.path.join(path, f\"{module_name}.py\")\n        if os.path.exists(module_path):\n            spec = importlib.util.spec_from_file_location(module_name, module_path)\n            module = importlib.util.module_from_spec(spec)\n            sys.modules[module_name] = module\n            spec.loader.exec_module(module)\n            return module\n    \n    raise ImportError(f\"Module {module_name} not found in allowed paths",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's AgentFlow arises from unsafe dynamic module loading in the `tools.py` file. This allows an attacker to execute arbitrary code if they can control the module path or name being loaded, potentially leading to remote code execution.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-4xxv-6wmf-xf45": {
+        "summary": "PraisonAI: FastContext path resolution permits absolute and traversal reads outside the workspace",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nfrom pathlib import Path\n\ndef resolve_path(base_dir, user_input):\n    # Ensure base_dir is an absolute path\n    base_dir = Path(base_dir).resolve()\n    \n    # Resolve user input relative to base_dir\n    resolved_path = base_dir / user_input\n    \n    # Normalize the path to remove any '..' components\n    resolved_path = resolved_path.resolve()\n    \n    # Check if the resolved path is within the base directory\n    if not resolved_path.is_relative_to(base_dir):\n        raise ValueError(\"Path traversal detected: Access denied\")\n    \n    return resolved_path",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's FastContext allows for path resolution that can be exploited to read files outside the intended workspace directory through the use of absolute paths or path traversal sequences (e.g., `../`). This can lead to unauthorized access to sensitive information.",
+            "mitigation_steps": [
+                "Replace all instances where file paths are resolved using user input with the `resolve_path` function provided in the patch.",
+                "Ensure that the `base_dir` parameter passed to `resolve_path` is correctly set to the root directory of the intended workspace.",
+                "Validate and sanitize all user inputs related to file paths before they are processed by the application"
+            ]
+        }
+    },
+    "GHSA-c6pq-cprj-62fw": {
+        "summary": "Duplicate Advisory: PraisonAI: Unsafe Dynamic Module Loading Leads to Arbitrary Code Execution via tools.py in AgentFlow",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import importlib.util\nimport os\nimport sys\n\ndef load_module_safely(module_name, file_path):\n    # Validate the module name to ensure it only contains safe characters\n    if not re.match(r'^[a-zA-Z0-9_]+$', module_name):\n        raise ValueError(\"Invalid module name\")\n\n    # Ensure the file path is absolute and points to a file within a trusted directory\n    if not os.path.isabs(file_path) or not os.path.isfile(file_path) or not file_path.startswith(TRUSTED_DIRECTORY):\n        raise ValueError(\"Invalid file path\")\n\n    # Load the module safely using importlib\n    spec = importlib.util.spec_from_file_location(module_name, file_path)\n    module = importlib.util.module_from_spec(spec)\n    sys.modules[module_name] = module\n    spec.loader.exec_module(module)\n    return module",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's AgentFlow arises from unsafe dynamic module loading within the `tools.py` file. This can allow an attacker to execute arbitrary code if they can control the module path or name being loaded, potentially leading to remote code execution.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Replace any existing"
+            ]
+        }
+    },
+    "GHSA-3f4v-mp44-x4x2": {
+        "summary": "Duplicate Advisory: PraisonAI: FastContext path resolution permits absolute and traversal reads outside the workspace",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nfrom pathlib import Path\n\ndef resolve_safe_path(base_dir, user_input):\n    # Ensure base_dir is an absolute path\n    base_dir = Path(base_dir).resolve()\n    \n    # Resolve the user input path relative to the base directory\n    full_path = base_dir / user_input\n    \n    # Normalize the path to remove any '..' components\n    full_path = full_path.resolve()\n    \n    # Check if the resolved path is still within the base directory\n    if not full_path.is_relative_to(base_dir):\n        raise ValueError(\"Path traversal detected: Access denied\")\n    \n    return full_path",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's FastContext allows attackers to perform path traversal attacks by using absolute paths or relative paths that traverse outside the intended workspace directory. This can lead to unauthorized access to sensitive files on the server.",
+            "mitigation_steps": [
+                "Replace all instances where file paths are constructed from user input with calls to `resolve_safe_path`, ensuring that `base_dir` is set to the correct workspace directory.",
+                "Validate and sanitize all user inputs related to file paths before processing them.",
+                "Regularly review and update the codebase to incorporate security best practices and patches for known vulnerabilities."
+            ]
+        }
+    },
+    "GHSA-fpf4-vwcp-v4hp": {
+        "summary": "Pydantic AI: Event loop blocked by quadratic title extraction in `web_fetch`",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import asyncio\nfrom aiohttp import ClientSession\n\nasync def web_fetch(url, session):\n    async with session.get(url) as response:\n        html = await response.text()\n        # Use a more efficient method to extract the title\n        start_tag = \"<title>\"\n        end_tag = \"</title>\"\n        start_index = html.find(start_tag)\n        if start_index != -1:\n            start_index += len(start_tag)\n            end_index = html.find(end_tag, start_index)\n            if end_index != -1:\n                title = html[start_index:end_index]\n            else:\n                title = \"No title found\"\n        else:\n            title = \"No title found\"\n        return title\n\nasync def fetch_titles(urls):\n    async with ClientSession() as session:\n        tasks = [web_fetch(url, session) for url in urls]\n        titles = await asyncio.gather(*tasks)\n        return titles",
+            "vulnerability_explanation": "The vulnerability arises from a quadratic time complexity issue in the `web_fetch` function, which can block the event loop when extracting titles from web pages. This inefficiency can lead to performance degradation and potential denial-of-service conditions under certain circumstances.",
+            "mitigation_steps": [
+                "Replace the existing title extraction logic in"
+            ]
+        }
+    },
+    "GHSA-4x9p-g9wm-8q7f": {
+        "summary": "Pydantic AI OpenTelemetry instrumentation: exception events on tool and agent run spans include content when `include_content=False`",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "# In the relevant function where exception events are logged, ensure that content is not included if include_content is False.\ndef log_exception_event(span, exception, include_content=False):\n    event_data = {\n        \"event\": \"exception\",\n        \"exception.type\": type(exception).__name__,\n        \"exception.message\": str(exception),\n    }\n    \n    if include_content:\n        event_data[\"exception.content\"] = str(exception)  # or any other content extraction\n    \n    span.add_event(**event_data)",
+            "vulnerability_explanation": "The vulnerability in Pydantic AI OpenTelemetry instrumentation occurs when exception events on tool and agent run spans include sensitive content even when the `include_content` parameter is set to `False`. This can lead to unintended exposure of sensitive data in telemetry logs.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Locate the function or method responsible for logging exception events in the Pydantic AI OpenTelemetry instrumentation codebase.",
+                "**Step 2:** Modify the function to conditionally include the exception content based on the `include_content` parameter, ensuring that it does not add the content to the event data when `include_content` is `False`.",
+                "**Step 3:** Test the modified code to verify"
+            ]
+        }
+    },
+    "GHSA-vmxc-h2x2-jmf3": {
+        "summary": "Pydantic AI: SSRF cloud-metadata blocklist bypass via IPv6 zone identifiers",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import ipaddress\nfrom pydantic import AnyUrl, validator\n\nclass SafeUrl(AnyUrl):\n    @validator('host')\n    def validate_host(cls, v):\n        try:\n            # Check if the host is an IP address\n            ip = ipaddress.ip_address(v)\n            # If it's an IPv6 address, check for zone identifiers\n            if isinstance(ip, ipaddress.IPv6Address) and '%' in v:\n                raise ValueError(\"IPv6 addresses with zone identifiers are not allowed.\")\n        except ValueError:\n            # If it's not an IP address, proceed with the original validation logic\n            pass\n        return v",
+            "vulnerability_explanation": "The vulnerability in Pydantic allows an attacker to bypass the SSRF (Server-Side Request Forgery) protection mechanism by using IPv6 zone identifiers. This can enable unauthorized access to internal services through crafted URLs that include these identifiers.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Replace the usage of `AnyUrl` from Pydantic with `SafeUrl` in your codebase where URL validation is performed.",
+                "**Step 2:** Ensure that all instances where URLs are parsed or validated use the `SafeUrl` class to prevent SSR"
+            ]
+        }
+    },
+    "GHSA-m6wp-h223-4c8g": {
+        "summary": "PraisonAI: Plugin Auto-Discovery Executes Arbitrary Python Files Without Verification",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nimport importlib.util\nfrom pathlib import Path\n\ndef load_plugin(plugin_path):\n    # Validate that the file is a Python file\n    if not plugin_path.endswith('.py'):\n        raise ValueError(\"Only .py files are allowed\")\n\n    # Verify that the file exists and is a file\n    if not Path(plugin_path).is_file():\n        raise FileNotFoundError(f\"The file {plugin_path} does not exist or is not a file\")\n\n    # Load the module safely using importlib\n    spec = importlib.util.spec_from_file_location(\"module.name\", plugin_path)\n    module = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(module)\n    return module",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's Plugin Auto-Discovery feature allows the execution of arbitrary Python files without proper verification. This can lead to malicious code execution if an attacker places a harmful script in the plugin directory.",
+            "mitigation_steps": [
+                "Replace the existing plugin loading mechanism with the provided `load_plugin` function.",
+                "Ensure that the directory containing plugins is secured and only accessible by trusted users.",
+                "Regularly audit and validate the contents of the plugin directory for any suspicious or unauthorized files."
+            ]
+        }
+    },
+    "GHSA-2xv2-w8cq-5gxw": {
+        "summary": "PraisonAI: CodeAgent Executes LLM-Generated Code Without Sandboxing and Leaks All Environment Secrets",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "### VULNERABILITY:\nThe vulnerability in PraisonAI's CodeAgent arises from its execution of Large Language Model (LLM)-generated code without any form of sandboxing. This allows the executed code to potentially access and leak all environment secrets, such as API keys, database credentials, etc., which are available in the environment where CodeAgent runs.\n\n### PATCH:\nTo mitigate this vulnerability, we can implement a sandboxing mechanism using Python's `subprocess` module with restricted permissions, or leverage a more robust sandboxing library like `PySandbox`. Here, I'll demonstrate a simple approach using `subprocess` to run the generated code in an isolated environment:\n\n```python\nimport subprocess\nimport os\n\ndef execute_sandboxed_code(code):\n    # Write the code to a temporary file\n    with open('temp_script.py', 'w') as f:\n        f.write(code)\n\n    # Define a restricted environment\n    env = {}\n    \n    # Run the script in a subprocess with the restricted environment\n    try:\n        result = subprocess.run(\n            ['python', 'temp_script.py'],\n            capture_output=True,\n            text=True,\n            env=env,  # Use the restricted environment\n            timeout=10  # Set a timeout to",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's CodeAgent arises from its execution of Large Language Model (LLM)-generated code without any form of sandboxing. This allows the executed code to potentially access and leak all environment secrets, such as API keys, database credentials, etc., which are available in the environment where CodeAgent runs.\n\n###",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-q359-rmv4-56fg": {
+        "summary": "Duplicate Advisory: PraisonAI: Plugin Auto-Discovery Executes Arbitrary Python Files Without Verification",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import os\nimport importlib.util\nfrom pathlib import Path\n\ndef load_plugin(plugin_path):\n    # Validate the plugin path to ensure it is within the expected directory\n    base_directory = Path(\"/path/to/expected/plugin/directory\")\n    resolved_plugin_path = Path(plugin_path).resolve()\n\n    if not resolved_plugin_path.is_relative_to(base_directory):\n        raise ValueError(\"Plugin path is outside of the allowed directory\")\n\n    # Verify the file extension to ensure it is a Python file\n    if resolved_plugin_path.suffix != \".py\":\n        raise ValueError(\"Plugin file must have a .py extension\")\n\n    # Load the module safely\n    spec = importlib.util.spec_from_file_location(resolved_plugin_path.stem, resolved_plugin_path)\n    if spec is None:\n        raise ImportError(f\"Failed to load plugin from {resolved_plugin_path}\")\n\n    plugin_module = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(plugin_module)\n    return plugin_module",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's Plugin Auto-Discovery feature allows for the execution of arbitrary Python files without any verification process. This can lead to malicious code execution if an attacker can place a crafted Python file in the plugin directory.",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-mhgx-w3w5-2rvc": {
+        "summary": "Duplicate Advisory: PraisonAI: CodeAgent Executes LLM-Generated Code Without Sandboxing and Leaks All Environment Secrets",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "import sandbox\n\ndef execute_sandboxed_code(code):\n    # Create a new sandboxed environment\n    with sandbox.Sandbox() as sbox:\n        # Execute the provided code within the sandbox\n        result = sbox.run(code)\n        return result\n\n# Example usage\nif __name__ == \"__main__\":\n    llm_generated_code = \"print('Hello, World!')\"\n    output = execute_sandboxed_code(llm_generated_code)\n    print(output)",
+            "vulnerability_explanation": "The vulnerability in PraisonAI's CodeAgent arises from the execution of Large Language Model (LLM)-generated code without any form of sandboxing. This allows the executed code to potentially access and leak all environment secrets, such as API keys and sensitive configuration data.\n\n###",
+            "mitigation_steps": [
+                "**Step 1:** Install the `sandbox` library or an equivalent sandboxing library that suits your requirements. You can install it via pip:"
+            ]
+        }
+    },
+    "GHSA-29r9-67vg-qj56": {
+        "summary": "PraisonAI: Human-in-the-loop tool approval is cached by tool name and silently reused for all subsequent calls with arbitrary arguments",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "VULNERABILITY: The vulnerability in PraisonAI arises from the caching mechanism used for human-in-the-loop tool approvals. Specifically, the approval status is cached based solely on the tool name, which means that once a tool is approved, its approval status is reused for any subsequent calls regardless of the arguments passed to the tool. This can lead to unauthorized use of tools if an initial approval was granted without considering the specific arguments provided.\n\nPATCH:\n```python\n# Assuming there's a cache dictionary named `tool_approval_cache` and a function `get_tool_approval(tool_name, *args)` that checks for approval.\n# Modify the caching mechanism to include both the tool name and its arguments in the cache key.\n\ndef get_tool_approval(tool_name, *args):\n    # Create a unique cache key using both the tool name and its arguments\n    cache_key = (tool_name, args)\n    \n    # Check if the approval status is already cached for the specific tool and arguments\n    if cache_key in tool_approval_cache:\n        return tool_approval_cache[cache_key]\n    \n    # If not cached, prompt for human approval\n    approval_status = prompt_for_human_approval(tool_name, *args)\n    \n    # Cache the approval status using the unique cache key\n    tool_approval",
+            "vulnerability_explanation": "The vulnerability in PraisonAI arises from the caching mechanism used for human-in-the-loop tool approvals. Specifically, the approval status is cached based solely on the tool name, which means that once a tool is approved, its approval status is reused for any subsequent calls regardless of the arguments passed to the tool. This can lead to unauthorized use of tools if an initial approval was granted without considering the specific arguments provided.",
+            "mitigation_steps": []
+        }
+    },
+    "GHSA-r3xw-gcpr-rf26": {
+        "summary": "Duplicate Advisory: PraisonAI: Human-in-the-loop tool approval is cached by tool name and silently reused for all subsequent calls with arbitrary arguments",
+        "cvss_score": "unscored",
+        "date_added": "2026-10-08 18:22:49",
+        "stage": "3_Ready_for_Fine_Tuning",
+        "patch_analysis": {
+            "status": "Patched_by_Cloudflare",
+            "diff_code": "VULNERABILITY: The vulnerability in PraisonAI arises from the caching mechanism used for human-in-the-loop tool approvals. The approval status is cached based solely on the tool name, leading to silent reuse of the cached approval for any subsequent calls, regardless of the arguments passed to the tool. This can bypass intended safety checks and lead to unauthorized actions.\n\nPATCH:\n```python\n# Assuming there is a cache dictionary named `approval_cache` and a function `get_tool_approval(tool_name, *args)`\n\ndef get_tool_approval(tool_name, *args):\n    # Create a unique key based on both the tool name and its arguments\n    cache_key = (tool_name, args)\n\n    # Check if the specific combination of tool name and arguments has been approved\n    if cache_key in approval_cache:\n        return approval_cache[cache_key]\n\n    # If not cached, perform the human-in-the-loop approval process\n    approval_status = perform_human_in_the_loop_approval(tool_name, *args)\n\n    # Cache the result using the unique key\n    approval_cache[cache_key] = approval_status\n\n    return approval_status\n\ndef perform_human_in_the_loop_approval(tool_name, *args):\n    # Placeholder function to simulate human-in-the-loop approval process\n    print(f",
+            "vulnerability_explanation": "The vulnerability in PraisonAI arises from the caching mechanism used for human-in-the-loop tool approvals. The approval status is cached based solely on the tool name, leading to silent reuse of the cached approval for any subsequent calls, regardless of the arguments passed to the tool. This can bypass intended safety checks and lead to unauthorized actions.",
             "mitigation_steps": []
         }
     }
